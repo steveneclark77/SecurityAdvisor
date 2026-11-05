@@ -12,10 +12,7 @@ class BaselineForm(forms.Form):
     coverage_gaps = forms.CharField(widget=forms.Textarea, help_text='Record missing coverage, unverified mappings, and review limitations.')
 class ApprovalForm(forms.Form):
     note = forms.CharField(widget=forms.Textarea, label='Review and approval rationale')
-    confirmed = forms.BooleanField(label='I reviewed this snapshot and understand approval is not certification.')
-    coverage_reviewed = forms.BooleanField(label='I reviewed coverage and recorded missing safeguards or limitations.')
-    applicability_reviewed = forms.BooleanField(label='I reviewed profile/modifier applicability and exceptions.')
-    sources_reviewed = forms.BooleanField(label='I reviewed source references and unverified mappings.')
+    confirmed = forms.BooleanField(label='I have reviewed the baseline.')
 
 @staff_member_required
 def dashboard(request):
@@ -44,14 +41,14 @@ def baseline_detail(request,pk):
 @staff_member_required
 @require_POST
 def approve_baseline(request,pk):
-    get_object_or_404(Baseline,pk=pk)
+    baseline = get_object_or_404(Baseline,pk=pk)
     form = ApprovalForm(request.POST)
     if form.is_valid():
         try:
             services.approve_baseline(pk=pk,user=request.user,note=form.cleaned_data['note'] + '\nReview confirmed: coverage/limitations, applicability/exceptions, sources/mappings; approval is not certification.')
             return redirect('baseline_detail',pk=pk)
         except ValidationError as exc: form.add_error(None,exc)
-    return render(request,'library/form.html',{'form':form,'title':'Approve baseline'},status=400)
+    return render(request,'library/baseline.html',{'baseline':baseline,'form':form},status=400)
 
 
 class RevisionForm(BaselineForm):

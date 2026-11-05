@@ -1,0 +1,23 @@
+<form method="post" action="{% url 'approve_baseline' baseline.pk %}" aria-label="Baseline approval">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <p>{{ form.note.label_tag }} {{ form.note }} {{ form.note.errors }}</p>
+  <p>{{ form.confirmed }} <label for="{{ form.confirmed.id_for_label }}">{{ form.confirmed.label }}</label>
+    <button type="button" class="info-button" data-open-dialog="baseline-review-info" aria-label="Review checklist information" title="Review checklist information"><span aria-hidden="true">ⓘ</span></button>
+    {{ form.confirmed.errors }}
+  </p>
+  <p class="muted">Enter your rationale and confirm your review to enable approval.</p>
+  <button type="submit" disabled>Approve this version</button>
+  <noscript><p>JavaScript is required to enable the approval button after completing the required inputs.</p></noscript>
+</form>
+<dialog id="baseline-review-info" aria-labelledby="baseline-review-title">
+  <h2 id="baseline-review-title">Baseline review checklist</h2>
+  <p>Confirm all of the following before approving:</p>
+  <ul>
+    <li>I reviewed this snapshot and understand approval is not certification.</li>
+    <li>I reviewed coverage and recorded missing safeguards or limitations.</li>
+    <li>I reviewed profile/modifier applicability and exceptions.</li>
+    <li>I reviewed source references and unverified mappings.</li>
+  </ul>
+  <button type="button" data-close-dialog>Close</button>
+</dialog>

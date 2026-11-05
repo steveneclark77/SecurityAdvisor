@@ -6,7 +6,7 @@ This walkthrough is for a consultant-led exercise, not a completed assessment. D
 
 Apply the update with `./update.command` on macOS, or follow the manual rebuild/migration commands in SETUP.md. Sign in using your consultant account and open **Customer engagements** from the top navigation.
 
-Before creating an assessment, use **Library** to review starter controls and capture a baseline. Record the incomplete framework mappings and any missing coverage. Review coverage, applicability, references, and limitations separately before approving. An approval for a synthetic exercise is not a compliance claim or evidence of complete coverage.
+Before creating an assessment, use **Library** to review starter controls and capture a baseline. Record the incomplete framework mappings and any missing coverage. Use the info icon beside “I have reviewed the baseline” to review the coverage, applicability, references, and limitations checklist. Enter the rationale and select the required checkbox to enable approval. An approval for a synthetic exercise is not a compliance claim or evidence of complete coverage.
 
 If changes are needed before approval, choose **Revise this draft**, edit and save the working guidance in the linked admin pages, then return and capture a uniquely named replacement. The original becomes **Superseded** and links to the replacement; review and approve the replacement separately. The revision captures the current shared working library and does not silently restore the old snapshot.
 

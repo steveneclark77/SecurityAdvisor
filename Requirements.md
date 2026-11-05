@@ -226,3 +226,8 @@ Unapproved snapshots offer a guided revision page linking to working controls an
 ### Running application version
 
 Display the running application version in the header, sourced from the repository-root `VERSION` file. Use SemVer `major.minor.patch`. Each user-requested change increments the patch unless the user specifies otherwise. Version-file updates take effect when the application restarts/rebuilds.
+
+
+### Required-input interaction
+
+Disable action buttons until their form inputs are complete and valid; retain server-side validation. Baseline approval requires a rationale and one checkbox, “I have reviewed the baseline.” An accessible info button opens a dialog listing the existing coverage, applicability, sources, and certification-limit checks. The dialog is informational; the checkbox is mandatory.

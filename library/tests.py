@@ -56,7 +56,7 @@ class LibraryTests(TestCase):
         self.assertContains(self.client.get(response.url),'Review and approve')
         self.assertEqual(self.client.get(reverse('approve_baseline',args=[baseline.pk])).status_code,405)
         self.assertEqual(self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed'}).status_code,400)
-        response=self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed scope','confirmed':'on','coverage_reviewed':'on','applicability_reviewed':'on','sources_reviewed':'on'})
+        response=self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed scope','confirmed':'on'})
         self.assertEqual(response.status_code,302)
         self.assertContains(self.client.get(response.url),'This snapshot is preserved')
     def test_profile_filter_includes_universal_and_relevant_controls(self):
@@ -230,3 +230,21 @@ class LibraryTests(TestCase):
         self.assertEqual(client.post(reverse('revise_baseline',args=[source.pk]),{'version':'v0-3'}).status_code,403)
         response = self.client.post(url,{'replacement':replacement.pk,'note':'Previously captured revised snapshot'})
         self.assertEqual(response.status_code,302)
+
+
+    def test_approval_requires_single_confirmation_and_nonblank_rationale(self):
+        baseline = self.baseline()
+        self.client.force_login(self.user)
+        url = reverse('approve_baseline',args=[baseline.pk])
+        for data in [{'note':'Reviewed'}, {'confirmed':'on'}, {'note':'   ','confirmed':'on'}]:
+            response = self.client.post(url, data)
+            self.assertEqual(response.status_code,400)
+            self.assertContains(response, 'baseline-review-info', status_code=400)
+            baseline.refresh_from_db()
+            self.assertIsNone(baseline.approved_at)
+        response = self.client.get(reverse('baseline_detail',args=[baseline.pk]))
+        self.assertContains(response, 'I have reviewed the baseline.')
+        self.assertContains(response, 'type="submit" disabled')
+        self.assertContains(response, 'I reviewed source references and unverified mappings.')
+        self.assertNotContains(response, 'name="sources_reviewed"')
+        self.assertEqual(self.client.post(url, {'note':'Reviewed all checklist items','confirmed':'on'}).status_code,302)
