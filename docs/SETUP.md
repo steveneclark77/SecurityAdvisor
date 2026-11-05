@@ -92,3 +92,19 @@ docker compose exec web python manage.py seed_library --enrich-existing
 The migration adds ordered action records. The enrichment command explicitly updates unchanged original starter guidance; customized controls without actions are listed and preserved for manual review. Existing action lists are never overwritten. Ordinary `seed_library` only adds new starter records. No command rewrites snapshots or approves a baseline.
 
 Each action has a stable database identity, order, instruction, applicability/exceptions, verification, and optional references. Edit them through the control's admin page. Customer-specific completion tracking will be added with assessments; library actions themselves are not completion checkboxes. References on the control apply to its actions; optional action references can link vendor instructions without making shared guidance vendor-dependent. Capture a new baseline after reviewing enriched guidance.
+
+## One-command updates on macOS
+
+After the initial installation, run `git pull origin main` once to obtain the updater. Start Docker Desktop, then double-click **update.command** in Finder, or run from the repository folder in Terminal:
+
+```bash
+./update.command
+```
+
+Git preserves its executable permission. If necessary after a manual download, run `chmod +x update.command`. If macOS blocks opening a downloaded script, review it before using Finder's Open option or executing it from Terminal; do not disable system security protections.
+
+The updater requires Git, Docker Desktop with Compose, an existing `.env`, and a clean `main` branch. It runs from its own folder, fast-forwards from GitHub, builds the web image, starts PostgreSQL, stops the web app, applies migrations and safe starter-guidance enrichment, checks configuration, restarts the app, and verifies the login page responds.
+
+It stops on errors and retains `.env`, the database volume, customized guidance, and historical baseline snapshots. Back up important data before migrations: it does not create backups or roll back updates. If a failure occurs after the web app stops, correct the reported issue and rerun. Inspect `docker compose logs web db` for startup problems.
+
+For unattended execution, use `./update.command --no-pause`. Otherwise, interactive runs wait for Return before closing so results remain visible. Failures return a nonzero exit code. This script also runs in Bash on Linux/WSL; it is not a Windows batch file.
