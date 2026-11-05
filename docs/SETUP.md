@@ -78,3 +78,17 @@ Customer intake, customer records, uploads, MFA, news ingestion, and retention a
 Retention is three years. Engagement closure is a proposed starting point, not yet approved. Attachment, history, backup, and exception treatment remains to be defined. Operations are expected to be US-only with no additional data-location requirement.
 
 The UI uses Django templates and local CSS without external browser dependencies. HTMX/Bootstrap remain options when needed. Scheduled management commands can support future daily ingestion; no scheduler or AI service is required now.
+
+## Upgrade an existing library to detailed actions
+
+After fetching this revision and rebuilding the web container, run:
+
+```bash
+docker compose up --build -d
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py seed_library --enrich-existing
+```
+
+The migration adds ordered action records. The enrichment command explicitly updates unchanged original starter guidance; customized controls without actions are listed and preserved for manual review. Existing action lists are never overwritten. Ordinary `seed_library` only adds new starter records. No command rewrites snapshots or approves a baseline.
+
+Each action has a stable database identity, order, instruction, applicability/exceptions, verification, and optional references. Edit them through the control's admin page. Customer-specific completion tracking will be added with assessments; library actions themselves are not completion checkboxes. References on the control apply to its actions; optional action references can link vendor instructions without making shared guidance vendor-dependent. Capture a new baseline after reviewing enriched guidance.

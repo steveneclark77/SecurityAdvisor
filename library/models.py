@@ -23,7 +23,7 @@ class Control(models.Model):
     investigation = models.TextField()
     evidence = models.TextField()
     risk = models.TextField()
-    recommendation = models.TextField()
+    recommendation = models.TextField(help_text='High-level outcome in plain language.')
     verification = models.TextField()
     estimated_cost = models.CharField(max_length=200, default='Estimate per customer after investigation')
     estimated_effort = models.CharField(max_length=200, default='Estimate per customer after investigation')
@@ -34,7 +34,25 @@ class Control(models.Model):
     def __str__(self): return f'{self.code}: {self.title}'
     def snapshot(self):
         names = ['code','title','function','universal','applicability','investigation','evidence','risk','recommendation','verification','estimated_cost','estimated_effort','references']
-        return {**{name:getattr(self,name) for name in names},'profiles':list(self.profiles.order_by('name').values_list('name',flat=True)),'modifiers':list(self.modifiers.order_by('name').values_list('name',flat=True))}
+        return {**{name:getattr(self,name) for name in names},'actions':[action.snapshot() for action in self.actions.all()],'profiles':list(self.profiles.order_by('name').values_list('name',flat=True)),'modifiers':list(self.modifiers.order_by('name').values_list('name',flat=True))}
+
+class ControlAction(models.Model):
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='actions')
+    position = models.PositiveIntegerField()
+    instruction = models.TextField()
+    applicability = models.TextField(help_text='Prerequisites, exceptions, and alternatives.')
+    verification = models.TextField(help_text='Evidence or safe test demonstrating completion.')
+    references = models.TextField(blank=True, help_text='Optional implementation references; control references also apply.')
+
+    class Meta:
+        ordering = ['position', 'pk']
+        constraints = [models.UniqueConstraint(fields=['control', 'position'], name='unique_control_action_position'), models.CheckConstraint(condition=models.Q(position__gte=1), name='positive_action_position')]
+
+    def __str__(self): return f'{self.control.code} action {self.position}'
+
+    def snapshot(self):
+        return {field:getattr(self, field) for field in ['position','instruction','applicability','verification','references']}
+
 
 class Baseline(models.Model):
     version = models.CharField(max_length=80, unique=True)

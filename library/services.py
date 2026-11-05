@@ -7,7 +7,7 @@ from .models import Baseline, Control, Profile, Modifier
 def create_baseline(*, user, version, coverage_gaps):
     if not user.is_active or not user.is_staff:
         raise PermissionError('Consultant access required.')
-    controls = list(Control.objects.prefetch_related('profiles','modifiers'))
+    controls = list(Control.objects.prefetch_related('profiles','modifiers','actions'))
     if not controls or not coverage_gaps.strip():
         raise ValidationError('Controls and a coverage-gap statement are required.')
     return Baseline.objects.create(version=version,created_by=user,coverage_gaps=coverage_gaps,snapshot={'controls':[c.snapshot() for c in controls], 'profiles':list(Profile.objects.values_list('name',flat=True)), 'modifiers':list(Modifier.objects.order_by('name').values_list('name',flat=True))})

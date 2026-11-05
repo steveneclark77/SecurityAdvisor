@@ -79,3 +79,74 @@ class LibraryTests(TestCase):
         baseline=approve_baseline(pk=baseline.pk,user=self.user,note='Original review')
         baseline.approval_note='Rewritten review'
         with self.assertRaises(ValidationError): baseline.save()
+
+    def test_all_starter_controls_have_ordered_actionable_guidance(self):
+        for control in Control.objects.all():
+            actions = list(control.actions.all())
+            self.assertGreaterEqual(len(actions), 3, control.code)
+            self.assertEqual([a.position for a in actions], list(range(1, len(actions)+1)))
+            for action in actions:
+                self.assertTrue(action.instruction and action.applicability and action.verification)
+        self.assertIn('phishing', Control.objects.get(code='PR-01').recommendation)
+
+    def test_action_edits_do_not_rewrite_snapshot(self):
+        baseline = self.baseline()
+        original = baseline.snapshot
+        action = Control.objects.get(code='PR-01').actions.first()
+        action.instruction = 'Later edited action'
+        action.save()
+        baseline.refresh_from_db()
+        self.assertEqual(original, baseline.snapshot)
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('baseline_detail', args=[baseline.pk]))
+        self.assertContains(response, 'FIDO2/WebAuthn')
+        self.assertNotContains(response, 'Later edited action')
+
+    def test_enrichment_upgrades_legacy_starters_but_preserves_custom_guidance(self):
+        from library.management.commands.seed_library import ROWS
+        from library.models import ControlAction
+        ControlAction.objects.all().delete()
+        for row in ROWS:
+            Control.objects.filter(code=row[0]).update(recommendation=row[6])
+        customized = Control.objects.get(code='PR-02')
+        customized.recommendation = 'Customer-specific guidance'
+        customized.save()
+        baseline = self.baseline()
+        before = baseline.snapshot
+        call_command('seed_library')
+        self.assertEqual(ControlAction.objects.count(), 0)
+        call_command('seed_library', enrich_existing=True)
+        self.assertEqual(Control.objects.get(code='PR-01').actions.count(), 7)
+        customized.refresh_from_db()
+        self.assertEqual(customized.recommendation, 'Customer-specific guidance')
+        self.assertFalse(customized.actions.exists())
+        count = ControlAction.objects.count()
+        action = Control.objects.get(code='PR-01').actions.first()
+        action.instruction = 'Consultant revised action'
+        action.save()
+        call_command('seed_library', enrich_existing=True)
+        self.assertEqual(ControlAction.objects.count(), count)
+        action.refresh_from_db()
+        self.assertEqual(action.instruction, 'Consultant revised action')
+        baseline.refresh_from_db()
+        self.assertEqual(baseline.snapshot, before)
+
+    def test_legacy_snapshots_without_actions_remain_readable(self):
+        baseline = self.baseline()
+        snapshot = baseline.snapshot
+        for control in snapshot['controls']:
+            control.pop('actions')
+        Baseline.objects.filter(pk=baseline.pk).update(snapshot=snapshot)
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get(reverse('baseline_detail', args=[baseline.pk])), 'Baseline v0-1')
+
+    def test_action_detail_is_visible_and_escaped(self):
+        self.client.force_login(self.user)
+        action = Control.objects.get(code='PR-01').actions.first()
+        action.instruction = '<script>alert(1)</script>'
+        action.save()
+        response = self.client.get('/')
+        self.assertContains(response, 'Specific actions')
+        self.assertContains(response, 'Synced passkeys are not necessarily device-bound')
+        self.assertContains(response, '&lt;script&gt;')
+        self.assertNotContains(response, '<script>alert(1)</script>')

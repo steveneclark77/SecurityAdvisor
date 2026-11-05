@@ -16,7 +16,7 @@ class ApprovalForm(forms.Form):
 
 @staff_member_required
 def dashboard(request):
-    controls = Control.objects.all()
+    controls = Control.objects.prefetch_related('actions')
     profile = request.GET.get('profile','')
     if profile:
         controls = controls.filter(profiles__pk=profile) | controls.filter(universal=True) if profile.isdigit() else controls.none()

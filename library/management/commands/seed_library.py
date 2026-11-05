@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from library.models import Profile, Modifier, Control
+from library.models import Profile, Modifier, Control, ControlAction
+from library.starter_actions import ACTIONS, REFERENCES
 
 PROFILES = ['Software, SaaS, and application development', 'IT services and managed service providers', 'Online retail and e-commerce', 'Physical retail', 'Restaurants, cafés, and food service', 'Hotels, lodging, and hospitality', 'Healthcare practices and clinics', 'Dental and other outpatient specialty practices', 'Financial services and insurance', 'Legal services', 'Accounting, tax, and bookkeeping', 'Other professional and consulting services', 'Real estate and property management', 'Construction and skilled trades', 'Manufacturing', 'Transportation, logistics, and warehousing', 'Automotive repair and dealerships', 'Education and childcare', 'Nonprofits, associations, and religious organizations', 'Personal services, fitness, and recreation']
 MODIFIERS = ['Payment processing', 'Sensitive health or financial data', 'Software development', 'Public applications', 'Remote workers', 'Operational technology', 'Multiple locations', 'Government contracts']
@@ -8,14 +9,33 @@ ROWS = [('GOV-01', 'Assign security ownership', 'Govern', 'Identify who accepts 
 
 class Command(BaseCommand):
     help = 'Load original starter drafts without overwriting existing controls or approving a baseline.'
+    def add_arguments(self, parser):
+        parser.add_argument('--enrich-existing', action='store_true', help='Add detailed guidance to unchanged original starter controls only; preserve custom guidance and existing actions.')
+
     @transaction.atomic
     def handle(self, *args, **options):
         for name in PROFILES: Profile.objects.get_or_create(name=name)
         for name in MODIFIERS: Modifier.objects.get_or_create(name=name)
         created_count = 0
+        enriched_count = 0
+        skipped = []
         for code,title,function,investigation,evidence,risk,recommendation,verification in ROWS:
             conditional = code in ['SW-01','PAY-01','OT-01']
             control,created = Control.objects.get_or_create(code=code,defaults=dict(title=title,function=function,universal=not conditional,applicability='All business profiles; validate scope during assessment.' if not conditional else {'SW-01':'Businesses developing software or using coding agents.','PAY-01':'Businesses accepting or handling payments.','OT-01':'Businesses operating connected production or operational equipment.'}[code],investigation=investigation,evidence=evidence,risk=risk,recommendation=recommendation,verification=verification,references='NIST CSF 2.0 function-level thematic reference (not a validated safeguard mapping): https://www.nist.gov/cyberframework\nOriginal draft guidance; detailed CIS/CISA/sector mappings require review.'))
+            original_fields = dict(title=title, function=function, investigation=investigation, evidence=evidence, risk=risk, recommendation=recommendation, verification=verification)
+            eligible = not control.actions.exists() and all(getattr(control, field) == value for field, value in original_fields.items())
+            if created or (options['enrich_existing'] and eligible):
+                if code == 'PR-01':
+                    control.recommendation = 'Protect business accounts against phishing and unauthorized access, prioritizing privileged and business-critical accounts.'
+                extra_reference = REFERENCES.get(code, '')
+                if extra_reference and extra_reference not in control.references:
+                    control.references += '\n' + extra_reference
+                control.save()
+                for position, (instruction, action_applicability, action_verification) in enumerate(ACTIONS[code], start=1):
+                    ControlAction.objects.create(control=control, position=position, instruction=instruction, applicability=action_applicability, verification=action_verification)
+                enriched_count += 1
+            elif options['enrich_existing'] and not control.actions.exists():
+                skipped.append(code)
             if created:
                 created_count += 1
                 if code == 'SW-01':
@@ -27,4 +47,7 @@ class Command(BaseCommand):
                 if code == 'OT-01':
                     control.profiles.add(Profile.objects.get(name=PROFILES[14]))
                     control.modifiers.add(Modifier.objects.get(name='Operational technology'))
+        if skipped:
+            self.stdout.write(self.style.WARNING('Preserved customized controls without actions: ' + ', '.join(skipped)))
+        self.stdout.write(f'Added detailed actions to {enriched_count} controls.')
         self.stdout.write(self.style.SUCCESS(f'Created {created_count} draft controls; existing records preserved. No baseline approved.'))

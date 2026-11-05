@@ -36,7 +36,7 @@ These are proposed delivery stages, not released capabilities or delivery commit
 
 ## Current status
 
-The first baseline-library implementation is available: consultant login, 20 business profiles, eight modifiers, 14 original draft controls, profile filtering, editable working guidance, baseline snapshots, and explicit approval with reviewer, timestamp, and rationale.
+The first baseline-library implementation is available: consultant login, 20 business profiles, eight modifiers, 14 original draft controls with summary recommendations and ordered actions (applicability, exceptions, and verification), profile filtering, editable working guidance, baseline snapshots, and explicit approval with reviewer, timestamp, and rationale.
 
 Starter content is incomplete and requires consultant review. Customer intake, assessments, scoring, reports, news ingestion, auto-approval, and team/customer authorization remain planned. This milestone must not store sensitive customer data.
 

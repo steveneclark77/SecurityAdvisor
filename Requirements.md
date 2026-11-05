@@ -82,6 +82,16 @@ Reusable control guidance and customer-specific assessment records together must
 - Provide explanations suitable for both nontechnical and technical audiences.
 - Missing evidence is unknown and creates an investigation task; it must not default to low risk.
 
+### Actionable recommendation structure
+
+- Every control combines a plain-language recommendation summary with ordered, individually identifiable actions.
+- Each action includes concrete tool-agnostic instructions, applicability/prerequisites and exceptions or alternatives, and verifiable evidence or a safe completion test.
+- Explain risk reduction without promising complete prevention. Distinguish separate mechanisms such as phishing-resistant MFA and managed-device restrictions.
+- Control rationale and sources support actions; optional action-level references can link vendor-specific implementation guides.
+- Preserve actions in baseline snapshots. Existing historical snapshots without actions remain readable and must not be silently augmented.
+- Future assessments track actions individually without requiring separate risk scores for each action. Completion tracking is not implemented in the current library milestone.
+- Split broad controls when different owners, evidence, or remediation make separate assessment useful; length alone is not a reason to split.
+
 ## 5. Scoring and priority
 
 Use separate five-level business impact and likelihood ratings. A documented matrix determines priority; the exact matrix and priority labels remain to be approved.
