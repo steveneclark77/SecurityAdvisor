@@ -25,4 +25,6 @@ def approve_baseline(*, pk, user, note):
     baseline.approved_by = user
     baseline.approved_at = timezone.now()
     baseline.save(update_fields=['approval_note','approved_by','approved_at'])
+    from engagements.services import flag_reassessments
+    flag_reassessments(baseline)
     return baseline

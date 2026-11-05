@@ -6,7 +6,7 @@ RUN --mount=type=secret,id=pip_ca_bundle \
     if [ -f /run/secrets/pip_ca_bundle ]; then \
       PIP_CERT=/run/secrets/pip_ca_bundle pip install --no-cache-dir -r requirements.txt; \
     else pip install --no-cache-dir -r requirements.txt; fi
-RUN useradd --create-home app
+RUN useradd --create-home app && mkdir -p /app/private-evidence && chown app:app /app/private-evidence
 COPY --chown=app:app . .
 USER app
 EXPOSE 8000

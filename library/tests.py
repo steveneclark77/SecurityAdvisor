@@ -56,7 +56,7 @@ class LibraryTests(TestCase):
         self.assertContains(self.client.get(response.url),'Review and approve')
         self.assertEqual(self.client.get(reverse('approve_baseline',args=[baseline.pk])).status_code,405)
         self.assertEqual(self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed'}).status_code,400)
-        response=self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed scope','confirmed':'on'})
+        response=self.client.post(reverse('approve_baseline',args=[baseline.pk]),{'note':'Reviewed scope','confirmed':'on','coverage_reviewed':'on','applicability_reviewed':'on','sources_reviewed':'on'})
         self.assertEqual(response.status_code,302)
         self.assertContains(self.client.get(response.url),'This snapshot is preserved')
     def test_profile_filter_includes_universal_and_relevant_controls(self):

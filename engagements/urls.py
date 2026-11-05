@@ -1,0 +1,27 @@
+from django.urls import path
+from . import views
+urlpatterns = [
+    path('assessments/<int:pk>/requests/generate/', views.generate_requests, name='generate_requests'),
+    path('', views.index, name='engagement_index'),
+    path('customers/new/', views.customer_new, name='customer_new'),
+    path('customers/<int:customer_pk>/engagements/new/', views.engagement_new, name='engagement_new'),
+    path('<int:pk>/', views.detail, name='engagement_detail'),
+    path('<int:pk>/edit/', views.engagement_edit, name='engagement_edit'),
+    path('<int:pk>/assessments/new/', views.assessment_new, name='assessment_new'),
+    path('assessments/<int:pk>/', views.assessment_detail, name='assessment_detail'),
+    path('actions/<int:pk>/', views.action_edit, name='action_edit'),
+    path('<int:pk>/requests/new/', views.request_new, name='request_new'),
+    path('requests/<int:pk>/', views.request_edit, name='request_edit'),
+    path('<int:pk>/evidence/new/', views.evidence_new, name='evidence_new'),
+    path('evidence/<int:pk>/download/', views.evidence_download, name='evidence_download'),
+    path('<int:pk>/findings/new/', views.finding_new, name='finding_new'),
+    path('findings/<int:pk>/', views.finding_edit, name='finding_edit'),
+    path('findings/<int:pk>/tasks/new/', views.task_new, name='task_new'),
+    path('tasks/<int:pk>/', views.task_edit, name='task_edit'),
+    path('tasks/<int:pk>/retests/new/', views.retest_new, name='retest_new'),
+    path('<int:pk>/invitations/new/', views.invite_new, name='invite_new'),
+    path('<int:pk>/invitations/revoke/', views.revoke_invites, name='revoke_invites'),
+    path('<int:pk>/reports/new/', views.report_new, name='report_new'),
+    path('reports/<int:pk>/', views.report_detail, name='report_detail'),
+    path('reassessments/<int:pk>/', views.reassessment_edit, name='reassessment_edit'),
+]

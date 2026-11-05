@@ -73,7 +73,7 @@ The Dockerfile accepts an optional BuildKit secret named `pip_ca_bundle` contain
 
 ## Production boundary and retention
 
-Customer intake, customer records, uploads, MFA, news ingestion, and retention automation are not implemented yet. Do not store sensitive customer data in this milestone. Production requires reviewed authentication/MFA, HTTPS, a production server and static-file serving, customer authorization, encrypted storage/backups, restore testing, and retention/deletion controls.
+Customer workflow features support synthetic exercises only. MFA, news ingestion, and retention automation remain unimplemented. Do not store sensitive customer data yet. Production requires reviewed authentication/MFA, HTTPS, a production server and static-file serving, authorization review, encrypted storage/backups, malware scanning, restore testing, and retention/deletion controls.
 
 Retention is three years. Engagement closure is a proposed starting point, not yet approved. Attachment, history, backup, and exception treatment remains to be defined. Operations are expected to be US-only with no additional data-location requirement.
 
@@ -108,3 +108,11 @@ The updater requires Git, Docker Desktop with Compose, an existing `.env`, and a
 It stops on errors and retains `.env`, the database volume, customized guidance, and historical baseline snapshots. Back up important data before migrations: it does not create backups or roll back updates. If a failure occurs after the web app stops, correct the reported issue and rerun. Inspect `docker compose logs web db` for startup problems.
 
 For unattended execution, use `./update.command --no-pause`. Otherwise, interactive runs wait for Return before closing so results remain visible. Failures return a nonzero exit code. This script also runs in Bash on Linux/WSL; it is not a Windows batch file.
+
+## Customer workflow milestone
+
+After applying migrations, select **Customer engagements**. Follow [the synthetic engagement walkthrough](ENGAGEMENT_WALKTHROUGH.md). Updates do not create customers or approve baselines automatically.
+
+Private evidence attachments persist in a separate `evidence_data` Docker volume and are downloadable only through assigned-customer authorization. Include both the PostgreSQL database and evidence volume in any future backup/migration plan. A volume is not a backup. Do not use `docker compose down -v` unless you intend to remove both.
+
+The new workflow supports synthetic customer/engagement records, scoped intake/evidence links, pinned assessments, action observations, evidence, findings, remediation, retests, preserved printable reports, history, and affected-customer reviews. Account MFA, production encryption and recovery operations, malware scanning, retention automation, and a team-assignment management UI remain outstanding. Keep all exercises synthetic. No notification or email is sent by issuing a link or scheduling a review.

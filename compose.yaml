@@ -22,6 +22,8 @@ services:
       POSTGRES_DB: securityadvisor
       POSTGRES_USER: securityadvisor
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - evidence_data:/app/private-evidence
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -29,3 +31,4 @@ services:
         condition: service_healthy
 volumes:
   postgres_data:
+  evidence_data:

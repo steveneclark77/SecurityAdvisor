@@ -202,3 +202,17 @@ The complete first release must demonstrate that:
 - Security and data lifecycle details identified in Section 9.
 
 Resolve these decisions before implementing their relevant milestones. Technology decisions recorded above are selected; hosting and production operations remain open.
+
+
+## 12. Customer workflow implementation decisions
+
+- Engagements record scope, assessment authorization, separate change authorization, exclusions, contacts, deliverables, customer-specific impact context, and review dates/triggers.
+- Customer workflow access requires an explicit customer assignment, even for staff/superusers. Global library administration does not expose customer models. Team-assignment management remains future work.
+- Intake/evidence invitations are purpose-scoped, seven-day, revocable bearer links with hashed stored tokens and single final submission. Intake supports draft progress. Development intake recommendations are provisional business-activity/modifier mappings, not an AI classification.
+- Assessment actions capture the approved baseline's instructions and mappings. Applicability, implementation, verification, and confidence are separate; exclusions require rationale and cannot be marked tested.
+- Evidence requests can be generated per control without duplication; evidence can be reused across actions and findings within the same engagement. Attachments are private downloads with generated filenames, a 5 MB limit, and restricted types/basic content checks. Production malware scanning remains outstanding.
+- Findings may group several action gaps; both ratings are required for a priority other than unrated. Priority is consultant judgment until an automatic matrix is approved. Accepted risk requires a decision-maker/rationale and review date.
+- Remediation separates planned, in-progress, implemented/unverified, partial, verified, and reopened states. Change authorization and verified dependencies gate implementation. Passing evidence-backed retests establish verification; later failures reopen tasks.
+- Reports preserve executive and technical views, evidence provenance, unknowns, exclusions, and baseline coverage gaps. Browser printing/PDF is supported; dedicated document export is not yet implemented.
+- Approved relevant library changes create review tasks, not automatic customer finding updates. Matching is conservatively based on captured profile/modifiers and requires consultant confirmation.
+- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification or daily news ingestion is performed yet.

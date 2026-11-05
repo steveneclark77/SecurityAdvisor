@@ -36,9 +36,11 @@ These are proposed delivery stages, not released capabilities or delivery commit
 
 ## Current status
 
-The first baseline-library implementation is available: consultant login, 20 business profiles, eight modifiers, 14 original draft controls with summary recommendations and ordered actions (applicability, exceptions, and verification), profile filtering, editable working guidance, baseline snapshots, and explicit approval with reviewer, timestamp, and rationale.
+The baseline library includes 20 profiles, eight modifiers, and 14 draft controls with ordered, applicable, verifiable actions. Captured baselines require explicit review and approval.
 
-Starter content is incomplete and requires consultant review. Customer intake, assessments, scoring, reports, news ingestion, auto-approval, and team/customer authorization remain planned. This milestone must not store sensitive customer data.
+The customer workflow now supports assigned synthetic customers, scoped engagements and business context, expiring intake/evidence links, assessments pinned to approved baselines, action-level observations and reusable evidence, findings with documented risk judgments, authorized remediation plans and dependencies, retesting, preserved executive/technical reports, edit history, and affected-customer review after approved library changes.
+
+Start with [the synthetic engagement walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md). No exercise customer or approved baseline is automatically created. Starter guidance is incomplete; this is not a certification tool. Use synthetic data only: production MFA, encryption/backup operations, malware scanning, and retention automation remain unfinished. Daily news ingestion, automatic scoring/approval, and team-assignment management are still planned. Reports can be printed or saved as PDF through the browser.
 
 ## Development
 
