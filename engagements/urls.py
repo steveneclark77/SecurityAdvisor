@@ -1,6 +1,12 @@
 from django.urls import path
 from . import views
 urlpatterns = [
+    path('contacts/', views.contact_index, name='contact_index'),
+    path('contacts/new/', views.contact_new, name='contact_new'),
+    path('contacts/<int:pk>/edit/', views.contact_edit, name='contact_edit'),
+    path('<int:pk>/contacts/', views.engagement_contacts, name='engagement_contacts'),
+    path('<int:pk>/contacts/link/<int:contact_pk>/', views.contact_link, name='contact_link'),
+    path('contact-links/<int:pk>/edit/', views.contact_link_edit, name='contact_link_edit'),
     path('assessments/<int:pk>/requests/generate/', views.generate_requests, name='generate_requests'),
     path('', views.index, name='engagement_index'),
     path('customers/new/', views.customer_new, name='customer_new'),

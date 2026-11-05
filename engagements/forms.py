@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from library.models import Baseline
 from library.management.commands.seed_library import PROFILES, MODIFIERS
-from .models import Customer, Engagement, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Reassessment
+from .models import Customer, Engagement, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Reassessment, Contact, EngagementContact
 
 
 class StyledModelForm(forms.ModelForm):
@@ -26,7 +26,7 @@ class CustomerForm(StyledModelForm):
 class EngagementForm(StyledModelForm):
     class Meta:
         model = Engagement
-        exclude = ['customer','created_at']
+        exclude = ['customer','created_at','legacy_contact_note']
 
 
 class AssessmentForm(forms.Form):
@@ -201,3 +201,27 @@ class EvidenceResponseForm(forms.Form):
     provenance = forms.CharField(max_length=200)
     collected_on = forms.DateField(widget=forms.DateInput(attrs={'type':'date'}))
     file = forms.FileField(required=False, validators=[validate_evidence_file])
+
+
+class ContactForm(StyledModelForm):
+    class Meta:
+        model = Contact
+        exclude = ['managers','created_at']
+
+    def __init__(self, *args, shared=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields.pop('archived', None)
+        if shared:
+            self.fields['confirm_shared_edit'] = forms.BooleanField(label='I understand that these shared contact details change everywhere this person is linked.')
+
+
+CONTACT_ROLES = [('business_owner','Business owner'),('technical','Technical contact'),('evidence','Evidence provider'),('remediation','Remediation implementer'),('other','Other stakeholder')]
+
+
+class EngagementContactForm(StyledModelForm):
+    roles = forms.MultipleChoiceField(choices=CONTACT_ROLES, widget=forms.CheckboxSelectMultiple)
+
+    class Meta:
+        model = EngagementContact
+        exclude = ['engagement','contact']

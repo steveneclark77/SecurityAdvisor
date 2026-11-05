@@ -27,6 +27,8 @@ def start_assessment(*, engagement, baseline, user, profile, modifiers, rational
         raise ValidationError('Modifiers must exist in the captured baseline.')
     if not engagement.assessment_authorization.strip() or not rationale.strip():
         raise ValidationError('Assessment authorization and applicability rationale are required.')
+    if not engagement.active_contacts.exists():
+        raise ValidationError('Add at least one active contact before starting an assessment.')
     controls = baseline.snapshot.get('controls', [])
     if not controls:
         raise ValidationError('The baseline contains no controls.')
@@ -35,7 +37,7 @@ def start_assessment(*, engagement, baseline, user, profile, modifiers, rational
         applicable = control.get('universal') or profile in control.get('profiles', []) or bool(set(modifiers) & set(control.get('modifiers', [])))
         actions = control.get('actions') or [dict(instruction='Detailed actions missing: investigate using the captured procedure.', applicability=control.get('applicability',''), verification=control.get('verification',''))]
         for action in actions:
-            ActionResult.objects.create(assessment=assessment, control_code=control['code'], control_title=control['title'], guidance={'control':control, 'action':action}, investigation_owner=engagement.contact, applicability='applicable' if applicable else 'excluded', applicability_reason='Selected profile/modifier or universal baseline coverage.' if applicable else 'Not selected by the chosen profile or modifiers. Consultant must review this exclusion.')
+            ActionResult.objects.create(assessment=assessment, control_code=control['code'], control_title=control['title'], guidance={'control':control, 'action':action}, investigation_owner="Unassigned", applicability='applicable' if applicable else 'excluded', applicability_reason='Selected profile/modifier or universal baseline coverage.' if applicable else 'Not selected by the chosen profile or modifiers. Consultant must review this exclusion.')
     audit(engagement, user, f'Created assessment {assessment.pk} from baseline {baseline.version}.')
     return assessment
 
@@ -100,6 +102,7 @@ def capture_report(*, engagement, user):
         for result in assessment.results.prefetch_related('evidence'):
             results.append(dict(id=result.pk, assessment_id=assessment.pk, baseline=assessment.baseline.version, control=result.control_code, title=result.control_title, guidance=result.guidance, applicability=result.applicability, reason=result.applicability_reason, implementation=result.implementation, verification=result.verification, confidence=result.confidence, observation=result.observation, investigation_owner=result.investigation_owner, followup_due=result.followup_due.isoformat() if result.followup_due else None, evidence_ids=list(result.evidence.values_list('pk',flat=True)), verified_at=result.verified_at.isoformat() if result.verified_at else None))
     snapshot = {
+        'contacts':[dict(name=str(link.contact), title=link.title_override or link.contact.title, affiliation=link.affiliation_override or link.contact.organization, email=link.contact.email, office_phone=link.contact.office_phone, cell_phone=link.contact.cell_phone, roles=link.roles, primary=link.primary) for link in engagement.active_contacts],
         'customer':engagement.customer.name, 'synthetic':engagement.customer.synthetic, 'engagement':engagement.title,
         'scope':engagement.scope, 'exclusions':engagement.exclusions, 'assessment_authorization':engagement.assessment_authorization,
         'business_context':{f:getattr(engagement,f) for f in ['financial_thresholds','outage_tolerance','critical_operations','reputation_context']},

@@ -125,3 +125,8 @@ Open the draft snapshot and choose **Revise this draft**. Follow the page's link
 If a newer replacement snapshot already exists, use **Already captured a replacement?** on the same page instead. Both versions retain their captured contents, and the original records the replacement link, actor, timestamp, and reason. A superseded draft cannot be approved or revised again; follow its replacement link. Approved baselines remain immutable and cannot be superseded through this draft-only workflow.
 
 Revision does not restore the original snapshot into the working library. The replacement includes all currently saved working changes, including unrelated edits made since the original capture. Failed creation leaves the original awaiting review. Existing snapshots receive no automatic status change during migration.
+
+
+## Contact workflow (v0.1.3)
+
+Updates preserve the original free-text contact in a legacy note. After creating an engagement, add contacts on the second screen, then continue. Existing engagements use **Manage contacts**. New assessments require an active contact; existing assessments and historical owner/authorization text are unchanged. A contact directory supports independent records and explicit-permission reuse. Shared edits prompt for confirmation; archive or deactivate links to preserve history. Roles do not grant login access or authorize work.

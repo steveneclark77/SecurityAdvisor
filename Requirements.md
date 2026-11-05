@@ -231,3 +231,14 @@ Display the running application version in the header, sourced from the reposito
 ### Required-input interaction
 
 Disable action buttons until their form inputs are complete and valid; retain server-side validation. Baseline approval requires a rationale and one checkbox, “I have reviewed the baseline.” An accessible info button opens a dialog listing the existing coverage, applicability, sources, and certification-limit checks. The dialog is informational; the checkbox is mandatory.
+
+
+### Reusable engagement contacts
+
+- Engagement creation omits the old contact field and opens a contact-selection/creation step. Engagements can be saved without contacts, but need at least one active, non-archived linked contact before starting an assessment.
+- Contacts are independent records with first name, last name, default title, organization, office/cell phones, email, preferred method, and archive status. Require first/last names and at least one contact method. Phone fields support international formats/extensions. Single-name support is a future consideration.
+- A contact can link to zero or more engagements. Each engagement-contact link has one or more roles, optional title/affiliation overrides, active status, and a primary designation. Only one active primary is allowed per engagement.
+- Contacts do not create accounts, authorize assessments/changes, or grant access. Shared edits/archiving require explicit contact-management access and a confirmation when used by multiple engagements. Engagement members may read linked contacts and edit only their local link metadata, without learning other customer relationships.
+- Existing-contact reuse requires explicit management access; duplicate checks search only accessible contacts, warn, and never auto-merge. No universal email uniqueness constraint is imposed.
+- Deactivation unlinks while retaining history. Archive instead of deleting historical people. Preserve original free-text contacts as legacy notes requiring review. Reports capture contact details at report time.
+- Evidence/task ownership and authorization references remain unchanged in this milestone; structured references and historical assignment snapshots will be connected in a later change.

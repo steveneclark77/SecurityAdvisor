@@ -1,0 +1,8 @@
+{% extends 'library/base.html' %}{% block content %}
+<h1>{{ title }}</h1>{% if engagement %}<p><a href="{% url 'engagement_contacts' engagement.pk %}">Back to engagement contacts</a></p>{% else %}<p><a href="{% url 'contact_index' %}">Contact directory</a></p>{% endif %}
+{% if shared %}<p class="notice">This person is linked to multiple engagements. Editing or archiving this record affects all links. Other customers and their engagements are not disclosed here. Use engagement roles/title overrides for engagement-specific changes.</p>{% endif %}
+{% if link_form %}<p>These roles and overrides apply only to this engagement. To unlink while preserving history, clear Active and Primary. Making this contact primary replaces the previous primary designation.</p>{% else %}<p>Synthetic details only. At least one of email, office phone, or cell phone is required. Use international phone formats and extensions as needed.</p>{% endif %}
+<form method="post" {% if not link_form %}data-require-one="email,office_phone,cell_phone" data-method-selector="preferred_method"{% endif %}>{% csrf_token %}{{ form.as_p }}
+{% if duplicates %}<p class="notice">A possibly matching accessible contact already exists. Review your directory to reuse it, or confirm that you intend to create a separate person. No records are merged automatically.</p><p><label><input type="checkbox" name="confirm_duplicate" required> Create a separate contact despite the possible duplicate.</label></p>{% endif %}
+<button type="submit">Save contact{% if not link_form and engagement %} and set engagement roles{% endif %}</button></form>
+{% endblock %}

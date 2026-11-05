@@ -1,6 +1,11 @@
 /* Keep action buttons unavailable until their form's required input is ready. */
 (() => {
   function ready(form) {
+    const alternatives = form.dataset.requireOne;
+    if (alternatives && !alternatives.split(',').some(name => form.elements.namedItem(name)?.value.trim())) return false;
+    const selector = form.dataset.methodSelector;
+    const selected = selector && form.elements.namedItem(selector)?.value;
+    if (selected && !form.elements.namedItem(selected)?.value.trim()) return false;
     return Array.from(form.elements).every(field => {
       if (!field.willValidate) return true;
       if (!field.validity.valid) return false;

@@ -18,12 +18,17 @@ Create an engagement such as **Initial security improvement exercise**:
 
 - Scope: fictional email administration, hosted ordering, payment administration, and business laptops.
 - Exclusions: intrusive scanning, live payment processing, and changes to real services.
-- Contact: a fictional business owner.
 - Assessment authorization: fictional owner authorized interviews, synthetic configuration review, and safe test-account demonstrations.
 - Change authorization: initially leave blank. Assessment permission does not authorize remediation.
 - Deliverables: executive summary, technical findings, and a prioritized plan.
 - Business context: describe the cafe's critical operations, outage tolerance, reputation concerns, and financial impact thresholds. Record unknown thresholds explicitly rather than inventing certainty.
 - Follow-up: choose a review date and triggers such as a provider change, new location, or relevant incident.
+
+Saving the engagement opens a second screen, **Contacts for the engagement**. Create **Alex Morgan**, title **Owner**, organization **Synthetic Harbor Cafe**, email **alex@example.test** (fictional), and optionally synthetic office/cell numbers. At least one contact method is required. Save the person, then assign the **Business owner** role and mark Primary/Active. Continue to the engagement once an active contact is linked.
+
+Add additional people by creating contacts or selecting existing contacts you have permission to manage. A contact can exist with no engagement or be reused across engagements; roles and title/affiliation overrides apply only to the link. Use **Manage contacts** any time to change roles, choose a primary, or deactivate a link. Edit/archiving shared person details requires explicit contact-management access and confirmation when shared. The application does not grant logins or authorization by linking a contact.
+
+Existing free-text contacts appear as legacy notes requiring review; create structured records manually rather than assuming the text was parsed. Evidence/task owners and authorization references remain separate and are not silently converted to contact links.
 
 Three-year retention is a requirement, not automated deletion. Its starting event, backup treatment, and exceptions remain undecided.
 

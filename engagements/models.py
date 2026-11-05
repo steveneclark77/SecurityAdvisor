@@ -25,7 +25,7 @@ class Engagement(models.Model):
     title = models.CharField(max_length=180)
     scope = models.TextField()
     exclusions = models.TextField(blank=True)
-    contact = models.CharField(max_length=200)
+    legacy_contact_note = models.CharField(max_length=200, blank=True, help_text='Preserved original free-text contact; review and create structured contacts.')
     assessment_authorization = models.TextField(help_text='Who authorized which assessment methods, when, and with what restrictions?')
     change_authorization = models.TextField(blank=True, help_text='Separate authorization for implementation; leave blank until obtained.')
     deliverables = models.TextField()
@@ -39,8 +39,63 @@ class Engagement(models.Model):
     data_handling = models.TextField(default='Synthetic data only. Three-year retention required; clock start and exceptions not yet agreed.')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def active_contacts(self):
+        return self.contact_links.filter(active=True, contact__archived=False).select_related('contact')
+
     def __str__(self):
         return f'{self.customer}: {self.title}'
+
+
+class Contact(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    title = models.CharField(max_length=160, blank=True)
+    organization = models.CharField(max_length=180, blank=True)
+    office_phone = models.CharField(max_length=60, blank=True, help_text='International formats and extensions are supported.')
+    cell_phone = models.CharField(max_length=60, blank=True)
+    email = models.EmailField(blank=True)
+    preferred_method = models.CharField(max_length=20, blank=True, choices=[('email','Email'),('office_phone','Office phone'),('cell_phone','Cell phone')])
+    archived = models.BooleanField(default=False)
+    managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='managed_contacts')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['last_name','first_name','pk']
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
+
+    def clean(self):
+        super().clean()
+        if not any(value.strip() for value in [self.office_phone, self.cell_phone, self.email]):
+            raise ValidationError('Provide at least one contact method: office phone, cell phone, or email.')
+        if self.preferred_method and not getattr(self,self.preferred_method,'').strip():
+            raise ValidationError('Provide the selected preferred contact method.')
+
+
+class EngagementContact(models.Model):
+    engagement = models.ForeignKey(Engagement, on_delete=models.PROTECT, related_name='contact_links')
+    contact = models.ForeignKey(Contact, on_delete=models.PROTECT, related_name='engagement_links')
+    roles = models.JSONField(default=list)
+    title_override = models.CharField(max_length=160, blank=True)
+    affiliation_override = models.CharField(max_length=180, blank=True)
+    primary = models.BooleanField(default=False)
+    active = models.BooleanField(default=True, help_text='Deactivate to unlink while preserving history.')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['engagement','contact'], name='unique_engagement_contact'),
+            models.UniqueConstraint(fields=['engagement'], condition=models.Q(primary=True, active=True), name='one_active_primary_contact'),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.primary and not self.active:
+            raise ValidationError('An inactive engagement contact cannot be primary.')
+        if self.active and self.contact_id and self.contact.archived:
+            raise ValidationError('Unarchive this contact before linking or activating it.')
+
 
 
 class Intake(models.Model):

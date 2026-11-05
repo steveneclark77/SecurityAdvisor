@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST, require_http_methods
 from . import forms, services
-from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, Report, Reassessment
+from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, Report, Reassessment, Contact, EngagementContact
 
 
 def consultant(view):
@@ -47,7 +47,7 @@ def customer_new(request):
 def engagement_new(request, customer_pk):
     customer = get_object_or_404(Customer.objects.filter(assigned_users=request.user), pk=customer_pk)
     obj = Engagement(customer=customer)
-    return edit(request, forms.EngagementForm, obj, obj, 'Create engagement')
+    return edit(request, forms.EngagementForm, obj, obj, 'Create engagement', next_route='engagement_contacts')
 
 
 @consultant
@@ -79,7 +79,7 @@ def record_state(obj):
     return state
 
 
-def edit(request, form_class, obj, engagement, title, *, scoped=False, after_save=None, initial=None):
+def edit(request, form_class, obj, engagement, title, *, scoped=False, after_save=None, initial=None, next_route="engagement_detail"):
     before = record_state(obj)
     kwargs = {'instance':obj, 'initial':initial or {}}
     if scoped:
@@ -94,7 +94,7 @@ def edit(request, form_class, obj, engagement, title, *, scoped=False, after_sav
                 saved.save()
                 form.save_m2m()
                 services.audit(engagement, request.user, f'{title}: record {saved.pk}.', {'before':before, 'after':record_state(saved)})
-            return redirect('engagement_detail', pk=engagement.pk)
+            return redirect(next_route, pk=engagement.pk)
         except ValidationError as exc:
             form.add_error(None, exc)
     return render(request, 'engagements/form.html', {'form':form,'title':title,'engagement':engagement,'obj':obj}, status=400 if request.method == 'POST' else 200)
@@ -201,7 +201,7 @@ def finding_edit(request, pk):
 @require_http_methods(['GET','POST'])
 def task_new(request, pk):
     finding = get_object_or_404(Finding.objects.filter(engagement__in=engagements_for(request.user)), pk=pk)
-    obj = Remediation(finding=finding, instructions=finding.recommendation, owner=finding.engagement.contact, estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
+    obj = Remediation(finding=finding, instructions=finding.recommendation, owner="Unassigned", estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
     return edit(request, forms.RemediationForm, obj, finding.engagement, 'Plan remediation', scoped=True)
 
 
@@ -321,7 +321,108 @@ def generate_requests(request, pk):
             EvidenceRequest.objects.get_or_create(engagement=assessment.engagement, assessment=assessment, control_code=result.control_code, defaults={
                 'title':f'{result.control_code}: {result.control_title}',
                 'instructions':result.guidance['control'].get('evidence','Provide redacted evidence supporting this control.') + '\nSynthetic/redacted data only. Do not submit credentials.',
-                'owner':assessment.engagement.contact,
+                'owner':'Unassigned',
             })
         services.audit(assessment.engagement, request.user, f'Generated evidence requests for assessment {assessment.pk}; existing requests preserved.')
     return redirect('engagement_detail', pk=assessment.engagement_id)
+
+
+def contacts_for(user):
+    from django.db.models import Q
+    return Contact.objects.filter(Q(managers=user) | Q(engagement_links__engagement__customer__assigned_users=user)).distinct()
+
+
+@consultant
+def contact_index(request):
+    return render(request, 'engagements/contacts.html', {'contacts':contacts_for(request.user), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+
+
+@consultant
+def engagement_contacts(request, pk):
+    engagement = engagement_for(request.user, pk)
+    linked = engagement.contact_links.values_list('contact_id',flat=True)
+    available = request.user.managed_contacts.filter(archived=False).exclude(pk__in=linked)
+    return render(request, 'engagements/contacts.html', {'engagement':engagement, 'links':engagement.contact_links.select_related('contact'), 'available':available, 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+
+
+@consultant
+@require_http_methods(['GET','POST'])
+def contact_new(request):
+    engagement = None
+    candidate = request.GET.get('engagement')
+    if candidate:
+        if not candidate.isdigit():
+            raise Http404
+        engagement = engagement_for(request.user, candidate)
+    form = forms.ContactForm(request.POST if request.method == 'POST' else None)
+    duplicates = False
+    if request.method == 'POST' and form.is_valid():
+        # Duplicate checks never search records the current user cannot access.
+        from django.db.models import Q
+        query = Q(first_name__iexact=form.cleaned_data['first_name'],last_name__iexact=form.cleaned_data['last_name'])
+        if form.cleaned_data.get('email'):
+            query |= Q(email__iexact=form.cleaned_data['email'])
+        duplicates = contacts_for(request.user).filter(query).exists()
+        if not duplicates or request.POST.get('confirm_duplicate') == 'on':
+            with transaction.atomic():
+                contact = form.save()
+                contact.managers.add(request.user)
+                if engagement:
+                    services.audit(engagement, request.user, f'Created reusable contact {contact.pk}; engagement link pending.')
+            if engagement:
+                return redirect(reverse('contact_link',args=[engagement.pk,contact.pk]))
+            return redirect('contact_index')
+    return render(request, 'engagements/contact_form.html', {'form':form,'title':'Create contact','engagement':engagement,'duplicates':duplicates})
+
+
+@consultant
+@require_http_methods(['GET','POST'])
+def contact_edit(request, pk):
+    contact = get_object_or_404(request.user.managed_contacts, pk=pk)
+    # No customer names or link counts are revealed by this shared-edit warning.
+    shared = contact.engagement_links.count() > 1
+    before = record_state(contact)
+    form = forms.ContactForm(request.POST if request.method == 'POST' else None, instance=contact, shared=shared)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            saved = form.save()
+            for engagement in Engagement.objects.filter(contact_links__contact=saved).distinct():
+                services.audit(engagement, request.user, f'Updated shared contact {saved.pk}.', {'before':before,'after':record_state(saved)})
+        return redirect('contact_index')
+    return render(request, 'engagements/contact_form.html', {'form':form,'title':'Edit reusable contact','shared':shared})
+
+
+@consultant
+@require_http_methods(['GET','POST'])
+def contact_link(request, pk, contact_pk):
+    engagement = engagement_for(request.user, pk)
+    # Reuse requires explicit contact management access, not an email match.
+    contact = get_object_or_404(request.user.managed_contacts.filter(archived=False), pk=contact_pk)
+    obj = EngagementContact.objects.filter(engagement=engagement,contact=contact).first() or EngagementContact(engagement=engagement,contact=contact)
+    return save_contact_link(request, engagement, obj)
+
+
+@consultant
+@require_http_methods(['GET','POST'])
+def contact_link_edit(request, pk):
+    obj = get_object_or_404(EngagementContact.objects.filter(engagement__in=engagements_for(request.user)).select_related('engagement','contact'), pk=pk)
+    return save_contact_link(request, obj.engagement, obj)
+
+
+def save_contact_link(request, engagement, obj):
+    before = record_state(obj)
+    form = forms.EngagementContactForm(request.POST if request.method == 'POST' else None, instance=obj)
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            # Serialize primary-contact switches within this engagement.
+            Engagement.objects.select_for_update().get(pk=engagement.pk)
+            saved = form.save(commit=False)
+            if saved.primary and saved.active:
+                for previous in engagement.contact_links.filter(primary=True,active=True).exclude(pk=saved.pk):
+                    previous.primary = False
+                    previous.save(update_fields=['primary'])
+                    services.audit(engagement, request.user, f'Contact link {previous.pk} is no longer primary.')
+            saved.save()
+            services.audit(engagement, request.user, f'Updated engagement contact {saved.pk}. No access or authorization granted.', {'before':before,'after':record_state(saved)})
+        return redirect('engagement_contacts',pk=engagement.pk)
+    return render(request, 'engagements/contact_form.html', {'form':form,'title':f'Engagement roles: {obj.contact}','engagement':engagement,'link_form':True})

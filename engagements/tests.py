@@ -12,7 +12,7 @@ from django.utils import timezone
 from library.models import Control
 from library.services import create_baseline, approve_baseline
 from . import forms, services
-from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, AuditEvent, Report, Reassessment
+from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, AuditEvent, Report, Reassessment, Contact, EngagementContact
 
 
 class EngagementTests(TestCase):
@@ -24,6 +24,9 @@ class EngagementTests(TestCase):
         cls.customer = Customer.objects.create(name='Synthetic Harbor Cafe')
         cls.customer.assigned_users.add(cls.user)
         cls.engagement = Engagement.objects.create(customer=cls.customer, **cls.engagement_data())
+        cls.person = Contact.objects.create(first_name='Alex',last_name='Morgan',email='alex@example.test')
+        cls.person.managers.add(cls.user)
+        EngagementContact.objects.create(engagement=cls.engagement,contact=cls.person,roles=['business_owner'],primary=True)
         cls.baseline = create_baseline(user=cls.user, version='test-v1', coverage_gaps='Synthetic exercise; detailed mappings and framework coverage incomplete.')
         approve_baseline(pk=cls.baseline.pk,user=cls.user,note='Synthetic baseline review with documented gaps.')
         cls.baseline.refresh_from_db()
@@ -34,7 +37,7 @@ class EngagementTests(TestCase):
 
     @staticmethod
     def engagement_data():
-        return dict(title='Synthetic initial review',scope='Fictional email, ordering, and devices.',exclusions='No intrusive tests.',contact='Fictional owner',assessment_authorization='Fictional owner approved configuration review only.',deliverables='Summary and improvement plan',financial_thresholds='Levels 1–5 to be confirmed; unknown for this fixture.',outage_tolerance='Two hours during service',critical_operations='Ordering and payments',reputation_context='Repeat local customers',data_handling='Synthetic data only; retention details pending.')
+        return dict(title='Synthetic initial review',scope='Fictional email, ordering, and devices.',exclusions='No intrusive tests.',legacy_contact_note='Fictional owner',assessment_authorization='Fictional owner approved configuration review only.',deliverables='Summary and improvement plan',financial_thresholds='Levels 1–5 to be confirmed; unknown for this fixture.',outage_tolerance='Two hours during service',critical_operations='Ordering and payments',reputation_context='Repeat local customers',data_handling='Synthetic data only; retention details pending.')
 
     @staticmethod
     def finding_data():
@@ -284,3 +287,104 @@ class EngagementTests(TestCase):
         self.assertEqual(response.status_code,302)
         self.assertEqual(self.client.post(reverse('report_new',args=[self.engagement.pk])).status_code,302)
         self.assertTrue(AuditEvent.objects.filter(engagement=self.engagement).exists())
+
+    def test_contact_step_replaces_text_input_and_gates_assessment(self):
+        response = self.client.get(reverse('engagement_new',args=[self.customer.pk]))
+        self.assertNotContains(response,'name="legacy_contact_note"')
+        self.assertNotContains(response,'name="contact"')
+        response = self.client.post(reverse('engagement_new',args=[self.customer.pk]),self.engagement_data())
+        created = Engagement.objects.latest('pk')
+        self.assertRedirects(response,reverse('engagement_contacts',args=[created.pk]))
+        self.assertFalse(created.contact_links.exists())
+        with self.assertRaises(ValidationError):
+            services.start_assessment(engagement=created,baseline=self.baseline,user=self.user,profile='Restaurants, cafés, and food service',modifiers=[],rationale='Test')
+        self.assertContains(self.client.get(reverse('engagement_contacts',args=[created.pk])),'add an active contact first')
+        self.assertContains(self.client.get(reverse('engagement_contacts',args=[self.engagement.pk])),'Legacy contact note requiring review')
+
+    def test_contact_creation_methods_and_duplicate_warning(self):
+        url = reverse('contact_new')
+        data = dict(first_name='Jordan',last_name='Lee',title='Engineer',organization='Synthetic contractor')
+        self.client.post(url,data)
+        self.assertFalse(Contact.objects.filter(first_name='Jordan').exists())
+        data.update(office_phone='+44 (0)20 1234 5678 ext 42')
+        self.assertEqual(self.client.post(url,data).status_code,302)
+        person = Contact.objects.get(first_name='Jordan')
+        self.assertEqual(list(person.managers.all()),[self.user])
+        self.assertFalse(person.engagement_links.exists())
+        response = self.client.post(url,data)
+        self.assertContains(response,'possibly matching accessible contact')
+        self.assertEqual(Contact.objects.filter(first_name='Jordan').count(),1)
+        self.client.post(url,{**data,'confirm_duplicate':'on'})
+        self.assertEqual(Contact.objects.filter(first_name='Jordan').count(),2)
+        form = forms.ContactForm({**data,'preferred_method':'email'})
+        self.assertFalse(form.is_valid())
+
+    def test_contact_can_link_multiple_engagements_and_primary_switches(self):
+        second = Engagement.objects.create(customer=self.customer,**self.engagement_data())
+        url = reverse('contact_link',args=[second.pk,self.person.pk])
+        self.assertEqual(self.client.post(url,{'roles':['technical','remediation'],'primary':'on','active':'on','title_override':'Contract engineer'}).status_code,302)
+        self.assertEqual(self.person.engagement_links.count(),2)
+        link = second.contact_links.get()
+        self.assertEqual(link.title_override,'Contract engineer')
+        self.assertNotEqual(self.engagement.contact_links.get().title_override,'Contract engineer')
+        person = Contact.objects.create(first_name='Sam',last_name='Rivera',email='sam@example.test')
+        person.managers.add(self.user)
+        self.assertEqual(self.client.post(reverse('contact_link',args=[second.pk,person.pk]),{'roles':['business_owner'],'primary':'on','active':'on'}).status_code,302)
+        self.assertEqual(second.contact_links.filter(primary=True,active=True).count(),1)
+        link.refresh_from_db()
+        self.assertFalse(link.primary)
+
+    def test_shared_contact_edit_confirmation_archiving_and_snapshots(self):
+        second = Engagement.objects.create(customer=self.customer,**self.engagement_data())
+        EngagementContact.objects.create(engagement=second,contact=self.person,roles=['technical'])
+        report = services.capture_report(engagement=self.engagement,user=self.user)
+        url = reverse('contact_edit',args=[self.person.pk])
+        response = self.client.get(url)
+        self.assertContains(response,'linked to multiple engagements')
+        data = dict(first_name='Alex',last_name='Morgan',email='updated@example.test')
+        self.client.post(url,data)
+        self.person.refresh_from_db()
+        self.assertEqual(self.person.email,'alex@example.test')
+        self.assertEqual(self.client.post(url,{**data,'confirm_shared_edit':'on','archived':'on'}).status_code,302)
+        self.person.refresh_from_db()
+        self.assertTrue(self.person.archived)
+        self.assertEqual(self.person.email,'updated@example.test')
+        self.assertFalse(self.engagement.active_contacts.exists())
+        report.refresh_from_db()
+        self.assertEqual(report.snapshot['contacts'][0]['email'],'alex@example.test')
+        self.assertTrue(AuditEvent.objects.filter(engagement=second,description__contains='shared contact').exists())
+
+    def test_shared_contacts_do_not_reveal_other_clients_or_grant_reuse(self):
+        foreign = Customer.objects.create(name='Secret other company')
+        foreign.assigned_users.add(self.other)
+        other_engagement = Engagement.objects.create(customer=foreign,**self.engagement_data())
+        EngagementContact.objects.create(engagement=other_engagement,contact=self.person,roles=['technical'])
+        hidden = Contact.objects.create(first_name='Hidden',last_name='Person',email='hidden@example.test')
+        hidden.managers.add(self.other)
+        self.assertNotContains(self.client.get(reverse('contact_index')),'Hidden Person')
+        self.assertNotContains(self.client.get(reverse('contact_edit',args=[self.person.pk])),'Secret other company')
+        self.client.force_login(self.other)
+        self.assertContains(self.client.get(reverse('engagement_contacts',args=[other_engagement.pk])),'Alex Morgan')
+        self.assertNotContains(self.client.get(reverse('contact_index')),'Synthetic Harbor Cafe')
+        self.assertEqual(self.client.get(reverse('contact_edit',args=[self.person.pk])).status_code,404)
+        self.assertEqual(self.client.post(reverse('contact_link',args=[other_engagement.pk,self.person.pk]),{'roles':['technical'],'active':'on'}).status_code,404)
+        self.assertEqual(self.client.get(reverse('engagement_contacts',args=[self.engagement.pk])).status_code,404)
+        response = self.client.post(reverse('contact_new'),dict(first_name='Alex',last_name='Newperson',email='alex@example.test'))
+        self.assertContains(response,'possibly matching accessible contact')
+        private = Contact.objects.create(first_name='Private',last_name='Contractor',email='private@example.test')
+        private.managers.add(self.user)
+        response = self.client.post(reverse('contact_new'),dict(first_name='Private',last_name='Contractor',email='private@example.test'))
+        self.assertEqual(response.status_code,302)
+        self.assertNotContains(self.client.get(reverse('contact_index')),'Secret other company')
+
+    def test_contact_unlink_retains_person_history_and_requires_post_csrf(self):
+        link = self.engagement.contact_links.get()
+        url = reverse('contact_link_edit',args=[link.pk])
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        self.assertEqual(client.post(url,{'roles':['business_owner']}).status_code,403)
+        self.assertEqual(self.client.post(url,{'roles':['business_owner']}).status_code,302)
+        link.refresh_from_db()
+        self.assertFalse(link.active)
+        self.assertTrue(Contact.objects.filter(pk=self.person.pk).exists())
+        self.assertTrue(AuditEvent.objects.filter(engagement=self.engagement,description__contains='engagement contact').exists())
