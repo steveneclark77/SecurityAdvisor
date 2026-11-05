@@ -221,3 +221,8 @@ Resolve these decisions before implementing their relevant milestones. Technolog
 ### Draft baseline revision
 
 Unapproved snapshots offer a guided revision page linking to working controls and profile/modifier editing. Capturing a replacement and superseding the old draft is atomic. Preserve both snapshots and record the replacement link, actor, timestamp, and reason. A newer existing snapshot can also be linked as the replacement. Superseded drafts cannot be approved or revised; approved baselines cannot enter this draft-only workflow. Replacement snapshots require their own approval. Revisions capture the current shared working library rather than restoring old content automatically.
+
+
+### Running application version
+
+Display the running application version in the header, sourced from the repository-root `VERSION` file. Use SemVer `major.minor.patch`. Each user-requested change increments the patch unless the user specifies otherwise. Version-file updates take effect when the application restarts/rebuilds.

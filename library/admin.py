@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.conf import settings
 from .models import Profile, Modifier, Control, Baseline, ControlAction
-admin.site.site_header = 'SecurityAdvisor library'
+admin.site.site_header = f'SecurityAdvisor v{settings.APP_VERSION} · Library'
 admin.site.register(Profile)
 admin.site.register(Modifier)
 class ControlActionInline(admin.StackedInline):
