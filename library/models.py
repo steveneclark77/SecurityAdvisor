@@ -63,14 +63,28 @@ class Baseline(models.Model):
     approval_note = models.TextField(blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='approved_baselines')
+    superseded_by = models.OneToOneField('self', null=True, blank=True, on_delete=models.PROTECT, related_name='replaces')
+    superseded_at = models.DateTimeField(null=True, blank=True)
+    superseded_actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name='superseded_baselines')
+    supersession_note = models.TextField(blank=True)
+
+    @property
+    def status(self):
+        if self.superseded_by_id:
+            return 'Superseded'
+        return 'Approved' if self.approved_at else 'Awaiting review'
+
     class Meta:
         ordering = ['-created_at']
+        constraints = [models.CheckConstraint(condition=models.Q(approved_at__isnull=True) | models.Q(superseded_by__isnull=True), name='approved_baseline_not_superseded')]
     def save(self, *args, **kwargs):
         if self.pk:
             previous = type(self).objects.get(pk=self.pk)
             preserved = ['version','created_by_id','snapshot','coverage_gaps']
             if any(getattr(previous, field) != getattr(self, field) for field in preserved):
                 raise ValidationError('Captured baseline content cannot be edited; create a new version.')
+            if previous.superseded_by_id:
+                raise ValidationError('A superseded draft cannot be changed.')
             if previous.approved_at:
                 raise ValidationError('An approved baseline cannot be changed.')
         super().save(*args, **kwargs)

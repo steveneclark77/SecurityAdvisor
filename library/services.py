@@ -17,6 +17,8 @@ def approve_baseline(*, pk, user, note):
     if not user.is_active or not user.is_staff:
         raise PermissionError('Consultant access required.')
     baseline = Baseline.objects.select_for_update().get(pk=pk)
+    if baseline.superseded_by_id:
+        raise ValidationError('This draft is superseded. Review its replacement instead.')
     if baseline.approved_at:
         raise ValidationError('This version is already approved. Create a new version for changes.')
     if not note.strip():
@@ -28,3 +30,38 @@ def approve_baseline(*, pk, user, note):
     from engagements.services import flag_reassessments
     flag_reassessments(baseline)
     return baseline
+
+
+@transaction.atomic
+def supersede_draft(*, pk, replacement_pk, user, note):
+    if not user.is_active or not user.is_staff:
+        raise PermissionError('Consultant access required.')
+    # Lock in ID order to avoid competing revision requests deadlocking.
+    locked = {b.pk:b for b in Baseline.objects.select_for_update().filter(pk__in=[pk,replacement_pk]).order_by('pk')}
+    source = locked[pk]
+    replacement = locked[replacement_pk]
+    if source.approved_at or source.superseded_by_id:
+        raise ValidationError('Only an awaiting-review draft can be superseded.')
+    if replacement.pk == source.pk or replacement.created_at <= source.created_at or replacement.superseded_by_id:
+        raise ValidationError('Choose a newer, active replacement snapshot.')
+    if hasattr(replacement, 'replaces'):
+        raise ValidationError('This replacement already supersedes another draft.')
+    if not note.strip():
+        raise ValidationError('Explain why this draft is being replaced.')
+    source.superseded_by = replacement
+    source.superseded_at = timezone.now()
+    source.superseded_actor = user
+    source.supersession_note = note.strip()
+    source.save(update_fields=['superseded_by','superseded_at','superseded_actor','supersession_note'])
+    return replacement
+
+
+@transaction.atomic
+def revise_draft(*, pk, user, version, coverage_gaps, revision_note):
+    if not user.is_active or not user.is_staff:
+        raise PermissionError('Consultant access required.')
+    source = Baseline.objects.select_for_update().get(pk=pk)
+    if source.approved_at or source.superseded_by_id:
+        raise ValidationError('Only an awaiting-review draft can be revised.')
+    replacement = create_baseline(user=user, version=version, coverage_gaps=coverage_gaps)
+    return supersede_draft(pk=pk, replacement_pk=replacement.pk, user=user, note=revision_note)

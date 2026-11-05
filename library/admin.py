@@ -16,7 +16,7 @@ class ControlAdmin(admin.ModelAdmin):
     filter_horizontal = ['profiles','modifiers']
 @admin.register(Baseline)
 class BaselineAdmin(admin.ModelAdmin):
-    list_display = ['version','created_at','approved_at','approved_by']
+    list_display = ['version','status','created_at','approved_at','approved_by']
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False

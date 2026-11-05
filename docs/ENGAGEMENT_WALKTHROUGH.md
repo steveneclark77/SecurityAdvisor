@@ -8,6 +8,8 @@ Apply the update with `./update.command` on macOS, or follow the manual rebuild/
 
 Before creating an assessment, use **Library** to review starter controls and capture a baseline. Record the incomplete framework mappings and any missing coverage. Review coverage, applicability, references, and limitations separately before approving. An approval for a synthetic exercise is not a compliance claim or evidence of complete coverage.
 
+If changes are needed before approval, choose **Revise this draft**, edit and save the working guidance in the linked admin pages, then return and capture a uniquely named replacement. The original becomes **Superseded** and links to the replacement; review and approve the replacement separately. The revision captures the current shared working library and does not silently restore the old snapshot.
+
 ## 2. Create the customer and scope
 
 Choose **Create synthetic customer**, name it **Synthetic Harbor Cafe**, and confirm that the records contain no real information. The creating user is assigned to that customer; other staff users do not automatically receive access, including superusers through customer workflow screens. No customer models are exposed through the global admin.

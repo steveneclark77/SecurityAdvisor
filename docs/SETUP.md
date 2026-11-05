@@ -116,3 +116,12 @@ After applying migrations, select **Customer engagements**. Follow [the syntheti
 Private evidence attachments persist in a separate `evidence_data` Docker volume and are downloadable only through assigned-customer authorization. Include both the PostgreSQL database and evidence volume in any future backup/migration plan. A volume is not a backup. Do not use `docker compose down -v` unless you intend to remove both.
 
 The new workflow supports synthetic customer/engagement records, scoped intake/evidence links, pinned assessments, action observations, evidence, findings, remediation, retests, preserved printable reports, history, and affected-customer reviews. Account MFA, production encryption and recovery operations, malware scanning, retention automation, and a team-assignment management UI remain outstanding. Keep all exercises synthetic. No notification or email is sent by issuing a link or scheduling a review.
+
+
+## Revise an unapproved baseline
+
+Open the draft snapshot and choose **Revise this draft**. Follow the page's links to edit controls/actions or profile/modifier mappings in the shared working library, save them, and return to the revision page. Enter a unique replacement version, updated coverage gaps, and the reason for revision. **Create replacement and supersede old draft** captures current working content and marks the original **Superseded** in one transaction. The replacement still requires explicit review and approval.
+
+If a newer replacement snapshot already exists, use **Already captured a replacement?** on the same page instead. Both versions retain their captured contents, and the original records the replacement link, actor, timestamp, and reason. A superseded draft cannot be approved or revised again; follow its replacement link. Approved baselines remain immutable and cannot be superseded through this draft-only workflow.
+
+Revision does not restore the original snapshot into the working library. The replacement includes all currently saved working changes, including unrelated edits made since the original capture. Failed creation leaves the original awaiting review. Existing snapshots receive no automatic status change during migration.

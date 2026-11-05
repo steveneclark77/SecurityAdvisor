@@ -216,3 +216,8 @@ Resolve these decisions before implementing their relevant milestones. Technolog
 - Reports preserve executive and technical views, evidence provenance, unknowns, exclusions, and baseline coverage gaps. Browser printing/PDF is supported; dedicated document export is not yet implemented.
 - Approved relevant library changes create review tasks, not automatic customer finding updates. Matching is conservatively based on captured profile/modifiers and requires consultant confirmation.
 - Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification or daily news ingestion is performed yet.
+
+
+### Draft baseline revision
+
+Unapproved snapshots offer a guided revision page linking to working controls and profile/modifier editing. Capturing a replacement and superseding the old draft is atomic. Preserve both snapshots and record the replacement link, actor, timestamp, and reason. A newer existing snapshot can also be linked as the replacement. Superseded drafts cannot be approved or revised; approved baselines cannot enter this draft-only workflow. Replacement snapshots require their own approval. Revisions capture the current shared working library rather than restoring old content automatically.

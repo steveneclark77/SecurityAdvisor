@@ -36,7 +36,7 @@ These are proposed delivery stages, not released capabilities or delivery commit
 
 ## Current status
 
-The baseline library includes 20 profiles, eight modifiers, and 14 draft controls with ordered, applicable, verifiable actions. Captured baselines require explicit review and approval.
+The baseline library includes 20 profiles, eight modifiers, and 14 draft controls with ordered, applicable, verifiable actions. Captured baselines require explicit review and approval. Unapproved drafts have a guided revision flow that captures a replacement, marks the old draft superseded, and preserves both snapshots.
 
 The customer workflow now supports assigned synthetic customers, scoped engagements and business context, expiring intake/evidence links, assessments pinned to approved baselines, action-level observations and reusable evidence, findings with documented risk judgments, authorized remediation plans and dependencies, retesting, preserved executive/technical reports, edit history, and affected-customer review after approved library changes.
 

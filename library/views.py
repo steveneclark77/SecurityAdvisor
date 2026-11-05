@@ -3,7 +3,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from .models import Baseline, Control, Profile, Modifier
 from . import services
 
@@ -52,3 +52,46 @@ def approve_baseline(request,pk):
             return redirect('baseline_detail',pk=pk)
         except ValidationError as exc: form.add_error(None,exc)
     return render(request,'library/form.html',{'form':form,'title':'Approve baseline'},status=400)
+
+
+class RevisionForm(BaselineForm):
+    revision_note = forms.CharField(widget=forms.Textarea, label='Reason for replacing this draft')
+
+
+class SupersedeForm(forms.Form):
+    replacement = forms.ModelChoiceField(queryset=Baseline.objects.none())
+    note = forms.CharField(widget=forms.Textarea, label='Reason for superseding')
+
+    def __init__(self, *args, source, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['replacement'].queryset = Baseline.objects.filter(created_at__gt=source.created_at, superseded_by__isnull=True, replaces__isnull=True)
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def revise_baseline(request, pk):
+    source = get_object_or_404(Baseline, pk=pk)
+    if source.approved_at or source.superseded_by_id:
+        return render(request, 'library/revise.html', {'source':source}, status=409)
+    form = RevisionForm(request.POST if request.method == 'POST' else None, initial={'coverage_gaps':source.coverage_gaps})
+    if request.method == 'POST' and form.is_valid():
+        try:
+            replacement = services.revise_draft(pk=pk, user=request.user, **form.cleaned_data)
+            return redirect('baseline_detail', pk=replacement.pk)
+        except (ValidationError, IntegrityError) as exc:
+            form.add_error(None, 'Version already exists.' if isinstance(exc, IntegrityError) else exc)
+    return render(request, 'library/revise.html', {'source':source, 'form':form, 'supersede_form':SupersedeForm(source=source)}, status=400 if request.method == 'POST' else 200)
+
+
+@staff_member_required
+@require_POST
+def supersede_baseline(request, pk):
+    source = get_object_or_404(Baseline, pk=pk)
+    form = SupersedeForm(request.POST, source=source)
+    if form.is_valid():
+        try:
+            replacement = services.supersede_draft(pk=pk, replacement_pk=form.cleaned_data['replacement'].pk, user=request.user, note=form.cleaned_data['note'])
+            return redirect('baseline_detail', pk=replacement.pk)
+        except ValidationError as exc:
+            form.add_error(None, exc)
+    return render(request, 'library/form.html', {'form':form,'title':'Supersede draft'}, status=400)

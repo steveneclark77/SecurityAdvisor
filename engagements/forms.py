@@ -30,7 +30,7 @@ class EngagementForm(StyledModelForm):
 
 
 class AssessmentForm(forms.Form):
-    baseline = forms.ModelChoiceField(queryset=Baseline.objects.filter(approved_at__isnull=False))
+    baseline = forms.ModelChoiceField(queryset=Baseline.objects.filter(approved_at__isnull=False, superseded_by__isnull=True))
     profile = forms.ChoiceField(choices=[])
     modifiers = forms.MultipleChoiceField(choices=[],required=False,widget=forms.CheckboxSelectMultiple)
     rationale = forms.CharField(widget=forms.Textarea, help_text='Explain applicability, confirm intake recommendations, and justify overrides.')

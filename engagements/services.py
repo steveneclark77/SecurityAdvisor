@@ -19,7 +19,7 @@ def audit(engagement, user, description, details=None):
 @transaction.atomic
 def start_assessment(*, engagement, baseline, user, profile, modifiers, rationale):
     require_access(user, engagement)
-    if not baseline.approved_at:
+    if not baseline.approved_at or baseline.superseded_by_id:
         raise ValidationError('Select an approved baseline.')
     if profile not in baseline.snapshot.get('profiles', []):
         raise ValidationError('Profile must exist in the captured baseline.')
