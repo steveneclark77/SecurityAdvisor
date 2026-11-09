@@ -33,4 +33,5 @@ dialog li{margin:12px 0}
 .guidance-panel p{margin:6px 0}
 .info-button{padding:2px 8px;background:transparent;color:#125d87;font-size:1.2rem}
 @media print{.button,button{display:none}.guidance-panel{background:white;border-left:2px solid #777}}
-</style><script src="{% static 'library/forms.js' %}" defer></script></head><body><header><strong>SecurityAdvisor</strong> <span aria-label="Application version">v{{ app_version }}</span> · Baseline library <nav><a href="/">Library</a><a href="/work/">Customer engagements</a><a href="/work/contacts/">Contacts</a><a href="/admin/">Manage controls</a></nav></header><main>{% block content %}{% endblock %}</main></body></html>
+header nav{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:8px}header nav a{margin-right:0}
+</style><script src="{% static 'library/forms.js' %}" defer></script></head><body><header><strong>SecurityAdvisor</strong> <span aria-label="Application version">v{{ app_version }}</span> · Baseline library <nav><a href="/">Library</a><a href="/work/">Customer engagements</a><a href="/work/contacts/">Contacts</a><a href="/inventory/">Inventory</a><a href="/admin/">Manage controls</a></nav></header><main>{% block content %}{% endblock %}</main></body></html>

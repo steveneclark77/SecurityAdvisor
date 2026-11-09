@@ -60,6 +60,12 @@ class ScopedForm(StyledModelForm):
                 continue
             if name in ['evidence','request']:
                 field.queryset = field.queryset.filter(engagement=engagement)
+            elif name == 'inventory_items':
+                field.queryset = field.queryset.filter(customer=engagement.customer)
+                candidate = self.data.get('assessment') if self.is_bound else getattr(self.instance,'assessment_id',None)
+                selected = engagement.assessments.filter(pk=candidate).first() if candidate and str(candidate).isdigit() else None
+                allowed = [item['id'] for item in (selected.inventory_snapshot or {}).get('items',[])] if selected else []
+                field.queryset = field.queryset.filter(pk__in=allowed)
             elif name == 'actions':
                 field.queryset = field.queryset.filter(assessment__engagement=engagement)
                 assessment_id = self.data.get('assessment') if self.is_bound else getattr(self.instance,'assessment_id',None)
@@ -187,12 +193,12 @@ class IntakeForm(forms.Form):
     industry = forms.ChoiceField(choices=[('',"I don't know / mixed business")]+[(p,p) for p in PROFILES], required=False)
     activities = forms.CharField(widget=forms.Textarea, required=False, help_text="Describe the business; 'unknown' is acceptable.")
     modifiers = forms.MultipleChoiceField(choices=[(m,m) for m in MODIFIERS], required=False, widget=forms.CheckboxSelectMultiple)
-    technologies = forms.CharField(widget=forms.Textarea, required=False, help_text='Email, cloud services, devices, providers, and public websites.')
-    critical_operations = forms.CharField(widget=forms.Textarea, required=False)
+    technologies = forms.CharField(widget=forms.Textarea, required=False, help_text='Include payroll/benefits providers, accounting/file sharing, computers and security configuration, ISP/network services, physical security, and public sites. Names may be unknown at intake.')
+    critical_operations = forms.CharField(widget=forms.Textarea, required=False, help_text='Include customer service, payroll, vendor/rent payments, and IT maintenance, with deadlines or critical periods.')
     outage_tolerance = forms.CharField(widget=forms.Textarea, required=False)
     financial_context = forms.CharField(widget=forms.Textarea, required=False)
     sensitive_data = forms.CharField(widget=forms.Textarea, required=False)
-    unknowns = forms.CharField(widget=forms.Textarea, required=False, help_text='Questions to follow up at kickoff.')
+    unknowns = forms.CharField(label='Information to confirm',widget=forms.Textarea, required=False, help_text='Missing environment facts: provider names, software/features, laptop configurations, ISP/bundled security, physical systems, administrators, and connections. Safeguard effectiveness is assessed separately.')
 
 
 class EvidenceResponseForm(forms.Form):

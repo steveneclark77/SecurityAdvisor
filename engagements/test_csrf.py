@@ -18,6 +18,8 @@ class FormCsrfTests(TestCase):
         completed = 0
         for case in cases:
             with self.subTest(form=case.name, target=case.target):
+                if case.prepare:
+                    case.prepare()
                 page = browser.get(case.page, secure=secure)
                 self.assertEqual(page.status_code, 200)
                 self.assertEqual(page['Referrer-Policy'], 'same-origin')
@@ -57,7 +59,7 @@ class FormCsrfTests(TestCase):
                         walk(route.url_patterns)
                 elif isinstance(route, URLPattern):
                     callback = inspect.unwrap(route.callback)
-                    if callback.__module__ not in ['engagements.views','library.views']:
+                    if callback.__module__ not in ['engagements.views','library.views','inventory.views']:
                         continue
                     source = inspect.getsource(callback)
                     if '@require_POST' in source or ('@require_http_methods' in source and 'POST' in source):

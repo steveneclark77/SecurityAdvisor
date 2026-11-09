@@ -106,6 +106,7 @@ class Intake(models.Model):
 
 
 class Assessment(models.Model):
+    inventory_snapshot = models.JSONField(null=True,blank=True,editable=False)
     engagement = models.ForeignKey(Engagement, on_delete=models.PROTECT, related_name='assessments')
     baseline = models.ForeignKey('library.Baseline', on_delete=models.PROTECT)
     profile = models.CharField(max_length=180)
@@ -113,6 +114,11 @@ class Assessment(models.Model):
     applicability_rationale = models.TextField()
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self,*args,**kwargs):
+        if self.pk and type(self).objects.get(pk=self.pk).inventory_snapshot != self.inventory_snapshot:
+            raise ValidationError('Assessment inventory facts are preserved. Start a new assessment for changed facts.')
+        super().save(*args,**kwargs)
 
 
 APPLICABILITY = [('applicable', 'Applicable'), ('unknown', 'Unknown — investigate'), ('excluded', 'Excluded — reason required')]
@@ -182,6 +188,7 @@ rating_validators = [MinValueValidator(1), MaxValueValidator(5)]
 
 
 class Finding(models.Model):
+    inventory_items = models.ManyToManyField('inventory.InventoryItem',blank=True,related_name='findings')
     engagement = models.ForeignKey(Engagement, on_delete=models.PROTECT, related_name='findings')
     assessment = models.ForeignKey(Assessment, on_delete=models.PROTECT, related_name='findings')
     title = models.CharField(max_length=200)

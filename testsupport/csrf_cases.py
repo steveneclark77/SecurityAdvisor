@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from engagements import models as m, services
 from library import models as library, services as baseline_services
+from inventory.models import InventoryItem, InventoryConnection, InventoryFollowUp
 
 
 def workflow_fixture():
@@ -28,6 +29,10 @@ def workflow_fixture():
     baseline_services.approve_baseline(pk=baseline.pk,user=user,note='Synthetic exercise approval')
     baseline.refresh_from_db()
     drafts = [baseline_services.create_baseline(user=user,version=name,coverage_gaps='Synthetic review pending') for name in ['csrf-approve','csrf-revise','csrf-supersede','csrf-replacement']]
+    operation = InventoryItem.objects.create(customer=customer,kind='operation',name='Synthetic biweekly payroll',operation_category='back_office',schedule='Every other Tuesday',critical_windows='Submission cutoff',outage_tolerance='One hour near cutoff',state='unknown')
+    provider = InventoryItem.objects.create(customer=customer,kind='provider',name='Synthetic payroll provider',state='unknown')
+    connection = InventoryConnection.objects.create(customer=customer,source=operation,target=provider,relationship='depends_on',details='Payroll submission depends on the portal')
+    followup = InventoryFollowUp.objects.create(customer=customer,item=provider,question='Who administers the provider portal?')
     assessment = services.start_assessment(engagement=engagement, baseline=baseline, user=user, profile='Restaurants, cafés, and food service', modifiers=['Payment processing'], rationale='Synthetic cafe')
     action = assessment.results.filter(control_code='PR-01').first()
     evidence_request = m.EvidenceRequest.objects.create(engagement=engagement,title='Synthetic policy request',instructions='Redacted fixtures only',owner='Fictional owner')
@@ -50,6 +55,7 @@ class Submission:
     data: dict
     check: Callable[[], bool]
     status: int = 302
+    prepare: Callable[[], object] | None = None
 
 
 def submissions(f):
@@ -58,8 +64,8 @@ def submissions(f):
     e = f.engagement.pk
     create = lambda **extra: {**f.finding_data, 'assessment':f.assessment.pk, **extra}
     items = []
-    def add(name,page,target,data,check,status=302):
-        items.append(Submission(name,page,target,data,check,status))
+    def add(name,page,target,data,check,status=302,prepare=None):
+        items.append(Submission(name,page,target,data,check,status,prepare))
     add('create_baseline', '/', url('create_baseline'), {'version':'csrf-created','coverage_gaps':'Synthetic gaps'}, lambda:library.Baseline.objects.filter(version='csrf-created').exists())
     add('approve_baseline',url('baseline_detail',f.drafts[0].pk),url('approve_baseline',f.drafts[0].pk),{'note':'Reviewed synthetic baseline','confirmed':'on'},lambda:library.Baseline.objects.get(pk=f.drafts[0].pk).approved_at is not None)
     add('revise_baseline',url('revise_baseline',f.drafts[1].pk),url('revise_baseline',f.drafts[1].pk),{'version':'csrf-revised','coverage_gaps':'Revised synthetic gaps','revision_note':'Clarify synthetic guidance'},lambda:library.Baseline.objects.get(pk=f.drafts[1].pk).superseded_by_id is not None)
@@ -100,4 +106,30 @@ def submissions(f):
     for purpose in ['intake','evidence']:
         add('invite_new',url('engagement_detail',e),url('invite_new',e),{'purpose':purpose,'request_id':f.evidence_request.pk},lambda purpose=purpose:m.Invite.objects.filter(engagement=f.engagement,purpose=purpose).count()==2,200)
     add('revoke_invites',url('engagement_detail',e),url('revoke_invites',e),{},lambda:not m.Invite.objects.filter(engagement=f.engagement,used_at__isnull=True,expires_at__gt=timezone.now()).exists())
+    customer_id=f.customer.pk
+    item_url=url('inventory_item_new',customer_id)+'?kind=operation'
+    item_data={'name':'New synthetic payroll operation','state':'unknown','criticality':'unknown','operation_category':'back_office','schedule':'Biweekly payroll cutoff'}
+    add('inventory_item_new',item_url,item_url,item_data,lambda:InventoryItem.objects.filter(customer=f.customer,name='New synthetic payroll operation').exists())
+    for kind,extra in [
+        ('provider',{'vendor_product':'Fictional payroll service','access_method':'Separate portal; administrator unknown','data_handling':'Employee PII categories only'}),
+        ('device',{'quantity':2,'operating_system':'Fictional laptop OS','security_configuration':'Antivirus and firewall configuration unknown'}),
+        ('software',{'vendor_product':'QuickBooks and Dropbox examples','access_method':'SSO status unknown'}),
+        ('network',{'vendor_product':'ISP and router to confirm','security_configuration':'Bundled protections unknown'}),
+        ('physical',{'description':'Alarm and camera service','access_method':'Vendor remote access to confirm'}),
+        ('data',{'data_handling':'Employee PII; full card data versus tokens to confirm','exposures':['employee_pii','payments']}),
+    ]:
+        target=url('inventory_item_new',customer_id)+'?kind='+kind
+        name='New synthetic '+kind+' inventory'
+        add('inventory_item_new',target,target,{'name':name,'state':'unknown','criticality':'unknown',**extra},lambda name=name:InventoryItem.objects.filter(customer=f.customer,name=name).exists())
+    edit_url=url('inventory_item_edit',f.operation.pk)
+    add('inventory_item_edit',edit_url,edit_url,{**item_data,'name':'Updated synthetic payroll operation'},lambda:InventoryItem.objects.get(pk=f.operation.pk).name=='Updated synthetic payroll operation')
+    connection_data={'source':f.operation.pk,'target':f.provider.pk,'relationship':'depends_on','details':'Synthetic provider portal connection','state':'unknown'}
+    add('inventory_connection_new',url('inventory_connection_new',customer_id),url('inventory_connection_new',customer_id),connection_data,lambda:InventoryConnection.objects.filter(customer=f.customer,details='Synthetic provider portal connection').exists())
+    edit_url=url('inventory_connection_edit',f.connection.pk)
+    add('inventory_connection_edit',edit_url,edit_url,{**connection_data,'details':'Updated synthetic connection'},lambda:InventoryConnection.objects.get(pk=f.connection.pk).details=='Updated synthetic connection')
+    followup_data={'item':f.provider.pk,'question':'Which payroll service is used?','status':'open'}
+    add('inventory_followup_new',url('inventory_followup_new',customer_id),url('inventory_followup_new',customer_id),followup_data,lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Which payroll service is used?').exists())
+    edit_url=url('inventory_followup_edit',f.followup.pk)
+    add('inventory_followup_edit',edit_url,edit_url,{**followup_data,'status':'resolved','response':'Synthetic provider identified'},lambda:InventoryFollowUp.objects.get(pk=f.followup.pk).status=='resolved')
+    add('inventory_intake_followups',url('engagement_detail',e),url('inventory_intake_followups',e),{},lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Legacy provider details to confirm').exists(),prepare=lambda:m.Intake.objects.create(engagement=f.engagement,answers={'unknowns':'Legacy provider details to confirm'},recommendation={'profile':f.assessment.profile,'modifiers':[]}))
     return items

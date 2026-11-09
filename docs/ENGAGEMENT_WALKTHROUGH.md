@@ -42,7 +42,9 @@ Return to the engagement page to review the provisional profile recommendation. 
 
 External customers cannot reach a laptop-only deployment. Do not expose the development server to the internet to test intake.
 
-## 4. Start and review an assessment
+## 4. Build inventory, then start and review an assessment
+
+Before starting, open **Customer inventory and operations** and follow [the inventory guide](INVENTORY.md). Include payroll, vendor/rent payments, and infrastructure/KTLO operations alongside orders/payments. Record providers, devices/software, data, and connections; keep missing facts in **Information to confirm**. New assessments capture these facts, so fill them before starting rather than retroactively substituting current information.
 
 Choose **Start assessment**. Select an approved baseline, confirm the best-fit profile and modifiers, and explain any overrides. Choices must exist in the selected baseline snapshot.
 

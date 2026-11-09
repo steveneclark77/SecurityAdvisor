@@ -89,7 +89,7 @@ class BrowserForms(StaticLiveServerTestCase):
         path = reverse('public_response',args=[self.fixture.intake])
         self.visit(path)
         self.page.get_by_label('Activities:').fill('Synthetic cafe with payroll and vendor payments')
-        self.page.get_by_label('Unknowns:').fill('Providers and laptop configurations need confirmation')
+        self.page.get_by_label('Information to confirm:').fill('Providers and laptop configurations need confirmation')
         form = self.page.locator('form')
         response = self.submit(form,self.page.get_by_role('button',name='Save progress',exact=True),path)
         self.assertEqual(response.status,200)
@@ -134,6 +134,8 @@ class BrowserForms(StaticLiveServerTestCase):
         completed = 0
         for case in cases:
             with self.subTest(form=case.name,target=case.target):
+                if case.prepare:
+                    self.db(case.prepare)
                 self.visit(case.page)
                 matching = []
                 for form in self.page.locator('form').all():

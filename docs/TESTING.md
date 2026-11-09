@@ -6,7 +6,7 @@ All fixtures are synthetic. Django creates and destroys a dedicated test databas
 
 Run `python manage.py test` in the configured development environment, or `docker compose exec web python manage.py test`.
 
-The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 31 form operations, including intake draft/final submission and evidence response, it verifies:
+The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 44 form operations, including intake draft/final submission and evidence response, it verifies:
 
 - The rendered form contains a token and uses the same-origin referrer policy.
 - Missing/incorrect tokens, foreign origins, and null origins return HTTP 403.
@@ -38,7 +38,7 @@ Coverage includes:
 - Real login, logout, and password changes (including CSRF token rotation).
 - Intake Save progress, reload, final submission, persistence, and single-use enforcement.
 - Public multipart evidence upload and protection against invitation referrer leakage to another origin.
-- Every authenticated application form operation: baseline creation/approval/revision/supersession; customers, engagements, assessments, action results, evidence requests/uploads, findings, remediation/retesting, contacts/links, invitations/revocation, reports, and reassessment decisions.
+- Every authenticated application form operation: baseline creation/approval/revision/supersession; customers, engagements, assessments, action results, evidence requests/uploads, findings, remediation/retesting, contacts/links, invitations/revocation, reports, reassessment decisions, and inventory items/connections/information follow-ups.
 - Representative admin control/inline-action saves and profile/modifier creation.
 
 Tests interact with rendered forms, their scripts, cookies, browser-generated Origin headers, and actual navigation. The browser server uses local HTTP; HTTPS Origin/Referer enforcement is exercised separately by the server-side matrix. A stale pre-login form must be rejected after login rotates its token, and reloading must recover normal saving. They do not inject CSRF tokens or force a successful Origin header. ORM outcome checks run on a separate synchronous thread, retaining Django's async-safety guard.
