@@ -242,3 +242,8 @@ Disable action buttons until their form inputs are complete and valid; retain se
 - Existing-contact reuse requires explicit management access; duplicate checks search only accessible contacts, warn, and never auto-merge. No universal email uniqueness constraint is imposed.
 - Deactivation unlinks while retaining history. Archive instead of deleting historical people. Preserve original free-text contacts as legacy notes requiring review. Reports capture contact details at report time.
 - Evidence/task ownership and authorization references remain unchanged in this milestone; structured references and historical assignment snapshots will be connected in a later change.
+
+
+### Visual hierarchy and actions
+
+Explanatory-only blocks must be visually distinct from data/control sections using a labeled guidance panel. Contacts with no reusable records show linking guidance, while available records offer explicit Link contact actions. Creation, editing, linking, continuation, downloads, and other workflow actions use consistent button styling; safe navigation links to forms retain link semantics, and state changes remain POST-only. Navigation and source references remain recognizable links.

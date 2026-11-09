@@ -21,3 +21,8 @@ Reviewers Prioritize:
 6. Server-side validation, regardless of disabled UI buttons.
 7. Relevant tests are written and executed
 8. Requested version increment.
+
+## UI interaction patterns
+
+- Render action links with shared button styling. Use real submit buttons for mutations; preserve safe links for navigation to forms, external references, and record navigation. Do not use GET requests to mutate state.
+- Explanatory-only blocks use the distinct `guidance-panel` style and a visible Guidance label, rather than the white card style used for data and controls. Empty states should not look like an available action.
