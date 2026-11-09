@@ -32,7 +32,9 @@ def start_assessment(*, engagement, baseline, user, profile, modifiers, rational
     controls = baseline.snapshot.get('controls', [])
     if not controls:
         raise ValidationError('The baseline contains no controls.')
-    assessment = Assessment.objects.create(engagement=engagement, baseline=baseline, profile=profile, modifiers=modifiers, applicability_rationale=rationale, created_by=user)
+    from inventory.services import capture_inventory
+    inventory_snapshot = capture_inventory(engagement.customer)
+    assessment = Assessment.objects.create(inventory_snapshot=inventory_snapshot, engagement=engagement, baseline=baseline, profile=profile, modifiers=modifiers, applicability_rationale=rationale, created_by=user)
     for control in controls:
         applicable = control.get('universal') or profile in control.get('profiles', []) or bool(set(modifiers) & set(control.get('modifiers', [])))
         actions = control.get('actions') or [dict(instruction='Detailed actions missing: investigate using the captured procedure.', applicability=control.get('applicability',''), verification=control.get('verification',''))]
@@ -83,6 +85,7 @@ def capture_report(*, engagement, user):
     findings = []
     for finding in engagement.findings.prefetch_related('actions','evidence','tasks__retests__evidence','tasks__dependencies'):
         details = {field.name:getattr(finding,field.name) for field in finding._meta.fields if field.name not in ['id','engagement','assessment']}
+        details['inventory_item_ids'] = list(finding.inventory_items.values_list('pk',flat=True))
         details['id'] = finding.pk
         details['baseline'] = finding.assessment.baseline.version
         details['assessment_id'] = finding.assessment_id
@@ -101,7 +104,10 @@ def capture_report(*, engagement, user):
     for assessment in engagement.assessments.select_related('baseline'):
         for result in assessment.results.prefetch_related('evidence'):
             results.append(dict(id=result.pk, assessment_id=assessment.pk, baseline=assessment.baseline.version, control=result.control_code, title=result.control_title, guidance=result.guidance, applicability=result.applicability, reason=result.applicability_reason, implementation=result.implementation, verification=result.verification, confidence=result.confidence, observation=result.observation, investigation_owner=result.investigation_owner, followup_due=result.followup_due.isoformat() if result.followup_due else None, evidence_ids=list(result.evidence.values_list('pk',flat=True)), verified_at=result.verified_at.isoformat() if result.verified_at else None))
+    from inventory.services import capture_inventory
     snapshot = {
+        'current_inventory':capture_inventory(engagement.customer),
+        'assessment_inventories':[{'assessment_id':a.pk,'snapshot':a.inventory_snapshot} for a in engagement.assessments.all()],
         'contacts':[dict(name=str(link.contact), title=link.title_override or link.contact.title, affiliation=link.affiliation_override or link.contact.organization, email=link.contact.email, office_phone=link.contact.office_phone, cell_phone=link.contact.cell_phone, roles=link.roles, primary=link.primary) for link in engagement.active_contacts],
         'customer':engagement.customer.name, 'synthetic':engagement.customer.synthetic, 'engagement':engagement.title,
         'scope':engagement.scope, 'exclusions':engagement.exclusions, 'assessment_authorization':engagement.assessment_authorization,

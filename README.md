@@ -42,6 +42,10 @@ The customer workflow now supports assigned synthetic customers, scoped engageme
 
 Start with [the synthetic engagement walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md). No exercise customer or approved baseline is automatically created. Starter guidance is incomplete; this is not a certification tool. Use synthetic data only: production MFA, encryption/backup operations, malware scanning, and retention automation remain unfinished. Daily news ingestion, automatic scoring/approval, and team-assignment management are still planned. Reports can be printed or saved as PDF through the browser.
 
+## Customer inventory
+
+Customer-level records connect business operations, providers, devices, software, networks, physical systems, and information. Back-office and infrastructure/KTLO work uses the same impact criteria as customer-facing work. See [the inventory workflow](docs/INVENTORY.md) for setup, information follow-ups, and historical assessment/report snapshots.
+
 ## Application version
 
 The repository-root `VERSION` file is the source of truth for the running app version shown in the header. Versions use `major.minor.patch`; each requested change increments the patch unless a different increment or version is explicitly requested. Roadmap milestones above describe scope, rather than the installed build version.

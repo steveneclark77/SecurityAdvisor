@@ -137,3 +137,8 @@ Updates preserve the original free-text contact in a legacy note. After creating
 Earlier intake/evidence pages used a `no-referrer` meta policy that caused browser form POSTs to send `Origin: null`, which Django correctly rejected. The policy is now `same-origin`, preserving same-origin submission while withholding referrers from other origins. CSRF middleware and token validation remain enabled; null and foreign origins remain rejected.
 
 After updating/rebuilding, reload the intake page from its original invitation URL before submitting. If a previous save returned 403, it was not persisted; copy any recoverable text from your browser before reloading. Previously saved drafts remain intact. Do not add `null` to trusted origins or exempt these forms from CSRF protection.
+
+
+## Inventory workflow (v0.1.8)
+
+Run the normal updater to apply additive inventory/assessment migrations. Existing intakes, approvals, findings, and reports are preserved; old assessments are not backfilled with current inventory facts. Use the Inventory header entry or engagement shortcut and follow [INVENTORY.md](INVENTORY.md). This inventory captures facts and dependencies; it does not scan systems or certify safeguards automatically.

@@ -113,7 +113,8 @@ def assessment_new(request, pk):
             return redirect('assessment_detail', pk=assessment.pk)
         except ValidationError as exc:
             form.add_error(None, exc)
-    return render(request, 'engagements/form.html', {'form':form,'title':'Confirm applicability and start assessment','engagement':engagement})
+    from inventory.services import scope_guidance
+    return render(request, 'engagements/form.html', {'form':form,'title':'Confirm applicability and start assessment','engagement':engagement,'inventory_guidance':scope_guidance(engagement.customer)})
 
 
 @consultant
@@ -278,7 +279,9 @@ def public_response(request, token):
                 invite.save(update_fields=['draft_answers'])
                 return render(request, 'engagements/public.html', {'form':form,'invite':invite,'saved':True})
             if invite.purpose == 'intake':
-                Intake.objects.create(engagement=invite.engagement, answers=form.cleaned_data, recommendation=services.recommend_profile(form.cleaned_data))
+                intake = Intake.objects.create(engagement=invite.engagement, answers=form.cleaned_data, recommendation=services.recommend_profile(form.cleaned_data))
+                from inventory.services import intake_followup
+                intake_followup(intake)
             else:
                 Evidence.objects.create(engagement=invite.engagement, request=invite.request, **form.cleaned_data)
                 invite.request.status = 'received'
