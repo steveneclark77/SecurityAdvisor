@@ -10,3 +10,14 @@
 ## Form interaction
 
 - Disable action buttons until required inputs are complete and valid. Always retain server-side validation. Informational/help buttons must use `type="button"`.
+
+## Code Reviews
+Reviewers Prioritize: 
+1. Cross-customer access and shared-contact privacy.
+2. Assessment/change authorization boundaries.
+3. Preservation of baseline, assessment, report, and audit history.
+4. Migration safety and retention of existing data.
+5. Evidence-upload and expiring-link security.
+6. Server-side validation, regardless of disabled UI buttons.
+7. Relevant tests are written and executed
+8. Requested version increment.
