@@ -50,4 +50,6 @@ The repository-root `VERSION` file is the source of truth for the running app ve
 
 The application uses Django 5.2 LTS and PostgreSQL, with Docker Compose for local development. It uses server-rendered templates and local CSS; HTMX/Bootstrap can be introduced when needed. Python dependencies are pinned in `requirements.txt`. SQLite is available as an explicit development/test fallback.
 
+See [testing and browser regression checks](docs/TESTING.md) for repeatable CSRF and real-browser validation.
+
 See [the setup guide](docs/SETUP.md) for Windows 10/WSL2 prerequisites, startup, baseline review, tests, and production limitations. See [Requirements.md](Requirements.md) for detailed product requirements.

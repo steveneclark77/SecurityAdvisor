@@ -1,0 +1,3 @@
+-r requirements.txt
+# Browser tooling is development/CI only, never installed in the app image.
+playwright==1.65.0

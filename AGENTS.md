@@ -26,3 +26,9 @@ Reviewers Prioritize:
 
 - Render action links with shared button styling. Use real submit buttons for mutations; preserve safe links for navigation to forms, external references, and record navigation. Do not use GET requests to mutate state.
 - Explanatory-only blocks use the distinct `guidance-panel` style and a visible Guidance label, rather than the white card style used for data and controls. Empty states should not look like an available action.
+
+## Form and CSRF regression checks
+
+- Add every application POST route to the shared submission inventory in `testsupport/csrf_cases.py`, with a valid payload and a persisted-outcome assertion.
+- Verify legitimate CSRF-protected submission as well as rejection of missing/incorrect tokens and invalid origins.
+- Changes to form templates, referrer policies, authentication, or submission behavior require the affected real-browser tests. Do not disable CSRF, bypass browser header behavior, or silently skip unavailable engines.
