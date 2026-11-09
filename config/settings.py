@@ -35,3 +35,7 @@ X_FRAME_OPTIONS = 'DENY'
 MEDIA_ROOT = BASE_DIR / "private-evidence"
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
+
+# Preserve the origin for same-origin form POSTs without disclosing invitation
+# URLs in referrers to external sites. Keep public-page meta policy consistent.
+SECURE_REFERRER_POLICY = 'same-origin'

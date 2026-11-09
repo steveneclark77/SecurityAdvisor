@@ -388,3 +388,44 @@ class EngagementTests(TestCase):
         self.assertFalse(link.active)
         self.assertTrue(Contact.objects.filter(pk=self.person.pk).exists())
         self.assertTrue(AuditEvent.objects.filter(engagement=self.engagement,description__contains='engagement contact').exists())
+
+    def test_intake_origin_policy_and_csrf_protected_save_submit(self):
+        raw = services.issue_invite(engagement=self.engagement,user=self.user,purpose='intake')
+        url = reverse('public_response',args=[raw])
+        browser = Client(enforce_csrf_checks=True)
+        response = browser.get(url)
+        self.assertContains(response,'name="referrer" content="same-origin"')
+        self.assertEqual(response['Referrer-Policy'],'same-origin')
+        token = browser.cookies['csrftoken'].value
+        payload = {'activities':'Synthetic cafe and outsourced payroll','intent':'save','csrfmiddlewaretoken':token}
+        for origin in ['null','https://untrusted.example']:
+            self.assertEqual(browser.post(url,payload,HTTP_ORIGIN=origin).status_code,403)
+        self.assertEqual(browser.post(url,{'activities':'Missing token','intent':'save'},HTTP_ORIGIN='http://testserver').status_code,403)
+        invite = Invite.objects.get(token_digest=hashlib.sha256(raw.encode()).hexdigest())
+        self.assertEqual(invite.draft_answers,{})
+        self.assertIsNone(invite.used_at)
+        response = browser.post(url,payload,HTTP_ORIGIN='http://testserver')
+        self.assertContains(response,'Draft saved')
+        self.assertContains(browser.get(url),'Synthetic cafe and outsourced payroll')
+        invite.refresh_from_db()
+        self.assertIsNone(invite.used_at)
+        response = browser.post(url,{**payload,'intent':'submit'},HTTP_ORIGIN='http://testserver')
+        self.assertContains(response,'Response received')
+        self.assertEqual(Intake.objects.get(engagement=self.engagement).answers['activities'],'Synthetic cafe and outsourced payroll')
+        self.assertEqual(browser.get(url).status_code,404)
+
+    def test_evidence_origin_policy_preserves_csrf_on_https(self):
+        evidence_request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic record',instructions='Redacted data only',owner='Fictional')
+        raw = services.issue_invite(engagement=self.engagement,user=self.user,purpose='evidence',evidence_request=evidence_request)
+        url = reverse('public_response',args=[raw])
+        browser = Client(enforce_csrf_checks=True)
+        response = browser.get(url,secure=True)
+        self.assertContains(response,'name="referrer" content="same-origin"')
+        token = browser.cookies['csrftoken'].value
+        payload = {'title':'Synthetic export','notes':'Fictional data','provenance':'Test fixture','collected_on':timezone.localdate(),'csrfmiddlewaretoken':token}
+        self.assertEqual(browser.post(url,payload,secure=True,HTTP_ORIGIN='null').status_code,403)
+        # HTTPS browsers without an Origin header still need a same-origin Referer.
+        self.assertEqual(browser.post(url,payload,secure=True,HTTP_REFERER='https://untrusted.example/').status_code,403)
+        response = browser.post(url,payload,secure=True,HTTP_REFERER='https://testserver'+url)
+        self.assertContains(response,'Response received')
+        self.assertTrue(Evidence.objects.filter(request=evidence_request,title='Synthetic export').exists())
