@@ -247,3 +247,8 @@ Disable action buttons until their form inputs are complete and valid; retain se
 ### Visual hierarchy and actions
 
 Explanatory-only blocks must be visually distinct from data/control sections using a labeled guidance panel. Contacts with no reusable records show linking guidance, while available records offer explicit Link contact actions. Creation, editing, linking, continuation, downloads, and other workflow actions use consistent button styling; safe navigation links to forms retain link semantics, and state changes remain POST-only. Navigation and source references remain recognizable links.
+
+
+### Automated form and CSRF regression coverage
+
+Every application POST route must have a valid-submission payload and persisted-outcome assertion in the shared test inventory. Verify legitimate HTTP Origin and HTTPS Referer submissions as well as rejection of missing/incorrect tokens and null/foreign origins. New POST routes must fail the coverage guard until added. Real-browser CI runs Chromium and WebKit over intake draft/save/reload/finalization, public evidence upload, authenticated application forms, and representative admin forms. Test token rotation/reload recovery and invitation referrer privacy without disabling CSRF or injecting browser headers. Use only synthetic fixtures, temporary evidence storage, and isolated test databases. Missing browser tooling fails its job rather than skipping verification.
