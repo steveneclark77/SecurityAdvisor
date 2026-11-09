@@ -1,7 +1,7 @@
 {% extends 'library/base.html' %}{% block content %}
 <h1>Customer engagements</h1><p class="notice">Synthetic-data workflow. Production authentication/MFA, encryption, backups, malware scanning, and retention controls still require implementation and review.</p>
-<p><a href="{% url 'customer_new' %}">Create synthetic customer</a></p>
-<section><h2>Assigned customers</h2>{% for customer in customers %}<p>{{ customer.name }} · <a href="{% url 'engagement_new' customer.pk %}">New engagement</a></p>{% empty %}<p>No assigned customers yet.</p>{% endfor %}</section>
+<p><a class="button" href="{% url 'customer_new' %}">Create synthetic customer</a></p>
+<section><h2>Assigned customers</h2>{% for customer in customers %}<p>{{ customer.name }} <a class="button" href="{% url 'engagement_new' customer.pk %}">New engagement</a></p>{% empty %}<p>No assigned customers yet.</p>{% endfor %}</section>
 <section><h2>Engagements</h2>{% for engagement in engagements %}<p><a href="{% url 'engagement_detail' engagement.pk %}">{{ engagement }}</a></p>{% empty %}<p>Create a customer and define its first engagement.</p>{% endfor %}</section>
-<section><h2>Affected-customer review queue</h2>{% for review in reviews %}<article><h3>{{ review.assessment.engagement }}</h3><p>Baseline {{ review.baseline.version }} · {{ review.get_status_display }}</p><p>{{ review.reason }}</p><a href="{% url 'reassessment_edit' review.pk %}">Review and schedule</a></article>{% empty %}<p>No relevant approved library changes have been detected.</p>{% endfor %}</section>
+<section><h2>Affected-customer review queue</h2>{% for review in reviews %}<article><h3>{{ review.assessment.engagement }}</h3><p>Baseline {{ review.baseline.version }} · {{ review.get_status_display }}</p><p>{{ review.reason }}</p><a class="button button-secondary" href="{% url 'reassessment_edit' review.pk %}">Review and schedule</a></article>{% empty %}<p>No relevant approved library changes have been detected.</p>{% endfor %}</section>
 {% endblock %}
