@@ -130,3 +130,10 @@ Revision does not restore the original snapshot into the working library. The re
 ## Contact workflow (v0.1.3)
 
 Updates preserve the original free-text contact in a legacy note. After creating an engagement, add contacts on the second screen, then continue. Existing engagements use **Manage contacts**. New assessments require an active contact; existing assessments and historical owner/authorization text are unchanged. A contact directory supports independent records and explicit-permission reuse. Shared edits prompt for confirmation; archive or deactivate links to preserve history. Roles do not grant login access or authorize work.
+
+
+## Intake Save progress CSRF fix (v0.1.6)
+
+Earlier intake/evidence pages used a `no-referrer` meta policy that caused browser form POSTs to send `Origin: null`, which Django correctly rejected. The policy is now `same-origin`, preserving same-origin submission while withholding referrers from other origins. CSRF middleware and token validation remain enabled; null and foreign origins remain rejected.
+
+After updating/rebuilding, reload the intake page from its original invitation URL before submitting. If a previous save returned 403, it was not persisted; copy any recoverable text from your browser before reloading. Previously saved drafts remain intact. Do not add `null` to trusted origins or exempt these forms from CSRF protection.
