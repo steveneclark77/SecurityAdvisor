@@ -195,7 +195,7 @@ The complete first release must demonstrate that:
 - Hosting provider, production file storage, and deployment. The selected application stack is Django/Python with PostgreSQL, server-rendered templates, and Docker Compose; initial operation is local on Windows 10 through WSL2. HTMX/Bootstrap can be added as needed.
 - Detailed intake questions, control content, mappings, and baseline review procedure.
 - Priority matrix, impact aggregation, confidence scale, and exceptional-priority handling.
-- News source list and access methods, daily schedule/time zone, and framework review interval.
+- Additional news sources/access methods and the framework review interval. Initial RSS/Atom sources and a 24-hour worker schedule are selected in v0.1.9.
 - Relevance, novelty, duplicate, and affected-customer matching rules.
 - Classification approach, feedback application, evaluation, and auto-approval safeguards.
 - Report exports, templates, and notifications.
