@@ -118,6 +118,7 @@ class BrowserForms(StaticLiveServerTestCase):
         self.assertEqual(response.status,200)
         expect(self.page.get_by_role('heading',name='Response received')).to_be_visible()
         expect(self.page.get_by_role('heading',name='Corrections and additions')).to_be_visible()
+        expect(self.page.locator('.guidance-panel')).to_have_css('border-left-width', '3px')
         expect(self.page.get_by_text('You cannot edit this submission directly.',exact=False)).to_be_visible()
         expect(self.page.get_by_text('Our team will work with you to correct or add to the information used for your assessment.',exact=False)).to_be_visible()
         expect(self.page.locator('form')).to_have_count(0)

@@ -1,0 +1,5 @@
+body{font:16px system-ui;max-width:760px;margin:32px auto;padding:16px}
+textarea{width:95%;height:80px}
+input{max-width:95%}
+.errorlist{color:#a00}
+button:disabled{opacity:.5;cursor:not-allowed}

@@ -27,11 +27,7 @@ dialog li{margin:12px 0}
 .button-secondary{background:white;color:#125d87;border-color:#9bb6cb}
 .button-secondary:hover{background:#eaf3fa;color:#103e59}
 .button:focus-visible,button:focus-visible{outline:3px solid #237eb4;outline-offset:3px}
-.guidance-panel{background:#eaf3fa;border-left:3px solid #6d9ab9;border-radius:3px;padding:14px 18px;margin:16px 0;color:#344e64;font-size:.95rem}
-.guidance-label{display:block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#426580;margin-bottom:6px}
-.guidance-panel h2{font-size:1.05rem;margin:4px 0 8px}
-.guidance-panel p{margin:6px 0}
 .info-button{padding:2px 8px;background:transparent;color:#125d87;font-size:1.2rem}
-@media print{.button,button{display:none}.guidance-panel{background:white;border-left:2px solid #777}}
+@media print{.button,button{display:none}}
 header nav{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:8px}header nav a{margin-right:0}
-</style><script src="{% static 'library/forms.js' %}" defer></script></head><body><header><strong>SecurityAdvisor</strong> <span aria-label="Application version">v{{ app_version }}</span> · Baseline library <nav><a href="/">Library</a><a href="/work/">Customer engagements</a><a href="/work/contacts/">Contacts</a><a href="/inventory/">Inventory</a><a href="/admin/">Manage controls</a></nav></header><main>{% block content %}{% endblock %}</main></body></html>
+</style><link rel="stylesheet" href="{% static 'library/guidance.css' %}"><script src="{% static 'library/forms.js' %}" defer></script></head><body><header><strong>SecurityAdvisor</strong> <span aria-label="Application version">v{{ app_version }}</span> · Baseline library <nav><a href="/">Library</a><a href="/work/">Customer engagements</a><a href="/work/contacts/">Contacts</a><a href="/inventory/">Inventory</a><a href="/admin/">Manage controls</a></nav></header><main>{% block content %}{% endblock %}</main></body></html>
