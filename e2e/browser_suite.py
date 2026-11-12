@@ -21,6 +21,21 @@ from testsupport.csrf_cases import workflow_fixture, submissions
 
 
 class BrowserForms(StaticLiveServerTestCase):
+    def _fixture_teardown(self):
+        # SQLite flush uses DELETE, unlike PostgreSQL TRUNCATE. Temporarily
+        # remove history guards only while destroying this synthetic test data.
+        from django.db import connection
+        import importlib
+        guards = importlib.import_module('news.migrations.0004_version_immutability')
+        if connection.vendor != 'sqlite':
+            return super()._fixture_teardown()
+        editor = connection.schema_editor(atomic=False)
+        guards.uninstall(None, editor)
+        try:
+            return super()._fixture_teardown()
+        finally:
+            guards.install(None, editor)
+
     def setUp(self):
         self.media = tempfile.TemporaryDirectory(prefix='securityadvisor-browser-media-')
         self.addCleanup(self.media.cleanup)
@@ -251,18 +266,31 @@ class BrowserForms(StaticLiveServerTestCase):
         source = self.db(lambda: Source.objects.get(name='Synthetic browser feed'))
         def create_issue():
             from django.utils import timezone
+            from news.versioning import create_version
             scan = Scan.objects.create(source=source, feed_url=source.feed_url, status='success')
-            return Issue.objects.create(source=source, first_scan=scan, identity='synthetic-browser', name='Synthetic practice', url='https://www.bleepingcomputer.com/synthetic', last_seen_at=timezone.now())
+            issue = Issue.objects.create(source=source, first_scan=scan, identity='synthetic-browser', last_seen_at=timezone.now())
+            create_version(issue=issue, expected_version_id=None, content={'name': 'Synthetic practice', 'url': 'https://www.bleepingcomputer.com/synthetic'}, actor=None, origin='publisher_ingestion', change_reason='Synthetic discovery')
+            issue.refresh_from_db()
+            return issue
         issue = self.db(create_issue)
-        path = reverse('admin:news_issue_change', args=[issue.pk])
-        self.visit(path)
+        self.visit(reverse('admin:news_issue_change', args=[issue.pk]))
+        self.page.get_by_role('link', name='Create next version').click()
+        path = reverse('admin:news_issueversion_add') + f'?issue={issue.pk}&base_version={issue.current_version_id}'
         self.page.locator('[name=remediation]').fill('Review synthetic identity configuration')
         self.page.locator('[name=severity]').select_option('medium')
-        form = self.page.locator('#issue_form')
+        form = self.page.locator('#issueversion_form')
+        expect(form.locator('input[name="_save"]')).to_be_disabled()
+        self.page.locator('[name=change_reason]').fill('Synthetic new recommendation')
+        self.page.locator('[name=references-0-source]').select_option(str(source.pk))
+        self.page.locator('[name=references-0-source_url]').fill('https://www.bleepingcomputer.com/synthetic-advisory')
         self.assertEqual(self.submit(form, form.locator('input[name="_save"]'), path).status, 302)
+        self.db(issue.refresh_from_db)
+        self.assertEqual(self.db(lambda: issue.current_version.version_number), 2)
+        self.assertEqual(self.db(lambda: issue.current_version.references.get().source_url), 'https://www.bleepingcomputer.com/synthetic-advisory')
         path = reverse('admin:news_review_add')
         self.visit(path)
         self.page.locator('[name=issue]').select_option(str(issue.pk))
+        self.page.locator('[name=issue_version]').select_option(str(issue.current_version_id))
         self.page.locator('[name=decision]').select_option('add')
         self.page.locator('[name=rationale]').fill('Synthetic manual relevance review')
         expect(self.page.locator('#review_form input[name="_save"]')).to_be_disabled()

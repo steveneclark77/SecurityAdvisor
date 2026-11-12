@@ -146,3 +146,7 @@ Run the normal updater to apply additive inventory/assessment migrations. Existi
 ## News collection (v0.1.9)
 
 The normal updater applies additive News migrations and starts the daily `news_scanner` worker. Manage publisher feeds and candidates in Django admin; see [NEWS.md](NEWS.md) for permissions, feed validation, pause/retry behavior, and network requirements. The worker waits for an approved baseline and never changes customer records or approved guidance.
+
+## Issue version history (v0.1.10)
+
+The normal updater migrates existing news issues into immutable version 1 records, preserving old review snapshots without guessing exact version links. It stops both application and scanner during migration. Back up first: these history migrations refuse downgrade; restoring a pre-upgrade backup is the supported rollback. See [NEWS.md](NEWS.md) for next-version editing, per-version sources, network requirements, and configurable ingestion quotas.

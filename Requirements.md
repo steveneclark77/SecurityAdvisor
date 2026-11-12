@@ -269,3 +269,7 @@ Every application POST route must have a valid-submission payload and persisted-
 ### Initial news collection implementation (v0.1.9)
 
 Daily RSS/Atom ingestion stores all feed articles as unverified candidates, deduplicated per source URL. Sources are configurable database records. Severity, type, identifiers, and remediation require consultant judgment. Append-only add/update/ignore reviews preserve actor, rationale, proposed guidance, related controls, duplicate links, and issue snapshots. No automatic library changes occur. AI relevance analysis, proposal generation, and automatic application remain future work. See docs/NEWS.md for supported boundaries.
+
+### Issue version history and provenance (v0.1.10)
+
+Issue identity is separate from immutable full-content versions. Each meaningful edit creates a sequential successor with actor, time, origin, and required change reason. Supporting sources are per-version references, including captured attribution and exact publication links; consultant authorship and supporting publishers are separate. Stale writes are rejected. Reviews select the exact current version and later versions require fresh review. Legacy content becomes version 1; old review snapshots remain untouched without inferred version attribution. Publisher changes produce unverified proposal versions without overwriting consultant severity/remediation, and normal sightings create no version. Database guards protect history and current-version transitions. Downgrading by flattening history is unsupported.

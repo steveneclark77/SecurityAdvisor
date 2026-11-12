@@ -1,12 +1,14 @@
 """Bounded, HTTPS-only RSS/Atom ingestion. Publisher text is untrusted data."""
 import hashlib
+import http.client
+from io import BytesIO
 import ipaddress
 import socket
 import time
 from datetime import datetime, timezone as dt_timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlsplit, urlunsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 
 from defusedxml import ElementTree
 from django.conf import settings
@@ -17,6 +19,50 @@ from .models import Issue, Scan, Source
 MAX_BYTES = 2 * 1024 * 1024
 
 
+class IngestionQuotaExceeded(ValueError):
+    pass
+
+
+def public_address(host):
+    addresses = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    if not addresses or any(not ipaddress.ip_address(address[4][0]).is_global for address in addresses):
+        raise ValueError('Feed must resolve exclusively to public addresses.')
+    return addresses[0][4][0]
+
+
+class PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Keep hostname TLS verification while dialing the checked public IP."""
+    def connect(self):
+        target = self._tunnel_host or self.host
+        if target not in settings.NEWS_ALLOWED_HOSTS:
+            raise ValueError('Feed host is not allowed.')
+        self._pinned_ip = public_address(target)
+        through_proxy = bool(self._tunnel_host)
+        original = self._create_connection
+        def dial(address, *args, **kwargs):
+            return original(address if through_proxy else (self._pinned_ip, address[1]), *args, **kwargs)
+        self._create_connection = dial
+        try:
+            super().connect()
+        finally:
+            self._create_connection = original
+
+    def _tunnel(self):
+        # The CONNECT target is the validated IP, while TLS still verifies and
+        # sends SNI for the original publisher hostname after this returns.
+        hostname = self._tunnel_host
+        self._tunnel_host = self._pinned_ip
+        try:
+            super()._tunnel()
+        finally:
+            self._tunnel_host = hostname
+
+
+class PinnedHTTPSHandler(HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(PinnedHTTPSConnection, req, context=self._context)
+
+
 def validate_url(url, *, feed=False):
     parts = urlsplit(url)
     if parts.scheme != 'https' or not parts.hostname or parts.username or parts.password or parts.port not in (None, 443):
@@ -24,9 +70,7 @@ def validate_url(url, *, feed=False):
     if feed:
         if parts.hostname not in settings.NEWS_ALLOWED_HOSTS:
             raise ValueError('Feed host is not in NEWS_ALLOWED_HOSTS.')
-        addresses = socket.getaddrinfo(parts.hostname, 443, type=socket.SOCK_STREAM)
-        if not addresses or any(not ipaddress.ip_address(address[4][0]).is_global for address in addresses):
-            raise ValueError('Feed must resolve exclusively to public addresses.')
+        public_address(parts.hostname)
     return urlunsplit(('https', parts.netloc.lower(), parts.path or '/', parts.query, ''))
 
 
@@ -41,7 +85,7 @@ def fetch_feed(url):
     request = Request(url, headers={'User-Agent': f'SecurityAdvisor/{settings.APP_VERSION} (+RSS reader)', 'Accept': 'application/rss+xml, application/atom+xml, application/xml', 'Accept-Encoding': 'identity'})
     # Keep inherited proxy and CA settings; redirects are checked before sending.
     started = time.monotonic()
-    with build_opener(SafeRedirect()).open(request, timeout=10) as response:
+    with build_opener(SafeRedirect(), PinnedHTTPSHandler()).open(request, timeout=10) as response:
         chunks = []
         size = 0
         while True:
@@ -73,7 +117,21 @@ def published(value):
 
 
 def parse_feed(data):
-    root = ElementTree.fromstring(data)
+    if len(data) > MAX_BYTES:
+        raise ValueError('Feed exceeds size limit.')
+    depth = nodes = entries_seen = 0
+    iterator = ElementTree.iterparse(BytesIO(data), events=['start', 'end'])
+    for event, node in iterator:
+        if event == 'start':
+            depth += 1
+            nodes += 1
+            if node.tag.split('}')[-1] in ['item', 'entry']:
+                entries_seen += 1
+            if depth > 64 or nodes > 10000 or entries_seen > 500:
+                raise ValueError('Feed exceeds XML structure limits.')
+        else:
+            depth -= 1
+    root = iterator.root
     kind = root.tag.split('}')[-1]
     if kind not in ['rss', 'feed', 'RDF']:
         raise ValueError('Response is not a supported RSS/Atom feed.')
@@ -113,18 +171,37 @@ def scan_source(source_id, fetch=fetch_feed):
             Source.objects.select_for_update().get(pk=source_id)
             for entry in entries:
                 identity = entry.pop('identity')
+                from .versioning import create_version, CONTENT_FIELDS, reference_data
                 issue, created = Issue.objects.get_or_create(source=source, identity=identity,
-                    defaults={**entry, 'first_scan': scan, 'last_seen_at': timezone.now()})
+                    defaults={'first_scan': scan, 'last_seen_at': timezone.now()})
                 if created:
+                    if Issue.objects.filter(source=source).count() > settings.NEWS_MAX_ISSUES_PER_SOURCE:
+                        raise IngestionQuotaExceeded('Publisher candidate quota reached.')
+                    create_version(issue=issue, expected_version_id=None, content=entry, actor=None,
+                        change_reason='First publisher feed discovery.', origin='publisher_ingestion',
+                        references=[{'source_id': source.pk, 'source_url': entry['url'], 'source_published_at': entry['published_at'], 'notes': 'Publisher feed discovery.'}])
                     scan.created_count += 1
                 else:
                     Issue.objects.filter(pk=issue.pk).update(last_seen_at=timezone.now())
+                    previous_publisher = issue.versions.filter(origin__in=['publisher_ingestion', 'automated_proposal']).first()
+                    publisher_fields = ['name', 'url', 'description', 'published_at']
+                    if previous_publisher and any(getattr(previous_publisher, field) != entry[field] for field in publisher_fields):
+                        if issue.versions.filter(origin__in=['publisher_ingestion', 'automated_proposal']).count() >= settings.NEWS_MAX_AUTO_VERSIONS_PER_ISSUE:
+                            raise IngestionQuotaExceeded('Automated issue version quota reached.')
+                        current = issue.current_version
+                        content = {field: getattr(current, field) for field in CONTENT_FIELDS}
+                        content.update(entry)
+                        references = [ref for ref in reference_data(current) if ref['source_url'] != entry['url']]
+                        references.append({'source_id': source.pk, 'source_url': entry['url'], 'source_published_at': entry['published_at'], 'notes': 'Changed publisher feed content; unverified proposal.'})
+                        create_version(issue=issue, expected_version_id=current.pk, content=content, actor=None,
+                            change_reason='Publisher feed content changed; consultant review required.', origin='automated_proposal', references=references)
         scan.status = 'success'
     except Exception as exc:
         scan.status = 'failed'
         scan.created_count = 0
         # Avoid persisting URLs, credentials, or remote response bodies in errors.
-        scan.error = f'{type(exc).__name__}: feed unavailable, blocked, oversized, or invalid. Check endpoint and network policy.'
+        scan.error = ('Storage quota reached; review NEWS_MAX_ISSUES_PER_SOURCE or NEWS_MAX_AUTO_VERSIONS_PER_ISSUE. Existing history was preserved.'
+                      if isinstance(exc, IngestionQuotaExceeded) else f'{type(exc).__name__}: feed unavailable, blocked, oversized, or invalid. Check endpoint and network policy.')
     scan.finished_at = timezone.now()
     scan.save()
     return scan

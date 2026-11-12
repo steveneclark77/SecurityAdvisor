@@ -42,3 +42,7 @@ SECURE_REFERRER_POLICY = 'same-origin'
 
 # Explicit publisher allowlist: arbitrary admin URLs cannot target internal services.
 NEWS_ALLOWED_HOSTS = os.getenv("NEWS_ALLOWED_HOSTS", "feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com").split(",")
+
+# Stop ingestion rather than discard historical records when a quota is reached.
+NEWS_MAX_ISSUES_PER_SOURCE = int(os.getenv('NEWS_MAX_ISSUES_PER_SOURCE', '10000'))
+NEWS_MAX_AUTO_VERSIONS_PER_ISSUE = int(os.getenv('NEWS_MAX_AUTO_VERSIONS_PER_ISSUE', '100'))

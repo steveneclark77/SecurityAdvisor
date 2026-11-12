@@ -60,4 +60,4 @@ See [the setup guide](docs/SETUP.md) for Windows 10/WSL2 prerequisites, startup,
 
 ## Security news
 
-Configurable publisher feeds, tracked issue candidates, daily collection, and retained manual add/update/ignore reviews are available in Django admin. See [news setup and review](docs/NEWS.md). Collection never changes approved library or customer records.
+Configurable publisher feeds, daily collection, immutable issue versions with multiple supporting sources, and exact-version add/update/ignore reviews are available in Django admin. See [news setup and review](docs/NEWS.md). Collection never changes approved library or customer records.
