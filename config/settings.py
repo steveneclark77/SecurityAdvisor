@@ -46,3 +46,6 @@ NEWS_ALLOWED_HOSTS = os.getenv("NEWS_ALLOWED_HOSTS", "feeds.feedburner.com,www.b
 # Stop ingestion rather than discard historical records when a quota is reached.
 NEWS_MAX_ISSUES_PER_SOURCE = int(os.getenv('NEWS_MAX_ISSUES_PER_SOURCE', '10000'))
 NEWS_MAX_AUTO_VERSIONS_PER_ISSUE = int(os.getenv('NEWS_MAX_AUTO_VERSIONS_PER_ISSUE', '100'))
+
+# Automatic feed requests require explicit deployment opt-in; manual scans remain available.
+NEWS_AUTO_SCAN_ENABLED = os.getenv('NEWS_AUTO_SCAN_ENABLED', 'false').strip().lower() == 'true'

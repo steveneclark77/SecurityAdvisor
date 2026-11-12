@@ -154,3 +154,7 @@ The normal updater migrates existing news issues into immutable version 1 record
 ## URL-based source identity (v0.1.11)
 
 News sources use their canonical website URL as the database primary key. The updater transfers issue, scan, and version-reference relationships while retaining old numeric IDs and historical snapshots. It also seeds CISA, UpGuard, Schneier on Security, and SecurityWeek without overwriting existing URL-matched configuration. Existing duplicate canonical websites stop migration for review rather than being merged silently. Names and feed URLs remain editable; website identity is read-only after creation. Default feed-host allowlisting includes all seven publishers. See [NEWS.md](NEWS.md) for the endpoints and normalization rules.
+
+## Automatic news scanning is off (v0.1.12)
+
+`NEWS_AUTO_SCAN_ENABLED=false` is the default in settings, Compose, and `.env.example`. The updater may restart the worker, but it remains idle without requesting feeds until explicitly enabled. Change the value in `.env` and recreate `news_scanner` to apply it. Manual `docker compose exec web python manage.py scan_news` remains available and retains baseline/source restrictions. See [NEWS.md](NEWS.md).

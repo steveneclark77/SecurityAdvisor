@@ -452,3 +452,46 @@ class SourceIdentityTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Synthetic legacy source edit')
         self.assertContains(self.client.get(reverse('admin:news_source_change', args=[quote(source.pk)])), 'https://www.cisa.gov/')
+
+
+class AutomaticScanConfigurationTests(TestCase):
+    @override_settings(NEWS_AUTO_SCAN_ENABLED=False)
+    def test_disabled_worker_does_not_access_database_or_fetch_feeds(self):
+        output = StringIO()
+        with patch('news.management.commands.scan_news.time.sleep', side_effect=KeyboardInterrupt), patch('news.management.commands.scan_news.scan_source') as scan:
+            with self.assertNumQueries(0), self.assertRaises(KeyboardInterrupt):
+                call_command('scan_news', loop=True, stdout=output)
+        scan.assert_not_called()
+        self.assertIn('Automatic news scanning is disabled', output.getvalue())
+
+    @override_settings(NEWS_AUTO_SCAN_ENABLED=True)
+    def test_enabled_worker_retains_baseline_gate(self):
+        output = StringIO()
+        with patch('news.management.commands.scan_news.time.sleep', side_effect=KeyboardInterrupt), patch('news.management.commands.scan_news.scan_source') as scan:
+            with self.assertRaises(KeyboardInterrupt):
+                call_command('scan_news', loop=True, stdout=output)
+        scan.assert_not_called()
+        self.assertIn('Waiting for an approved baseline', output.getvalue())
+
+    @override_settings(NEWS_AUTO_SCAN_ENABLED=True)
+    def test_enabled_worker_scans_only_enabled_sources(self):
+        user = get_user_model().objects.create_user('synthetic-auto-scanner')
+        Baseline.objects.create(version='synthetic-auto', created_by=user, snapshot={}, coverage_gaps='Synthetic', approved_by=user, approved_at=timezone.now())
+        Source.objects.all().update(enabled=False)
+        source = Source.objects.get(pk='https://www.cisa.gov/')
+        source.enabled = True
+        source.save()
+        with patch('news.management.commands.scan_news.time.sleep', side_effect=KeyboardInterrupt), patch('news.management.commands.scan_news.scan_source') as scan:
+            scan.return_value = Scan(status='success', created_count=0)
+            with self.assertRaises(KeyboardInterrupt):
+                call_command('scan_news', loop=True, stdout=StringIO())
+        scan.assert_called_once_with(source.pk)
+
+    @override_settings(NEWS_AUTO_SCAN_ENABLED=False)
+    def test_manual_scan_remains_available_while_automatic_scanning_is_off(self):
+        user = get_user_model().objects.create_user('synthetic-manual-scanner')
+        Baseline.objects.create(version='synthetic-manual', created_by=user, snapshot={}, coverage_gaps='Synthetic', approved_by=user, approved_at=timezone.now())
+        with patch('news.management.commands.scan_news.scan_source') as scan:
+            scan.return_value = Scan(status='success', created_count=0)
+            call_command('scan_news', stdout=StringIO())
+        self.assertEqual(scan.call_count, Source.objects.filter(enabled=True).count())

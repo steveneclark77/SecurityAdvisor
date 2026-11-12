@@ -1,4 +1,5 @@
 import time
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections
 from library.models import Baseline
@@ -7,14 +8,16 @@ from news.models import Source
 
 
 class Command(BaseCommand):
-    help = 'Collect RSS/Atom candidates after baseline approval. --loop repeats daily; no library/customer changes.'
+    help = 'Collect RSS/Atom candidates after baseline approval. --loop runs only when NEWS_AUTO_SCAN_ENABLED=true; no library/customer changes.'
 
     def add_arguments(self, parser):
         parser.add_argument('--loop', action='store_true')
 
     def handle(self, *args, **options):
         while True:
-            if not Baseline.objects.filter(approved_at__isnull=False).exists():
+            if options['loop'] and not settings.NEWS_AUTO_SCAN_ENABLED:
+                self.stdout.write('Automatic news scanning is disabled; no feeds requested. Set NEWS_AUTO_SCAN_ENABLED=true and recreate the worker to enable it.')
+            elif not Baseline.objects.filter(approved_at__isnull=False).exists():
                 if not options['loop']:
                     raise CommandError('Approve a baseline before scanning news.')
                 self.stdout.write('Waiting for an approved baseline; no feeds requested.')

@@ -1,6 +1,6 @@
-# Security news ingestion and version history (v0.1.11)
+# Security news ingestion and version history (v0.1.12)
 
-After an approved baseline exists, the daily worker reads enabled RSS/Atom sources and saves article candidates for human review. News is a shared-library workflow, separate from customer findings. Collection does not scan customer systems, establish customer applicability, assign severity, apply remediation, or change controls/baselines/assessments/reports. Every feed article is a candidate, including unrelated news. AI relevance classification and generated recommendations remain future work.
+When automatic scanning is explicitly enabled and an approved baseline exists, the daily worker reads enabled RSS/Atom sources and saves article candidates for human review. News is a shared-library workflow, separate from customer findings. Collection does not scan customer systems, establish customer applicability, assign severity, apply remediation, or change controls/baselines/assessments/reports. Every feed article is a candidate, including unrelated news. AI relevance classification and generated recommendations remain future work.
 
 ## Sources
 
@@ -52,16 +52,20 @@ Version-history migrations deliberately refuse downgrade. Flattening multiple ve
 
 ## Automatic and manual runs
 
-`./update.command` migrates and restarts `news_scanner` alongside the app. The worker runs immediately, then every 24 hours while Docker is running. It waits without fetching until a baseline is approved. Restarting causes another immediate, deduplicated cycle. Missed days are not replayed, and a daily snapshot can miss entries that age out between runs.
+`./update.command` migrates and restarts `news_scanner` alongside the app. Automatic scanning defaults to **off** (`NEWS_AUTO_SCAN_ENABLED=false`). The worker stays idle without database queries or feed requests while off. With explicit opt-in it runs immediately, then every 24 hours while Docker is running. It waits without fetching until a baseline is approved. Restarting causes an immediate, deduplicated cycle only when automatic scanning is enabled. Missed days are not replayed, and a daily snapshot can miss entries that age out between runs.
+
+To enable automatic scans later, set `NEWS_AUTO_SCAN_ENABLED=true` in `.env` and recreate the worker with `docker compose up -d --force-recreate news_scanner`. To disable it, set the value back to `false` and recreate the worker again. Only the literal `true` (case-insensitive, surrounding whitespace ignored) enables automatic requests. The setting persists across updater runs; an absent setting defaults off. Python-only deployments use the same process environment variable and must restart the worker after changes.
+
+Manual one-shot scans remain available while automatic scanning is off. They still require an approved baseline, respect per-source enabled flags, and retain the same network and storage limits:
 
 ```bash
 docker compose logs news_scanner
 docker compose exec web python manage.py scan_news
 ```
 
-For an initial Compose installation, apply migrations before starting the worker, or restart it after migration. The service restarts after startup failure. A one-shot scan exits nonzero if a feed fails or no approved baseline exists. Inspect **News > Scans** for captured feed URL, timestamps, status, new-issue count, and sanitized failure details. Failed feeds retry next cycle; one failure does not prevent other sources from running. A scan left `running` after interruption is not a success. Overlapping scans may create separate audit records, but issue uniqueness and version locking protect content.
+For an initial Compose installation, apply migrations before starting the worker, or restart it after migration. The service restarts after startup failure. A one-shot scan exits nonzero if a feed fails or no approved baseline exists. Inspect **News > Scans** for captured feed URL, timestamps, status, new-issue count, and sanitized failure details. When automatic scanning is enabled, failed feeds retry next cycle; one failure does not prevent other sources from running. A scan left `running` after interruption is not a success. Overlapping scans may create separate audit records, but issue uniqueness and version locking protect content.
 
-Disable sources to pause ingestion persistently, or `docker compose stop news_scanner` to pause until the updater restarts it. No email/notification is sent.
+Use the global setting to keep all automatic ingestion off. Per-source enabled flags additionally select which sources may be scanned, including by manual runs. `docker compose stop news_scanner` pauses the worker until the updater restarts it, but does not change the persistent setting. No email/notification is sent.
 
 ## Network, parser, and storage boundaries
 

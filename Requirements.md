@@ -277,3 +277,7 @@ Issue identity is separate from immutable full-content versions. Each meaningful
 ### Source URL identity (v0.1.11)
 
 The canonical website URL is the Source primary key and duplicate websites are rejected. Names are non-unique labels; mutable feed endpoints are separate from permanent website identity. Preserve source relationships, immutable reference snapshots, legacy numeric identifiers, and old audit/review JSON during migration. Stop for duplicate canonical websites instead of silently merging historical issues. Seed CISA, UpGuard, Schneier on Security, and SecurityWeek by URL without overwriting existing configuration.
+
+### Automatic news scan configuration (v0.1.12)
+
+Global automatic news scanning requires explicit deployment opt-in through `NEWS_AUTO_SCAN_ENABLED=true`; it defaults off. While off, loop mode remains idle without database/feed access. The setting persists across updates and applies after worker recreation. Manual one-shot scans remain available, with approved-baseline and enabled-source checks.
