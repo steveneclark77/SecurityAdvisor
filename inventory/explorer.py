@@ -58,8 +58,6 @@ def explorer_context(customer, params):
         'heading': dict(CATEGORIES).get(kind, 'All records'),
         'add_label': 'Add ' + dict(ITEM_KINDS).get(kind, 'record').lower(),
         'records': [{'item': item, 'url': url(selected=item.pk, page=page.number), 'selected': item == selected} for item in visible],
-        # Retain the existing context shape for callers testing active-record scope.
-        'rows': [(item, inventory_fields(services.record_fields(item))) for item in visible],
         'selected': selected,
         'selected_fields': inventory_fields(services.record_fields(selected)) if selected else [],
         'selected_connections': connections.filter(Q(source=selected) | Q(target=selected)) if selected else [],

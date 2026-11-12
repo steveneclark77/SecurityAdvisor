@@ -51,7 +51,7 @@ class InventoryTests(TestCase):
         data={'name':'Archived synthetic payroll','state':'unknown','criticality':'unknown','operation_category':'back_office','archived':'on'}
         self.assertEqual(self.client.post(url,data).status_code,302)
         active_page=self.client.get(reverse('inventory_detail',args=[self.f.customer.pk]))
-        self.assertNotIn(self.f.operation.pk,[item.pk for item,fields in active_page.context['rows']])
+        self.assertNotIn(self.f.operation.pk,[row['item'].pk for row in active_page.context['records']])
         self.assertContains(self.client.get(reverse('inventory_detail',args=[self.f.customer.pk])+'?archived=yes'),'Archived synthetic payroll')
         self.assertTrue(self.f.customer.inventory_events.filter(description__contains='Edit').exists())
         self.assertTrue(InventoryConnection.objects.filter(pk=self.f.connection.pk).exists())
