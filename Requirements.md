@@ -289,3 +289,7 @@ Each feed fetch has an overall 30-second parent-enforced deadline covering DNS, 
 ### Guided engagement UI (v0.2.0)
 
 Use a grouped journey rail with factual work-status text and shape markers, explicit suggested-next guidance, and small downward connectors. Keep one rail action per work area; use Start for untouched work, Edit for started work, and Review for preserved intake. Display only the selected record workspace alongside the rail, retaining existing editing, evidence, finding, remediation, report, and history workflows. Preparation bullets are informational. Recommendation and status derivation is read-only, scoped to the assigned customer/engagement, and does not imply verification or enforce an order. Preserve existing authorization and validation gates. Use shared styles/components and responsive layouts.
+
+### Inventory explorer usability
+
+Customer inventory uses category navigation with counts, one contextual creation entry, search/fact-state/archive filters, a paginated record table, and a selected-record preview including dependencies and information gaps. Relationships, information follow-ups, and audit history have distinct destinations. Responsive layouts stack the preview below the table. Selection and filtering remain read-only and customer-assignment scoped, including for superusers; historical snapshots remain unchanged.

@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404,redirect,render
@@ -6,7 +7,7 @@ from django.views.decorators.http import require_http_methods,require_POST
 from engagements.models import Customer
 from engagements.views import consultant,engagement_for
 from . import forms,services
-from .templatetags.inventory_display import inventory_fields
+from .explorer import explorer_context
 from .models import InventoryItem,InventoryConnection,InventoryFollowUp,InventoryEvent,ITEM_KINDS
 
 
@@ -26,14 +27,7 @@ def index(request):
 @consultant
 def detail(request,pk):
     customer=customer_for(request.user,pk)
-    items=customer.inventory_items.all()
-    if request.GET.get('archived')!='yes':
-        items=items.filter(archived=False)
-    kind=request.GET.get('kind','')
-    if kind:
-        items=items.filter(kind=kind)
-    rows=[(item,inventory_fields(services.record_fields(item))) for item in items]
-    return render(request,'inventory/detail.html',{'customer':customer,'rows':rows,'connections':customer.inventory_connections.select_related('source','target'),'followups':customer.inventory_followups.select_related('item','source_intake'),'kinds':ITEM_KINDS,'history':customer.inventory_events.all()})
+    return render(request,'inventory/detail.html',{'customer':customer,**explorer_context(customer,request.GET)})
 
 
 def editor(request,customer,obj,form_class,title,*,scoped=False):
@@ -47,7 +41,15 @@ def editor(request,customer,obj,form_class,title,*,scoped=False):
             Customer.objects.select_for_update().get(pk=customer.pk)
             saved=form.save()
             InventoryEvent.objects.create(customer=customer,actor=request.user,description=f'{title}: record {saved.pk}.',details={'before':before,'after':services.record_fields(saved)})
-        return redirect('inventory_detail',pk=customer.pk)
+        if isinstance(saved,InventoryItem):
+            params={'kind':saved.kind,'selected':saved.pk}
+            if saved.archived:
+                params['archived']='yes'
+        else:
+            params={'area':'relationships' if isinstance(saved,InventoryConnection) else 'followups'}
+            if isinstance(saved,InventoryConnection) and saved.archived:
+                params['archived']='yes'
+        return redirect(reverse('inventory_detail',args=[customer.pk])+'?'+urlencode(params))
     return render(request,'inventory/form.html',{'customer':customer,'form':form,'title':title},status=400 if request.method=='POST' else 200)
 
 

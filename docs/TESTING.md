@@ -76,3 +76,7 @@ Feed-deadline regression tests start a real blocked synthetic child process, ver
 ## Engagement journey UI
 
 `python manage.py test engagements.test_journey` verifies recommendation/status derivation, optional intake, unknown/archived inventory, immutable GET behavior, safe area selection, and assignment checks for superusers. The CSRF submission inventory selects the relevant work pane through the read-only `area` query parameter; mutating endpoints and their payload/outcome checks are unchanged. Browser coverage verifies the seven unique rail actions, equal button styling, noninteractive preparation guidance, smaller connector arrowheads, arbitrary-order navigation, and mobile layout without horizontal overflow. Synthetic desktop/mobile screenshots are captured with the browser artifacts.
+
+## Inventory explorer
+
+Inventory tests cover preserved filters, category counts, archived visibility, empty types, pagination, invalid navigation parameters, read-only GETs, and assignment-scoped selection including superusers. The real-browser explorer test covers type navigation, contextual Add, table selection and preview, search empty/recovery states, relationships/follow-ups, and mobile overflow. CI artifacts include `inventory-desktop.png` and `inventory-mobile.png` for each browser engine. Existing inventory form submissions remain in the CSRF matrix.
