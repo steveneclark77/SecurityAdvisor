@@ -117,6 +117,10 @@ class BrowserForms(StaticLiveServerTestCase):
         response = self.submit(self.page.locator('form'),self.page.get_by_role('button',name='Submit final response',exact=True),path)
         self.assertEqual(response.status,200)
         expect(self.page.get_by_role('heading',name='Response received')).to_be_visible()
+        expect(self.page.get_by_role('heading',name='Corrections and additions')).to_be_visible()
+        expect(self.page.get_by_text('You cannot edit this submission directly.',exact=False)).to_be_visible()
+        expect(self.page.get_by_text('Our team will work with you to correct or add to the information used for your assessment.',exact=False)).to_be_visible()
+        expect(self.page.locator('form')).to_have_count(0)
         self.assertEqual(self.db(lambda:m.Intake.objects.get().answers['unknowns']),'Providers and laptop configurations need confirmation')
         self.assertEqual(self.page.goto(self.live_server_url+path).status,404)
         # The invitation URL must not become a referrer on another origin.

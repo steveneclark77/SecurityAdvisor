@@ -1,1 +1,24 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Response received</title></head><body><header>SecurityAdvisor <span aria-label="Application version">v{{ app_version }}</span></header><h1>Response received</h1><p>Your consultant will review it. This submission link is now closed.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Response received</title>
+  <style>
+    body{font:16px system-ui;max-width:760px;margin:32px auto;padding:16px}
+    .guidance-panel{background:#eaf3fa;border-left:3px solid #6d9ab9;border-radius:3px;padding:14px 18px;margin:16px 0;color:#344e64}
+    .guidance-panel h2{font-size:1.05rem;margin:4px 0 8px}
+    .guidance-panel p{margin:6px 0}
+  </style>
+</head>
+<body>
+  <header>SecurityAdvisor <span aria-label="Application version">v{{ app_version }}</span></header>
+  <h1>Response received</h1>
+  <p>Your consultant will review it. This submission link is now closed.</p>
+  <section class="guidance-panel" aria-labelledby="corrections-heading">
+    <strong>Guidance</strong>
+    <h2 id="corrections-heading">Corrections and additions</h2>
+    <p>You cannot edit this submission directly. If you notice a mistake or need to add information, contact your consultant. Our team will work with you to correct or add to the information used for your assessment.</p>
+  </section>
+</body>
+</html>
