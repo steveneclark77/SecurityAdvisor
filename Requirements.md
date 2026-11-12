@@ -281,3 +281,7 @@ The canonical website URL is the Source primary key and duplicate websites are r
 ### Automatic news scan configuration (v0.1.12)
 
 Global automatic news scanning requires explicit deployment opt-in through `NEWS_AUTO_SCAN_ENABLED=true`; it defaults off. While off, loop mode remains idle without database/feed access. The setting persists across updates and applies after worker recreation. Manual one-shot scans remain available, with approved-baseline and enabled-source checks.
+
+### Feed fetch deadline (v0.1.13)
+
+Each feed fetch has an overall 30-second parent-enforced deadline covering DNS, redirects, connection/TLS setup, headers, and body reads. Fetching uses a network-only subprocess that is killed and reaped on timeout. A timeout becomes a retained failed scan, and later sources continue. Public-IP pinning, hostname TLS verification, response/parser limits, storage quotas, and the automatic-scanning default-off setting remain enforced.

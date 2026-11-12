@@ -1,4 +1,4 @@
-# Security news ingestion and version history (v0.1.12)
+# Security news ingestion and version history (v0.1.13)
 
 When automatic scanning is explicitly enabled and an approved baseline exists, the daily worker reads enabled RSS/Atom sources and saves article candidates for human review. News is a shared-library workflow, separate from customer findings. Collection does not scan customer systems, establish customer applicability, assign severity, apply remediation, or change controls/baselines/assessments/reports. Every feed article is a candidate, including unrelated news. AI relevance classification and generated recommendations remain future work.
 
@@ -73,7 +73,7 @@ Use trusted public publishers only. `NEWS_ALLOWED_HOSTS` is a comma-separated ex
 
 HTTPS verification and original-hostname SNI remain enabled. Every feed connection resolves the allowed publisher, rejects non-public DNS answers, and pins the socket to a checked public IP. Redirects repeat validation. Inherited proxy/CA settings remain in use. For an HTTP CONNECT proxy, the tunnel target is the checked public IP while TLS verifies the publisher hostname. A proxy that permits only hostname-based CONNECT targets may reject this: configure its approved destination policy appropriately, or run on an approved network without that proxy. The app does not fall back to an unpinned connection or disable TLS.
 
-Responses have a 10-second socket timeout, a checked 30-second read budget, and a 2 MiB size limit. Defused XML rejects entities/external references. Depth (64), node (10,000), and entry (500) limits are checked during parsing. Non-feed responses fail explicitly. Article/reference pages are never fetched automatically. Publisher excerpts are untrusted and escaped by Django admin.
+Network fetching runs in a separate Python worker without loading application models or opening database connections. The parent enforces a 30-second overall deadline, kills and reaps a blocked worker on timeout, and records the source failure before continuing to later sources. This deadline covers DNS resolution, redirects, connection/TLS setup, response headers, and body reads; it does not depend on the network call returning first. The worker also retains a 10-second socket timeout and a 2 MiB response limit. Proxy/CA settings are inherited, and HTTPS pinning/verification remain enabled. Defused XML rejects entities/external references. Depth (64), node (10,000), and entry (500) limits are checked during parsing. Non-feed responses fail explicitly. Article/reference pages are never fetched automatically. Publisher excerpts are untrusted and escaped by Django admin.
 
 Automatic ingestion also has cumulative quotas, configurable in `.env`/process environment:
 

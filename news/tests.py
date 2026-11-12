@@ -6,7 +6,8 @@ from django.core.management import call_command, CommandError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from library.models import Baseline
-from .ingestion import parse_feed, scan_source, validate_url, SafeRedirect
+from .ingestion import parse_feed, scan_source, validate_url
+from .feed_transport import SafeRedirect
 from .models import Issue, IssueVersion, IssueVersionReference, Review, Scan, Source
 from .versioning import create_version, CONTENT_FIELDS
 
@@ -66,7 +67,7 @@ class IngestionTests(TestCase):
         for url in ['http://example.test/feed', 'https://user:password@example.test/', 'https://example.test:444/', 'https://internal.test/rss']:
             with self.assertRaises(ValueError):
                 validate_url(url, feed=True)
-        with patch('news.ingestion.socket.getaddrinfo', return_value=[(2, 1, 6, '', ('127.0.0.1', 443))]):
+        with patch('news.feed_transport.socket.getaddrinfo', return_value=[(2, 1, 6, '', ('127.0.0.1', 443))]):
             with self.assertRaises(ValueError):
                 validate_url('https://example.test/rss', feed=True)
         with self.assertRaises(ValueError):
@@ -103,14 +104,14 @@ class IngestionTests(TestCase):
 
     def test_feed_size_limit(self):
         from contextlib import contextmanager
-        from .ingestion import fetch_feed, MAX_BYTES
+        from .feed_transport import fetch_feed, MAX_BYTES
         class Oversized:
             def read1(self, size):
                 return b'x' * size
         @contextmanager
         def response(*args, **kwargs):
             yield Oversized()
-        with patch('news.ingestion.validate_url'), patch('news.ingestion.build_opener') as opener:
+        with patch('news.feed_transport.validate_url'), patch('news.feed_transport.build_opener') as opener:
             opener.return_value.open.side_effect = response
             with self.assertRaises(ValueError):
                 fetch_feed('https://example.test/rss')
@@ -348,13 +349,13 @@ class FeedBoundaryTests(TestCase):
 
     @override_settings(NEWS_ALLOWED_HOSTS=['publisher.test'])
     def test_direct_connection_dials_pinned_ip_with_original_tls_hostname(self):
-        from .ingestion import PinnedHTTPSConnection
+        from .feed_transport import PinnedHTTPSConnection
         from unittest.mock import Mock
         tls = Mock()
         conn = PinnedHTTPSConnection('publisher.test', context=tls)
         dial = Mock()
         conn._create_connection = dial
-        with patch('news.ingestion.public_address', return_value='93.184.216.34'):
+        with patch('news.feed_transport.public_address', return_value='93.184.216.34'):
             conn.connect()
         self.assertEqual(dial.call_args.args[0], ('93.184.216.34', 443))
         self.assertEqual(tls.wrap_socket.call_args.kwargs['server_hostname'], 'publisher.test')
@@ -362,14 +363,14 @@ class FeedBoundaryTests(TestCase):
     @override_settings(NEWS_ALLOWED_HOSTS=['publisher.test'])
     def test_proxy_tunnels_to_pinned_ip_and_keeps_publisher_tls_verification(self):
         import http.client
-        from .ingestion import PinnedHTTPSConnection
+        from .feed_transport import PinnedHTTPSConnection
         from unittest.mock import Mock
         tls = Mock()
         conn = PinnedHTTPSConnection('proxy.test', 8080, context=tls)
         conn.set_tunnel('publisher.test', 443)
         conn._create_connection = Mock()
         tunnel_targets = []
-        with patch('news.ingestion.public_address', return_value='93.184.216.34'), patch.object(http.client.HTTPConnection, '_tunnel', lambda connection: tunnel_targets.append(connection._tunnel_host)):
+        with patch('news.feed_transport.public_address', return_value='93.184.216.34'), patch.object(http.client.HTTPConnection, '_tunnel', lambda connection: tunnel_targets.append(connection._tunnel_host)):
             conn.connect()
         self.assertEqual(tunnel_targets, ['93.184.216.34'])
         self.assertEqual(tls.wrap_socket.call_args.kwargs['server_hostname'], 'publisher.test')
@@ -377,9 +378,9 @@ class FeedBoundaryTests(TestCase):
 
     @override_settings(NEWS_ALLOWED_HOSTS=['publisher.test'])
     def test_rebinding_to_private_address_is_rejected_at_connect(self):
-        from .ingestion import PinnedHTTPSConnection
+        from .feed_transport import PinnedHTTPSConnection
         conn = PinnedHTTPSConnection('publisher.test')
-        with patch('news.ingestion.socket.getaddrinfo', return_value=[(2, 1, 6, '', ('127.0.0.1', 443))]):
+        with patch('news.feed_transport.socket.getaddrinfo', return_value=[(2, 1, 6, '', ('127.0.0.1', 443))]):
             with self.assertRaises(ValueError):
                 conn.connect()
 
@@ -495,3 +496,57 @@ class AutomaticScanConfigurationTests(TestCase):
             scan.return_value = Scan(status='success', created_count=0)
             call_command('scan_news', stdout=StringIO())
         self.assertEqual(scan.call_count, Source.objects.filter(enabled=True).count())
+
+
+class FeedDeadlineTests(TestCase):
+    def test_deadline_kills_and_reaps_a_blocked_worker(self):
+        import os
+        import subprocess
+        import sys
+        import tempfile
+        import time
+        from pathlib import Path
+        from .ingestion import fetch_feed
+        with tempfile.TemporaryDirectory(prefix='synthetic-feed-deadline-') as folder:
+            pidfile = Path(folder) / 'pid'
+            code = f'import os,time; from pathlib import Path; Path({str(pidfile)!r}).write_text(str(os.getpid())); time.sleep(60)'
+            with patch('news.ingestion.FEED_WORKER_COMMAND', [sys.executable, '-c', code]):
+                started = time.monotonic()
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    fetch_feed('https://example.test/synthetic', timeout=1)
+            self.assertLess(time.monotonic() - started, 5)
+            self.assertTrue(pidfile.exists())
+            with self.assertRaises(ProcessLookupError):
+                os.kill(int(pidfile.read_text()), 0)
+
+    def test_worker_returns_bounded_payload_without_changing_feed_bytes(self):
+        import sys
+        from .ingestion import fetch_feed
+        code = f'import sys; sys.stdout.buffer.write({RSS!r})'
+        with patch('news.ingestion.FEED_WORKER_COMMAND', [sys.executable, '-c', code]):
+            self.assertEqual(fetch_feed('https://example.test/synthetic'), RSS)
+
+    def test_network_only_worker_rejects_invalid_urls_without_exposing_them(self):
+        from .ingestion import fetch_feed
+        with self.assertRaisesMessage(ValueError, 'Feed transport failed'):
+            fetch_feed('http://user:synthetic-secret@127.0.0.1/')
+
+    def test_timeout_is_recorded_and_next_source_still_runs(self):
+        import subprocess
+        user = get_user_model().objects.create_user('synthetic-deadline-scanner')
+        Baseline.objects.create(version='synthetic-deadline', created_by=user, snapshot={}, coverage_gaps='Synthetic', approved_by=user, approved_at=timezone.now())
+        Source.objects.all().update(enabled=False)
+        first = Source.objects.get(pk='https://www.cisa.gov/')
+        second = Source.objects.get(pk='https://www.upguard.com/blog')
+        Source.objects.filter(pk__in=[first.pk, second.pk]).update(enabled=True)
+        def scan(pk):
+            def fetch(url):
+                if pk == first.pk:
+                    raise subprocess.TimeoutExpired('synthetic-worker', 30)
+                return RSS
+            return scan_source(pk, fetch)
+        with patch('news.management.commands.scan_news.scan_source', side_effect=scan):
+            with self.assertRaises(CommandError):
+                call_command('scan_news', stdout=StringIO())
+        self.assertEqual(Scan.objects.get(source=first).status, 'failed')
+        self.assertEqual(Scan.objects.get(source=second).status, 'success')

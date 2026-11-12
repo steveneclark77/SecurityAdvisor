@@ -1,20 +1,20 @@
 """Bounded, HTTPS-only RSS/Atom ingestion. Publisher text is untrusted data."""
 import hashlib
-import http.client
+import json
+from pathlib import Path
+import subprocess
+import sys
 from io import BytesIO
-import ipaddress
-import socket
-import time
 from datetime import datetime, timezone as dt_timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlsplit, urlunsplit
-from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 
 from defusedxml import ElementTree
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from .models import Issue, Scan, Source
+from .feed_transport import validate_url
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -23,79 +23,21 @@ class IngestionQuotaExceeded(ValueError):
     pass
 
 
-def public_address(host):
-    addresses = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
-    if not addresses or any(not ipaddress.ip_address(address[4][0]).is_global for address in addresses):
-        raise ValueError('Feed must resolve exclusively to public addresses.')
-    return addresses[0][4][0]
+FEED_WORKER_COMMAND = [sys.executable, '-m', 'news.feed_transport']
 
 
-class PinnedHTTPSConnection(http.client.HTTPSConnection):
-    """Keep hostname TLS verification while dialing the checked public IP."""
-    def connect(self):
-        target = self._tunnel_host or self.host
-        if target not in settings.NEWS_ALLOWED_HOSTS:
-            raise ValueError('Feed host is not allowed.')
-        self._pinned_ip = public_address(target)
-        through_proxy = bool(self._tunnel_host)
-        original = self._create_connection
-        def dial(address, *args, **kwargs):
-            return original(address if through_proxy else (self._pinned_ip, address[1]), *args, **kwargs)
-        self._create_connection = dial
-        try:
-            super().connect()
-        finally:
-            self._create_connection = original
-
-    def _tunnel(self):
-        # The CONNECT target is the validated IP, while TLS still verifies and
-        # sends SNI for the original publisher hostname after this returns.
-        hostname = self._tunnel_host
-        self._tunnel_host = self._pinned_ip
-        try:
-            super()._tunnel()
-        finally:
-            self._tunnel_host = hostname
-
-
-class PinnedHTTPSHandler(HTTPSHandler):
-    def https_open(self, req):
-        return self.do_open(PinnedHTTPSConnection, req, context=self._context)
-
-
-def validate_url(url, *, feed=False):
-    parts = urlsplit(url)
-    if parts.scheme != 'https' or not parts.hostname or parts.username or parts.password or parts.port not in (None, 443):
-        raise ValueError('Only credential-free HTTPS URLs on port 443 are supported.')
-    if feed:
-        if parts.hostname not in settings.NEWS_ALLOWED_HOSTS:
-            raise ValueError('Feed host is not in NEWS_ALLOWED_HOSTS.')
-        public_address(parts.hostname)
-    return urlunsplit(('https', parts.netloc.lower(), parts.path or '/', parts.query, ''))
-
-
-class SafeRedirect(HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        validate_url(newurl, feed=True)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-
-def fetch_feed(url):
-    validate_url(url, feed=True)
-    request = Request(url, headers={'User-Agent': f'SecurityAdvisor/{settings.APP_VERSION} (+RSS reader)', 'Accept': 'application/rss+xml, application/atom+xml, application/xml', 'Accept-Encoding': 'identity'})
-    # Keep inherited proxy and CA settings; redirects are checked before sending.
-    started = time.monotonic()
-    with build_opener(SafeRedirect(), PinnedHTTPSHandler()).open(request, timeout=10) as response:
-        chunks = []
-        size = 0
-        while True:
-            chunk = response.read1(65536)
-            size += len(chunk)
-            if size > MAX_BYTES or time.monotonic() - started > 30:
-                raise ValueError('Feed exceeds size or duration limit.')
-            if not chunk:
-                return b''.join(chunks)
-            chunks.append(chunk)
+def fetch_feed(url, *, timeout=30):
+    """Kill and reap network work at the overall deadline, including DNS/headers."""
+    result = subprocess.run(FEED_WORKER_COMMAND,
+        input=json.dumps({'url': url, 'allowed_hosts': settings.NEWS_ALLOWED_HOSTS, 'app_version': settings.APP_VERSION}).encode(),
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout,
+        cwd=Path(__file__).resolve().parent.parent, check=False)
+    # subprocess.run kills and waits for the worker before raising on timeout.
+    if result.returncode:
+        raise ValueError('Feed transport failed; inspect endpoint and network policy.')
+    if len(result.stdout) > MAX_BYTES:
+        raise ValueError('Feed exceeds size limit.')
+    return result.stdout
 
 
 def text(element, name):
