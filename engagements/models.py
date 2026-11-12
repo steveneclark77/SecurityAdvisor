@@ -74,6 +74,9 @@ class Contact(models.Model):
             raise ValidationError('Provide the selected preferred contact method.')
 
 
+CONTACT_ROLES = [('business_owner','Business owner'),('technical','Technical contact'),('evidence','Evidence provider'),('remediation','Remediation implementer'),('other','Other stakeholder')]
+
+
 class EngagementContact(models.Model):
     engagement = models.ForeignKey(Engagement, on_delete=models.PROTECT, related_name='contact_links')
     contact = models.ForeignKey(Contact, on_delete=models.PROTECT, related_name='engagement_links')
@@ -88,6 +91,11 @@ class EngagementContact(models.Model):
             models.UniqueConstraint(fields=['engagement','contact'], name='unique_engagement_contact'),
             models.UniqueConstraint(fields=['engagement'], condition=models.Q(primary=True, active=True), name='one_active_primary_contact'),
         ]
+
+    @property
+    def role_labels(self):
+        labels = dict(CONTACT_ROLES)
+        return ', '.join(labels.get(role, role) for role in self.roles)
 
     def clean(self):
         super().clean()
