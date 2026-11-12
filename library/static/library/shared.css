@@ -1,3 +1,5 @@
+body{font:16px system-ui}
+.errorlist{color:#a42121}
 .guidance-panel{background:#eaf3fa;border-left:3px solid #6d9ab9;border-radius:3px;padding:14px 18px;margin:16px 0;color:#344e64;font-size:.95rem}
 .guidance-label{display:block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#426580;margin-bottom:6px}
 .guidance-panel h2{font-size:1.05rem;margin:4px 0 8px}

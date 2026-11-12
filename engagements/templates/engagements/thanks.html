@@ -1,12 +1,10 @@
-{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Response received</title>
-  <link rel="stylesheet" href="{% static 'library/public.css' %}">
-  <link rel="stylesheet" href="{% static 'library/guidance.css' %}">
+  {% include 'library/styles.html' with public_page=True %}
 </head>
 <body>
   <header>SecurityAdvisor <span aria-label="Application version">v{{ app_version }}</span></header>

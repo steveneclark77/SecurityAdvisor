@@ -158,3 +158,7 @@ News sources use their canonical website URL as the database primary key. The up
 ## Automatic news scanning is off (v0.1.12)
 
 `NEWS_AUTO_SCAN_ENABLED=false` is the default in settings, Compose, and `.env.example`. The updater may restart the worker, but it remains idle without requesting feeds until explicitly enabled. Change the value in `.env` and recreate `news_scanner` to apply it. Manual `docker compose exec web python manage.py scan_news` remains available and retains baseline/source restrictions. See [NEWS.md](NEWS.md).
+
+## Shared application styles
+
+Keep first-party CSS under `library/static/library/`: `shared.css` contains shared typography/components, `app.css` the consultant layout, and `public.css` the public submission layout. Page roots use the single `library/styles.html` include. Reuse these rules rather than adding inline CSS or parallel component definitions; see AGENTS.md for the DRY working agreement.
