@@ -8,7 +8,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '')
 if not SECRET_KEY:
     raise ImproperlyConfigured('Set DJANGO_SECRET_KEY to a random secret.')
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-INSTALLED_APPS = ['django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'library', 'engagements', 'inventory']
+INSTALLED_APPS = ['django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'library', 'engagements', 'inventory', 'news']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF = 'config.urls'
 TEMPLATES = [{'BACKEND':'django.template.backends.django.DjangoTemplates','DIRS':[], 'APP_DIRS':True,'OPTIONS':{'context_processors':['config.context_processors.app_version','django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages']}}]
@@ -39,3 +39,13 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 # Preserve the origin for same-origin form POSTs without disclosing invitation
 # URLs in referrers to external sites. Keep public-page meta policy consistent.
 SECURE_REFERRER_POLICY = 'same-origin'
+
+# Explicit publisher allowlist: arbitrary admin URLs cannot target internal services.
+NEWS_ALLOWED_HOSTS = os.getenv("NEWS_ALLOWED_HOSTS", "feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com,www.cisa.gov,www.upguard.com,www.schneier.com,www.securityweek.com").split(",")
+
+# Stop ingestion rather than discard historical records when a quota is reached.
+NEWS_MAX_ISSUES_PER_SOURCE = int(os.getenv('NEWS_MAX_ISSUES_PER_SOURCE', '10000'))
+NEWS_MAX_AUTO_VERSIONS_PER_ISSUE = int(os.getenv('NEWS_MAX_AUTO_VERSIONS_PER_ISSUE', '100'))
+
+# Automatic feed requests require explicit deployment opt-in; manual scans remain available.
+NEWS_AUTO_SCAN_ENABLED = os.getenv('NEWS_AUTO_SCAN_ENABLED', 'false').strip().lower() == 'true'

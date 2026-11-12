@@ -56,3 +56,15 @@ For an environment with a preinstalled browser, `E2E_EXECUTABLE_PATH` can explic
 - Browser forms (webkit).
 
 The existing Ruff workflow remains separate. Once these jobs have run successfully on GitHub, select their actual check names in the main-branch ruleset if you want them required. Creating the workflow does not change repository protection settings. Artifact retention is seven days; traces contain only synthetic test credentials and data.
+
+## News ingestion
+
+`python manage.py test news` covers synthetic RSS/Atom ingestion, deduplication, baseline gating, disabled sources, invalid/entity XML, network restrictions, failure retention, permissions, and review validation. The browser suite also verifies source creation with disabled incomplete-input buttons, issue triage, and retained manual review snapshots. No live publisher request is part of these tests. See [NEWS.md](NEWS.md) for the separate live endpoint check.
+
+Version-history coverage additionally checks stale edits, reference-only/source changes, exact-version reviews, model/queryset/raw-SQL immutability, quota rollback, publisher proposals, and an isolated legacy-data migration including refused downgrade. A PostgreSQL-only concurrent-edit test exercises row locks (explicitly skipped on SQLite). The browser news test creates a successor with a source reference before reviewing that exact version. SQLite live-server test teardown temporarily removes history triggers only while destroying its synthetic database contents; application requests always run with the guards installed.
+
+Source identity tests cover the actual URL primary key, normalized duplicate rejection, preventing new-instance overwrites, permanent website identity, repeatable seeding without overwriting configuration, and legacy source audit history. Migration tests run in temporary SQLite/PostgreSQL databases on the selected backend, including populated numeric-to-URL foreign-key conversion and a duplicate-URL failure that must preserve rows and immutability guards. PostgreSQL test credentials need the same database creation/deletion privileges required by Django's normal test runner.
+
+Automatic-scan configuration tests verify that a disabled worker performs no database queries or feed requests, enabled loop mode retains baseline and source restrictions, and manual scans work with automatic scanning disabled.
+
+Feed-deadline regression tests start a real blocked synthetic child process, verify it is killed and reaped at the overall deadline, verify successful payload transfer, and check that a failed source does not prevent later sources from being scanned. Transport validation/pinning/parser/quota tests remain in place.

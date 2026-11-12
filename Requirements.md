@@ -195,7 +195,7 @@ The complete first release must demonstrate that:
 - Hosting provider, production file storage, and deployment. The selected application stack is Django/Python with PostgreSQL, server-rendered templates, and Docker Compose; initial operation is local on Windows 10 through WSL2. HTMX/Bootstrap can be added as needed.
 - Detailed intake questions, control content, mappings, and baseline review procedure.
 - Priority matrix, impact aggregation, confidence scale, and exceptional-priority handling.
-- News source list and access methods, daily schedule/time zone, and framework review interval.
+- Additional news sources/access methods and the framework review interval. Initial RSS/Atom sources and a 24-hour worker schedule are selected in v0.1.9.
 - Relevance, novelty, duplicate, and affected-customer matching rules.
 - Classification approach, feedback application, evaluation, and auto-approval safeguards.
 - Report exports, templates, and notifications.
@@ -215,7 +215,7 @@ Resolve these decisions before implementing their relevant milestones. Technolog
 - Remediation separates planned, in-progress, implemented/unverified, partial, verified, and reopened states. Change authorization and verified dependencies gate implementation. Passing evidence-backed retests establish verification; later failures reopen tasks.
 - Reports preserve executive and technical views, evidence provenance, unknowns, exclusions, and baseline coverage gaps. Browser printing/PDF is supported; dedicated document export is not yet implemented.
 - Approved relevant library changes create review tasks, not automatic customer finding updates. Matching is conservatively based on captured profile/modifiers and requires consultant confirmation.
-- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification or daily news ingestion is performed yet.
+- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification is performed. Daily RSS/Atom news collection and manual review are implemented; AI classification remains planned.
 
 
 ### Draft baseline revision
@@ -265,3 +265,23 @@ Every application POST route must have a valid-submission payload and persisted-
 - Explicit inventory exposures offer modifier suggestions for consultant review, without silently changing approved baselines or evaluating safeguards.
 - Capture immutable inventory facts when starting an assessment. Findings may link only to records captured for that assessment/customer. Reports preserve both assessment-time inventory and separately labeled report-time inventory. Legacy assessments remain explicitly uncaptured, never backfilled from current facts.
 - Enforce assigned-customer access for every inventory view and relationship, including superusers. Use synthetic data only until production data safeguards are complete; no credentials or sensitive record contents belong in the inventory.
+
+### Initial news collection implementation (v0.1.9)
+
+Daily RSS/Atom ingestion stores all feed articles as unverified candidates, deduplicated per source URL. Sources are configurable database records. Severity, type, identifiers, and remediation require consultant judgment. Append-only add/update/ignore reviews preserve actor, rationale, proposed guidance, related controls, duplicate links, and issue snapshots. No automatic library changes occur. AI relevance analysis, proposal generation, and automatic application remain future work. See docs/NEWS.md for supported boundaries.
+
+### Issue version history and provenance (v0.1.10)
+
+Issue identity is separate from immutable full-content versions. Each meaningful edit creates a sequential successor with actor, time, origin, and required change reason. Supporting sources are per-version references, including captured attribution and exact publication links; consultant authorship and supporting publishers are separate. Stale writes are rejected. Reviews select the exact current version and later versions require fresh review. Legacy content becomes version 1; old review snapshots remain untouched without inferred version attribution. Publisher changes produce unverified proposal versions without overwriting consultant severity/remediation, and normal sightings create no version. Database guards protect history and current-version transitions. Downgrading by flattening history is unsupported.
+
+### Source URL identity (v0.1.11)
+
+The canonical website URL is the Source primary key and duplicate websites are rejected. Names are non-unique labels; mutable feed endpoints are separate from permanent website identity. Preserve source relationships, immutable reference snapshots, legacy numeric identifiers, and old audit/review JSON during migration. Stop for duplicate canonical websites instead of silently merging historical issues. Seed CISA, UpGuard, Schneier on Security, and SecurityWeek by URL without overwriting existing configuration.
+
+### Automatic news scan configuration (v0.1.12)
+
+Global automatic news scanning requires explicit deployment opt-in through `NEWS_AUTO_SCAN_ENABLED=true`; it defaults off. While off, loop mode remains idle without database/feed access. The setting persists across updates and applies after worker recreation. Manual one-shot scans remain available, with approved-baseline and enabled-source checks.
+
+### Feed fetch deadline (v0.1.13)
+
+Each feed fetch has an overall 30-second parent-enforced deadline covering DNS, redirects, connection/TLS setup, headers, and body reads. Fetching uses a network-only subprocess that is killed and reaped on timeout. A timeout becomes a retained failed scan, and later sources continue. Public-IP pinning, hostname TLS verification, response/parser limits, storage quotas, and the automatic-scanning default-off setting remain enforced.

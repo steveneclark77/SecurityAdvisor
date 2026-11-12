@@ -32,3 +32,8 @@ Reviewers Prioritize:
 - Add every application POST route to the shared submission inventory in `testsupport/csrf_cases.py`, with a valid payload and a persisted-outcome assertion.
 - Verify legitimate CSRF-protected submission as well as rejection of missing/incorrect tokens and invalid origins.
 - Changes to form templates, referrer policies, authentication, or submission behavior require the affected real-browser tests. Do not disable CSRF, bypass browser header behavior, or silently skip unavailable engines.
+
+## Security review follow-up
+
+- For each addressed 0-security finding, reply on its existing PR review thread with a brief description of the code change and associated commit. Resolve the thread after verifying the fix.
+- Inspect existing finding threads even when the latest scan reports no findings; leave findings open until their code fixes are verified.

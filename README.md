@@ -40,7 +40,7 @@ The baseline library includes 20 profiles, eight modifiers, and 14 draft control
 
 The customer workflow now supports assigned synthetic customers, scoped engagements and business context, reusable contacts with engagement-specific roles and a separate contact-setup step, expiring intake/evidence links, assessments pinned to approved baselines, action-level observations and reusable evidence, findings with documented risk judgments, authorized remediation plans and dependencies, retesting, preserved executive/technical reports, edit history, and affected-customer review after approved library changes.
 
-Start with [the synthetic engagement walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md). No exercise customer or approved baseline is automatically created. Starter guidance is incomplete; this is not a certification tool. Use synthetic data only: production MFA, encryption/backup operations, malware scanning, and retention automation remain unfinished. Daily news ingestion, automatic scoring/approval, and team-assignment management are still planned. Reports can be printed or saved as PDF through the browser.
+Start with [the synthetic engagement walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md). No exercise customer or approved baseline is automatically created. Starter guidance is incomplete; this is not a certification tool. Use synthetic data only: production MFA, encryption/backup operations, malware scanning, and retention automation remain unfinished. RSS/Atom news collection and manual review are available; AI classification, automatic scoring/approval, and team-assignment management remain planned. Reports can be printed or saved as PDF through the browser.
 
 ## Customer inventory
 
@@ -57,3 +57,7 @@ The application uses Django 5.2 LTS and PostgreSQL, with Docker Compose for loca
 See [testing and browser regression checks](docs/TESTING.md) for repeatable CSRF and real-browser validation.
 
 See [the setup guide](docs/SETUP.md) for Windows 10/WSL2 prerequisites, startup, baseline review, tests, and production limitations. See [Requirements.md](Requirements.md) for detailed product requirements.
+
+## Security news
+
+Configurable publisher feeds, daily collection, immutable issue versions with multiple supporting sources, and exact-version add/update/ignore reviews are available in Django admin. See [news setup and review](docs/NEWS.md). Automatic news scanning defaults off; enable it explicitly with `NEWS_AUTO_SCAN_ENABLED=true`. Manual scans remain available. Collection never changes approved library or customer records.

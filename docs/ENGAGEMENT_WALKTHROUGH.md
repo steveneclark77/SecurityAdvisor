@@ -113,7 +113,7 @@ Generate a report before and after remediation to confirm that the earlier snaps
 
 Edit a working control, capture a new baseline, and explicitly approve it. Relevant changed/new/removed controls create affected-customer review entries based on captured profiles/modifiers. They do not silently update existing assessments or imply confirmed product exposure.
 
-Open the review queue to plan a dated reassessment or dismiss it with a rationale. Start a new assessment from the newer baseline if needed. Daily news ingestion is still pending the source list and classification design; approved library changes already exercise the reassessment path.
+Open the review queue to plan a dated reassessment or dismiss it with a rationale. Start a new assessment from the newer baseline if needed. Daily RSS/Atom news collection and manual candidate review are available in admin; see [NEWS.md](NEWS.md). AI relevance classification remains planned. News reviews do not change guidance automatically; explicitly approved library changes exercise the reassessment path.
 
 ## Feedback to capture during the exercise
 

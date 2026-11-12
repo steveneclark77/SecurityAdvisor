@@ -46,11 +46,11 @@ fi
 step="pulling the latest code"
 git pull --ff-only origin main
 step="building the application image"
-docker compose build web
+docker compose build web news_scanner
 step="starting PostgreSQL"
 docker compose up -d --wait db
 step="stopping the application for migrations"
-docker compose stop web
+docker compose stop web news_scanner
 step="applying database migrations"
 docker compose run --rm --no-deps web python manage.py migrate --noinput
 step="updating unchanged starter guidance"
@@ -58,7 +58,7 @@ docker compose run --rm --no-deps web python manage.py seed_library --enrich-exi
 step="checking application configuration"
 docker compose run --rm --no-deps web python manage.py check
 step="restarting the application"
-docker compose up -d --force-recreate web
+docker compose up -d --force-recreate web news_scanner
 step="verifying the login page responds"
 docker compose exec -T web python - <<'PY'
 import time
