@@ -215,7 +215,7 @@ Resolve these decisions before implementing their relevant milestones. Technolog
 - Remediation separates planned, in-progress, implemented/unverified, partial, verified, and reopened states. Change authorization and verified dependencies gate implementation. Passing evidence-backed retests establish verification; later failures reopen tasks.
 - Reports preserve executive and technical views, evidence provenance, unknowns, exclusions, and baseline coverage gaps. Browser printing/PDF is supported; dedicated document export is not yet implemented.
 - Approved relevant library changes create review tasks, not automatic customer finding updates. Matching is conservatively based on captured profile/modifiers and requires consultant confirmation.
-- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification or daily news ingestion is performed yet.
+- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification is performed. Daily RSS/Atom news collection and manual review are implemented; AI classification remains planned.
 
 
 ### Draft baseline revision
@@ -265,3 +265,7 @@ Every application POST route must have a valid-submission payload and persisted-
 - Explicit inventory exposures offer modifier suggestions for consultant review, without silently changing approved baselines or evaluating safeguards.
 - Capture immutable inventory facts when starting an assessment. Findings may link only to records captured for that assessment/customer. Reports preserve both assessment-time inventory and separately labeled report-time inventory. Legacy assessments remain explicitly uncaptured, never backfilled from current facts.
 - Enforce assigned-customer access for every inventory view and relationship, including superusers. Use synthetic data only until production data safeguards are complete; no credentials or sensitive record contents belong in the inventory.
+
+### Initial news collection implementation (v0.1.9)
+
+Daily RSS/Atom ingestion stores all feed articles as unverified candidates, deduplicated per source URL. Sources are configurable database records. Severity, type, identifiers, and remediation require consultant judgment. Append-only add/update/ignore reviews preserve actor, rationale, proposed guidance, related controls, duplicate links, and issue snapshots. No automatic library changes occur. AI relevance analysis, proposal generation, and automatic application remain future work. See docs/NEWS.md for supported boundaries.

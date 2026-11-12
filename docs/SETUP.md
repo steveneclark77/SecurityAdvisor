@@ -73,7 +73,7 @@ The Dockerfile accepts an optional BuildKit secret named `pip_ca_bundle` contain
 
 ## Production boundary and retention
 
-Customer workflow features support synthetic exercises only. MFA, news ingestion, and retention automation remain unimplemented. Do not store sensitive customer data yet. Production requires reviewed authentication/MFA, HTTPS, a production server and static-file serving, authorization review, encrypted storage/backups, malware scanning, restore testing, and retention/deletion controls.
+Customer workflow features support synthetic exercises only. MFA and retention automation remain unimplemented. News collection requires configured feeds and manual review. Do not store sensitive customer data yet. Production requires reviewed authentication/MFA, HTTPS, a production server and static-file serving, authorization review, encrypted storage/backups, malware scanning, restore testing, and retention/deletion controls.
 
 Retention is three years. Engagement closure is a proposed starting point, not yet approved. Attachment, history, backup, and exception treatment remains to be defined. Operations are expected to be US-only with no additional data-location requirement.
 
@@ -142,3 +142,7 @@ After updating/rebuilding, reload the intake page from its original invitation U
 ## Inventory workflow (v0.1.8)
 
 Run the normal updater to apply additive inventory/assessment migrations. Existing intakes, approvals, findings, and reports are preserved; old assessments are not backfilled with current inventory facts. Use the Inventory header entry or engagement shortcut and follow [INVENTORY.md](INVENTORY.md). This inventory captures facts and dependencies; it does not scan systems or certify safeguards automatically.
+
+## News collection (v0.1.9)
+
+The normal updater applies additive News migrations and starts the daily `news_scanner` worker. Manage publisher feeds and candidates in Django admin; see [NEWS.md](NEWS.md) for permissions, feed validation, pause/retry behavior, and network requirements. The worker waits for an approved baseline and never changes customer records or approved guidance.

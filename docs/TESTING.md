@@ -56,3 +56,7 @@ For an environment with a preinstalled browser, `E2E_EXECUTABLE_PATH` can explic
 - Browser forms (webkit).
 
 The existing Ruff workflow remains separate. Once these jobs have run successfully on GitHub, select their actual check names in the main-branch ruleset if you want them required. Creating the workflow does not change repository protection settings. Artifact retention is seven days; traces contain only synthetic test credentials and data.
+
+## News ingestion
+
+`python manage.py test news` covers synthetic RSS/Atom ingestion, deduplication, baseline gating, disabled sources, invalid/entity XML, network restrictions, failure retention, permissions, and review validation. The browser suite also verifies source creation with disabled incomplete-input buttons, issue triage, and retained manual review snapshots. No live publisher request is part of these tests. See [NEWS.md](NEWS.md) for the separate live endpoint check.

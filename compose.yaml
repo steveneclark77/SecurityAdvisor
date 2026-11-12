@@ -14,7 +14,8 @@ services:
       retries: 12
   web:
     build: .
-    environment:
+    environment: &app_environment
+      NEWS_ALLOWED_HOSTS: ${NEWS_ALLOWED_HOSTS:-feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
@@ -29,6 +30,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  news_scanner:
+    build: .
+    command: ["python", "manage.py", "scan_news", "--loop"]
+    restart: unless-stopped
+    environment: *app_environment
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   evidence_data:
