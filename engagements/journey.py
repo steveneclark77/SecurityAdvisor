@@ -13,6 +13,7 @@ def engagement_journey(engagement, intake):
     scope_ready = bool(contacts and engagement.scope.strip() and engagement.assessment_authorization.strip())
     inventory = engagement.customer.inventory_items.filter(archived=False)
     items = inventory.count()
+    operations = inventory.filter(kind='operation').exists()
     unknown = inventory.filter(state='unknown').count()
     gaps = engagement.customer.inventory_followups.filter(status='open').count()
     assessments = engagement.assessments.count()
@@ -46,7 +47,7 @@ def engagement_journey(engagement, intake):
         step('intake', 'Customer intake', 'recorded' if intake else ('progress' if intake_started else 'new'),
              'Customer response received' if intake else ('Submission link issued; awaiting response' if invited else ('Previous link closed; no response recorded' if intake_started else 'No customer response recorded')), base+'?area=intake#work-intake', action='Review' if intake else ('Edit' if intake_started else 'Start'),
              reason='Review the customer response and confirm unclear facts. Intake is optional for a consultant-led engagement.', bullets=['Business activities and technology', 'Operational deadlines and impact', 'Information to confirm with the customer']),
-        step('inventory', 'Inventory and operations', ('progress' if unknown or gaps else 'recorded') if items else 'new', f'{count_text(items, "active record")} · {unknown} unknown · {count_text(gaps, "open follow-up")}', reverse('inventory_detail', args=[engagement.customer_id]),
+        step('inventory', 'Inventory and operations', ('progress' if unknown or gaps or not operations else 'recorded') if items else 'new', f'{count_text(items, "active record")} · {unknown} unknown · {count_text(gaps, "open follow-up")}', reverse('inventory_detail', args=[engagement.customer_id]),
              reason='Record business operations and their dependencies before starting an assessment. The assessment captures inventory as it stands at that time.', bullets=['Business operations, owners, and deadlines', 'Providers, devices, software, and networks', 'Data and dependencies', 'Missing facts under Information to confirm']),
         step('assessments', 'Assessments', ('progress' if outstanding else 'recorded') if assessments else 'new', f'{count_text(assessments, "assessment")} · {count_text(outstanding, "action")} needing investigation', base+'?area=assessments#work-assessments' if assessments else reverse('assessment_new', args=[engagement.pk]),
              reason='Choose an approved baseline and review applicability, observations, and verification. Unknown results remain investigation work.', bullets=['Approved baseline and profile', 'Captured inventory and applicability', 'Evidence-backed observations and uncertainty']),
@@ -61,7 +62,7 @@ def engagement_journey(engagement, intake):
         next_key = 'scope'
     elif not intake and not invited and not items and not assessments:
         next_key = 'intake'
-    elif not items:
+    elif not items or not operations:
         next_key = 'inventory'
     elif not assessments:
         next_key = 'assessments'

@@ -109,3 +109,13 @@ class JourneyTests(TestCase):
         finding.risk_acceptance = 'Synthetic owner accepted this risk pending review'
         finding.save()
         self.assertEqual(engagement_journey(f.engagement, None)['next']['key'], 'evidence')
+
+
+    def test_provider_only_inventory_still_recommends_recording_business_operations(self):
+        from inventory.models import InventoryItem
+        engagement, intake = self.fresh_engagement()
+        InventoryItem.objects.create(customer=engagement.customer, kind='provider', name='Synthetic provider', state='reported', provenance='Synthetic customer interview')
+        journey = engagement_journey(engagement, intake)
+        self.assertEqual(journey['next']['key'], 'inventory')
+        self.assertEqual(journey['next']['state'], 'progress')
+        self.assertEqual(journey['next']['action'], 'Edit')
