@@ -19,7 +19,25 @@ class RetainedAdmin(admin.ModelAdmin):
 
 @admin.register(Source)
 class SourceAdmin(RetainedAdmin):
-    list_display = ['name', 'enabled', 'feed_url']
+    list_display = ['name', 'url', 'enabled', 'feed_url']
+
+    def get_readonly_fields(self, request, obj=None):
+        return ['url', 'legacy_id', 'created_at'] if obj else ['legacy_id', 'created_at']
+
+    def history_view(self, request, object_id, extra_context=None):
+        from django.contrib.admin.models import LogEntry
+        from django.contrib.admin.utils import unquote
+        from django.contrib.contenttypes.models import ContentType
+        response = super().history_view(request, object_id, extra_context)
+        obj = self.get_object(request, unquote(object_id))
+        if obj and obj.legacy_id is not None and hasattr(response, 'context_data'):
+            from django.contrib.admin.views.main import PAGE_VAR
+            actions = LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(Source),
+                object_id__in=[obj.pk, str(obj.legacy_id)]).select_related('user', 'content_type').order_by('action_time')
+            paginator = self.get_paginator(request, actions, 100)
+            page = paginator.get_page(request.GET.get(PAGE_VAR, 1))
+            response.context_data.update(action_list=page, page_range=paginator.get_elided_page_range(page.number), pagination_required=paginator.count > 100)
+        return response
     list_filter = ['enabled']
     search_fields = ['name', 'notes']
 

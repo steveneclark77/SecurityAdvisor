@@ -150,3 +150,7 @@ The normal updater applies additive News migrations and starts the daily `news_s
 ## Issue version history (v0.1.10)
 
 The normal updater migrates existing news issues into immutable version 1 records, preserving old review snapshots without guessing exact version links. It stops both application and scanner during migration. Back up first: these history migrations refuse downgrade; restoring a pre-upgrade backup is the supported rollback. See [NEWS.md](NEWS.md) for next-version editing, per-version sources, network requirements, and configurable ingestion quotas.
+
+## URL-based source identity (v0.1.11)
+
+News sources use their canonical website URL as the database primary key. The updater transfers issue, scan, and version-reference relationships while retaining old numeric IDs and historical snapshots. It also seeds CISA, UpGuard, Schneier on Security, and SecurityWeek without overwriting existing URL-matched configuration. Existing duplicate canonical websites stop migration for review rather than being merged silently. Names and feed URLs remain editable; website identity is read-only after creation. Default feed-host allowlisting includes all seven publishers. See [NEWS.md](NEWS.md) for the endpoints and normalization rules.

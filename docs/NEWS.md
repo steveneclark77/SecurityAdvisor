@@ -1,16 +1,24 @@
-# Security news ingestion and version history (v0.1.10)
+# Security news ingestion and version history (v0.1.11)
 
 After an approved baseline exists, the daily worker reads enabled RSS/Atom sources and saves article candidates for human review. News is a shared-library workflow, separate from customer findings. Collection does not scan customer systems, establish customer applicability, assign severity, apply remediation, or change controls/baselines/assessments/reports. Every feed article is a candidate, including unrelated news. AI relevance classification and generated recommendations remain future work.
 
 ## Sources
 
-Open `/admin/` and use **News > Sources** to configure name, website URL, feed URL, notes, and enabled status. Disable a source to stop fetching; its history remains. Initial migration creates:
+Open `/admin/` and use **News > Sources** to configure name, website URL, feed URL, notes, and enabled status. Disable a source to stop fetching; its history remains. Migrations seed these seven sources by website URL:
 
 | Source | Website | Initial feed |
 | --- | --- | --- |
 | The Hacker News | https://thehackernews.com/ | https://feeds.feedburner.com/TheHackersNews |
 | Bleeping Computer | https://www.bleepingcomputer.com/ | https://www.bleepingcomputer.com/feed/ |
 | Dark Reading | https://www.darkreading.com/ | https://www.darkreading.com/rss.xml |
+| CISA | https://www.cisa.gov/ | https://www.cisa.gov/cybersecurity-advisories/all.xml |
+| UpGuard | https://www.upguard.com/blog | https://www.upguard.com/blog/rss.xml |
+| Schneier on Security | https://www.schneier.com/ | https://www.schneier.com/feed/atom/ |
+| SecurityWeek | https://www.securityweek.com/ | https://www.securityweek.com/feed/ |
+
+The website `url` is the actual database primary key, not a separate numeric ID or a name. All issue, scan, and supporting-reference foreign keys now use this URL. Names are labels and may repeat. Website URLs are normalized before ordinary saves: HTTPS/lowercase host, omitted default port, no fragment, root slash retained, and trailing slashes removed from non-root paths. Queries, credentials, and non-HTTPS identities are rejected. Database primary-key enforcement rejects duplicate URLs; normal forms also reject normalized duplicates. Different host aliases, redirects, and distinct paths are not automatically merged.
+
+A saved website URL is permanent and read-only in admin, while its name, feed URL, notes, and enabled flag remain configurable. Create a separate source if the website identity changes; disable the old record to retain provenance. Old numeric IDs are retained as read-only `legacy_id` values for migrated sources. Existing JSON/audit records retain their original values, and source admin history includes actions recorded under either identity.
 
 Verify endpoint availability and reuse terms in your deployment. This cloud environment blocked live feed probes at its outbound proxy; these endpoints have not been validated live here. Update feed URLs when publishers change them. Homepages are references, not HTML scraping targets. The app stores bounded feed excerpts and links, not downloaded full articles.
 
@@ -36,7 +44,9 @@ An add/update decision records a reviewed proposal only. Apply approved guidance
 
 ## Migration and historical records
 
-Existing issue content becomes version 1 with `legacy_migration` origin, original-source attribution, and unknown historical authorship. Existing review JSON is preserved exactly. Such reviews keep a null version link: their snapshots may describe earlier edits, so the app does not falsely identify them as reviews of version 1. Assessments, reports, baselines, approvals, and customer audit records are not rewritten.
+Existing issue content becomes version 1 with `legacy_migration` origin, original-source attribution, and unknown historical authorship. Existing review JSON is preserved exactly. The URL-key migration transfers every source relationship atomically while retaining source-name/website snapshots. If pre-existing websites normalize to a duplicate URL, it stops with their old IDs rather than merge or discard history. Correct those records after reviewing their relationships, then rerun the updater.
+
+Such reviews keep a null version link: their snapshots may describe earlier edits, so the app does not falsely identify them as reviews of version 1. Assessments, reports, baselines, approvals, and customer audit records are not rewritten.
 
 Version-history migrations deliberately refuse downgrade. Flattening multiple versions into the old mutable row would lose history; removing the database guards would weaken it. Back up before migrating. To downgrade, restore a reviewed pre-upgrade backup rather than reversing these migrations. The updater stops web and scanner before migrating and restarts them only after successful checks.
 
@@ -72,4 +82,4 @@ Quota failures roll back that source's candidate/version writes and record a fai
 
 ## Validation
 
-`python manage.py test news` covers synthetic feeds, repeated sightings, publisher changes, provenance, immutable rows, stale forms, quotas, parser/connection boundaries, and permissions. An isolated legacy-database migration test verifies content/review preservation and refusal to downgrade. The PostgreSQL suite additionally races two editors to verify that one succeeds and the stale editor is rejected. Chromium/WebKit tests exercise source creation, version/reference creation, disabled incomplete-input buttons, and exact-version review using real CSRF behavior. No test contacts publishers. Live endpoint correctness still requires a separate check on an allowed network.
+`python manage.py test news` covers synthetic feeds, repeated sightings, publisher changes, provenance, immutable rows, stale forms, quotas, parser/connection boundaries, and permissions. Isolated migration tests run on the selected database backend, verify source-key conversion and content/review preservation, and check that duplicate websites stop migration without removing history guards. They create and destroy only temporary test databases. The PostgreSQL suite additionally races two editors to verify that one succeeds and the stale editor is rejected. Chromium/WebKit tests exercise source creation, version/reference creation, disabled incomplete-input buttons, and exact-version review using real CSRF behavior. No test contacts publishers. Live endpoint correctness still requires a separate check on an allowed network.

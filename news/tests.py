@@ -19,7 +19,7 @@ class IngestionTests(TestCase):
         self.source = Source.objects.create(name='Synthetic feed', url='https://example.test/', feed_url='https://example.test/rss', enabled=True)
 
     def test_seeded_publishers(self):
-        self.assertEqual(Source.objects.exclude(pk=self.source.pk).count(), 3)
+        self.assertEqual(Source.objects.exclude(pk=self.source.pk).count(), 7)
 
     def test_idempotent_and_preserves_reviewed_content(self):
         scan = scan_source(self.source.pk, lambda url: RSS)
@@ -382,3 +382,73 @@ class FeedBoundaryTests(TestCase):
         with patch('news.ingestion.socket.getaddrinfo', return_value=[(2, 1, 6, '', ('127.0.0.1', 443))]):
             with self.assertRaises(ValueError):
                 conn.connect()
+
+
+class SourceIdentityTests(TestCase):
+    def test_url_is_primary_key_and_normalized_duplicate_is_rejected(self):
+        from django.db import IntegrityError, transaction
+        self.assertEqual(Source._meta.pk.name, 'url')
+        original = Source.objects.get(pk='https://www.cisa.gov/')
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Source.objects.create(name='Duplicate CISA', url='HTTPS://WWW.CISA.GOV:443/#news', feed_url=original.feed_url)
+        original.refresh_from_db()
+        self.assertEqual(original.name, 'CISA')
+        self.assertEqual(Source.objects.count(), 7)
+        duplicate = Source(name='Another label', url='https://WWW.CISA.GOV', feed_url=original.feed_url)
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    def test_new_instance_save_cannot_overwrite_existing_source(self):
+        from django.db import IntegrityError, transaction
+        original = Source.objects.get(pk='https://www.cisa.gov/')
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Source(name='Silent overwrite', url=original.pk, feed_url=original.feed_url).save()
+        original.refresh_from_db()
+        self.assertEqual(original.name, 'CISA')
+
+    def test_requested_seeds_are_idempotent_and_keep_customizations(self):
+        import importlib
+        from django.apps import apps
+        from django.db import connection
+        seed = importlib.import_module('news.migrations.0006_add_requested_sources').seed
+        source = Source.objects.get(pk='https://www.upguard.com/blog')
+        source.notes = 'Consultant configuration must survive seeding'
+        source.save()
+        for _ in range(2):
+            seed(apps, connection.schema_editor())
+        source.refresh_from_db()
+        self.assertEqual(Source.objects.count(), 7)
+        self.assertEqual(source.notes, 'Consultant configuration must survive seeding')
+        self.assertSetEqual(set(Source.objects.filter(url__in=['https://www.cisa.gov/', 'https://www.upguard.com/blog', 'https://www.schneier.com/', 'https://www.securityweek.com/']).values_list('name', flat=True)), {'CISA', 'UpGuard', 'Schneier on Security', 'SecurityWeek'})
+
+    def test_names_are_labels_and_url_identity_is_permanent(self):
+        source = Source.objects.get(pk='https://www.cisa.gov/')
+        Source.objects.create(name=source.name, url='https://alternate.example.test/', feed_url=source.feed_url)
+        source.url = 'https://different.example.test/'
+        with self.assertRaises(ValidationError):
+            source.save()
+        self.assertTrue(Source.objects.filter(pk='https://www.cisa.gov/').exists())
+
+    def test_canonical_path_and_invalid_website_urls(self):
+        from .source_urls import canonical_source_url
+        self.assertEqual(canonical_source_url(' HTTPS://WWW.UPGUARD.COM:443/blog/#section '), 'https://www.upguard.com/blog')
+        for value in ['http://example.test/', 'https://user:secret@example.test/', 'https://example.test/?token=secret', 'https://example.test:444/']:
+            with self.assertRaises(ValidationError):
+                canonical_source_url(value)
+
+    def test_admin_history_includes_legacy_numeric_identity(self):
+        from django.contrib.admin.models import LogEntry, CHANGE
+        from django.contrib.admin.utils import quote
+        from django.contrib.contenttypes.models import ContentType
+        from django.urls import reverse
+        user = get_user_model().objects.create_superuser('synthetic-source-auditor', password='synthetic-password')
+        source = Source.objects.get(pk='https://www.cisa.gov/')
+        # Seeded after the key migration, so emulate a retained legacy mapping.
+        source.legacy_id = 9001
+        source.save()
+        LogEntry.objects.create(user=user, content_type=ContentType.objects.get_for_model(Source), object_id='9001', object_repr='Original source label', action_flag=CHANGE, change_message='Synthetic legacy source edit')
+        self.client.force_login(user)
+        response = self.client.get(reverse('admin:news_source_history', args=[quote(source.pk)]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Synthetic legacy source edit')
+        self.assertContains(self.client.get(reverse('admin:news_source_change', args=[quote(source.pk)])), 'https://www.cisa.gov/')

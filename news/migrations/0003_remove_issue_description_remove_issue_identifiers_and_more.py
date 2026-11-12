@@ -21,6 +21,9 @@ def copy_versions(apps, schema_editor):
             source_name=issue.source.name, source_website=issue.source.url, source_url=issue.url,
             source_published_at=issue.published_at, notes='Original discovery source; imported from legacy issue.')
         Issue.objects.using(alias).filter(pk=issue.pk).update(current_version_id=version.pk)
+    # Flush deferred FK checks before the following PostgreSQL ALTER TABLEs.
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute('SET CONSTRAINTS ALL IMMEDIATE')
     # Existing review snapshots may describe older content: deliberately do not
     # relabel them as reviews of the newly captured legacy version.
 

@@ -273,3 +273,7 @@ Daily RSS/Atom ingestion stores all feed articles as unverified candidates, dedu
 ### Issue version history and provenance (v0.1.10)
 
 Issue identity is separate from immutable full-content versions. Each meaningful edit creates a sequential successor with actor, time, origin, and required change reason. Supporting sources are per-version references, including captured attribution and exact publication links; consultant authorship and supporting publishers are separate. Stale writes are rejected. Reviews select the exact current version and later versions require fresh review. Legacy content becomes version 1; old review snapshots remain untouched without inferred version attribution. Publisher changes produce unverified proposal versions without overwriting consultant severity/remediation, and normal sightings create no version. Database guards protect history and current-version transitions. Downgrading by flattening history is unsupported.
+
+### Source URL identity (v0.1.11)
+
+The canonical website URL is the Source primary key and duplicate websites are rejected. Names are non-unique labels; mutable feed endpoints are separate from permanent website identity. Preserve source relationships, immutable reference snapshots, legacy numeric identifiers, and old audit/review JSON during migration. Stop for duplicate canonical websites instead of silently merging historical issues. Seed CISA, UpGuard, Schneier on Security, and SecurityWeek by URL without overwriting existing configuration.

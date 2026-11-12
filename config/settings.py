@@ -41,7 +41,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 SECURE_REFERRER_POLICY = 'same-origin'
 
 # Explicit publisher allowlist: arbitrary admin URLs cannot target internal services.
-NEWS_ALLOWED_HOSTS = os.getenv("NEWS_ALLOWED_HOSTS", "feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com").split(",")
+NEWS_ALLOWED_HOSTS = os.getenv("NEWS_ALLOWED_HOSTS", "feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com,www.cisa.gov,www.upguard.com,www.schneier.com,www.securityweek.com").split(",")
 
 # Stop ingestion rather than discard historical records when a quota is reached.
 NEWS_MAX_ISSUES_PER_SOURCE = int(os.getenv('NEWS_MAX_ISSUES_PER_SOURCE', '10000'))

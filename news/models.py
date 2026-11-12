@@ -3,16 +3,40 @@ from django.db import models
 
 
 class Source(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    url = models.URLField(max_length=1000)
+    name = models.CharField(max_length=200)
+    url = models.URLField(max_length=1000, primary_key=True)
+    legacy_id = models.PositiveBigIntegerField(null=True, blank=True, unique=True, editable=False)
     feed_url = models.URLField(max_length=1000, help_text='HTTPS RSS or Atom endpoint; its host must be allowed in NEWS_ALLOWED_HOSTS.')
     notes = models.TextField(blank=True)
     enabled = models.BooleanField(default=True, help_text='Disable instead of deleting historical sources.')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._original_url = instance.pk
+        return instance
+
+    def save(self, *args, **kwargs):
+        from .source_urls import canonical_source_url
+        from django.core.exceptions import ValidationError
+        self.url = canonical_source_url(self.url)
+        if not self._state.adding and self.url != self._original_url:
+            raise ValidationError('A source website URL is its permanent identity; create a separate source for a different website.')
+        if self._state.adding:
+            kwargs['force_insert'] = True
+        result = super().save(*args, **kwargs)
+        self._original_url = self.url
+        return result
+
     def clean(self):
         from django.core.exceptions import ValidationError
         from urllib.parse import urlsplit
+        from .source_urls import canonical_source_url
+        try:
+            self.url = canonical_source_url(self.url)
+        except ValidationError as exc:
+            raise ValidationError({"url": exc.messages}) from exc
         try:
             parts = urlsplit(self.feed_url)
             valid = parts.scheme == 'https' and parts.hostname and not parts.username and not parts.password and parts.port in (None, 443)

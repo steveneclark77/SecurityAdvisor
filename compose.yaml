@@ -17,7 +17,7 @@ services:
     environment: &app_environment
       NEWS_MAX_ISSUES_PER_SOURCE: ${NEWS_MAX_ISSUES_PER_SOURCE:-10000}
       NEWS_MAX_AUTO_VERSIONS_PER_ISSUE: ${NEWS_MAX_AUTO_VERSIONS_PER_ISSUE:-100}
-      NEWS_ALLOWED_HOSTS: ${NEWS_ALLOWED_HOSTS:-feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com}
+      NEWS_ALLOWED_HOSTS: ${NEWS_ALLOWED_HOSTS:-feeds.feedburner.com,www.bleepingcomputer.com,www.darkreading.com,www.cisa.gov,www.upguard.com,www.schneier.com,www.securityweek.com}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1

@@ -259,7 +259,7 @@ class BrowserForms(StaticLiveServerTestCase):
         form = self.page.locator('#source_form')
         save = form.locator('input[name="_save"]')
         expect(save).to_be_disabled()
-        for name, value in {'name': 'Synthetic browser feed', 'url': 'https://www.bleepingcomputer.com/', 'feed_url': 'https://www.bleepingcomputer.com/feed/'}.items():
+        for name, value in {'name': 'Synthetic browser feed', 'url': 'https://synthetic-browser.example.test/', 'feed_url': 'https://www.bleepingcomputer.com/feed/'}.items():
             self.page.locator(f'[name={name}]').fill(value)
         expect(save).to_be_enabled()
         self.assertEqual(self.submit(form, save, path).status, 302)
