@@ -43,3 +43,13 @@ Use fictional records only. Start with three operations:
 Add a KTLO operation for device maintenance and backup recovery. Give each its own owner, deadlines, impact, and workaround; do not assume the service-hours tolerance also fits payroll or rent.
 
 Create unknown-provider follow-ups, two grouped laptops with configuration unknowns, accounting/file-sharing applications, the ISP/network, and physical security if relevant. Connect them with the operation and data records. Then start an assessment to freeze those facts for the exercise.
+
+## Inventory explorer (v0.2.1)
+
+Choose a record type in the left sidebar, select a name in the table to preview facts and dependencies, and use the row's **Edit** button to change or archive it. A category has one contextual **Add** action; **All records** has an **Add record** menu. The customer selector is also a compact table.
+
+Search matches names, descriptions, owners, and vendor/products. Apply fact-state and archived filters explicitly. Category counts include active records (or active and archived when selected) before search/state filters; the matching count describes the filtered table. Navigation between types retains these filters. Records are paginated at 50 per page; the preview defaults to the first visible record and never fetches an unrelated/customer-external selection. At narrower widths, the preview stacks below the table and only the table scrolls horizontally.
+
+**Relationships**, **Information to confirm**, and **History** are distinct sidebar destinations. They retain existing editing/archiving/resolution actions and history. Relationships default to active connections; **Show archived** includes archived connections. Connections to archived endpoints remain explicitly labeled. Fact confirmation still does not establish control effectiveness. Historical snapshots retain their original read-only presentation.
+
+Related UI opportunities, outside this change: the assessment action list would benefit most from compact filtering and a selected-action preview; evidence/findings would benefit from separate collection tables; the contact directory could use a table and person preview while keeping shared-person permissions distinct from engagement roles. News already uses Django admin list/detail conventions and does not need the inventory layout wholesale. The engagement journey remains a workflow rather than a record explorer.

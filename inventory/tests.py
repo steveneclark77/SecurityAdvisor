@@ -51,7 +51,7 @@ class InventoryTests(TestCase):
         data={'name':'Archived synthetic payroll','state':'unknown','criticality':'unknown','operation_category':'back_office','archived':'on'}
         self.assertEqual(self.client.post(url,data).status_code,302)
         active_page=self.client.get(reverse('inventory_detail',args=[self.f.customer.pk]))
-        self.assertNotIn(self.f.operation.pk,[item.pk for item,fields in active_page.context['rows']])
+        self.assertNotIn(self.f.operation.pk,[row['item'].pk for row in active_page.context['records']])
         self.assertContains(self.client.get(reverse('inventory_detail',args=[self.f.customer.pk])+'?archived=yes'),'Archived synthetic payroll')
         self.assertTrue(self.f.customer.inventory_events.filter(description__contains='Edit').exists())
         self.assertTrue(InventoryConnection.objects.filter(pk=self.f.connection.pk).exists())
@@ -127,3 +127,53 @@ class InventoryTests(TestCase):
         token=public.cookies['csrftoken'].value
         self.assertEqual(public.post(url,{'unknowns':'Missing provider details','intent':'submit','csrfmiddlewaretoken':token},HTTP_ORIGIN='http://testserver').status_code,200)
         self.assertTrue(InventoryFollowUp.objects.filter(customer=self.f.customer,question='Missing provider details').exists())
+
+    def test_explorer_filters_navigation_and_scoped_preview(self):
+        url=reverse('inventory_detail',args=[self.f.customer.pk])
+        device=InventoryItem.objects.create(customer=self.f.customer,kind='device',name='Synthetic laptop',quantity=2)
+        archived=InventoryItem.objects.create(customer=self.f.customer,kind='device',name='Retired laptop',archived=True)
+        response=self.client.get(url,{'kind':'device','q':'laptop','state':'unknown','selected':self.foreign.pk})
+        self.assertEqual(response.context['selected'],device)
+        self.assertNotContains(response,self.foreign.name)
+        self.assertEqual(response.context['page'].paginator.count,1)
+        self.assertContains(response,'Information needed')
+        devices=next(c for c in response.context['categories'] if c['key']=='device')
+        self.assertEqual(devices['count'],1)
+        self.assertIn('q=laptop',devices['url'])
+        self.assertIn('state=unknown',devices['url'])
+        self.assertNotIn(archived.pk,[row['item'].pk for row in response.context['records']])
+        response=self.client.get(url,{'kind':'device','archived':'yes','selected':archived.pk})
+        self.assertEqual(response.context['selected'],archived)
+        self.assertContains(response,'Archived')
+        response=self.client.get(url,{'kind':'physical'})
+        self.assertIsNone(response.context['selected'])
+        self.assertContains(response,'No records match this view')
+
+    def test_explorer_pages_are_read_only_and_collections_remain_available(self):
+        url=reverse('inventory_detail',args=[self.f.customer.pk])
+        before=self.f.customer.inventory_events.count()
+        for area in ['records','relationships','followups','history','../../other']:
+            response=self.client.get(url,{'area':area,'kind':'invalid','state':'invalid','selected':'invalid','page':'invalid'})
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.context['kind'],'')
+            self.assertEqual(response.context['state'],'')
+        self.assertEqual(self.f.customer.inventory_events.count(),before)
+        self.assertContains(self.client.get(url,{'area':'relationships'}),self.f.connection.details)
+        self.assertContains(self.client.get(url,{'area':'followups'}),self.f.followup.question)
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(url,{'area':'history','selected':self.f.operation.pk}).status_code,404)
+
+    def test_explorer_pagination_retains_filters(self):
+        InventoryItem.objects.bulk_create([InventoryItem(customer=self.f.customer,kind='device',name=f'Laptop {i:03}') for i in range(55)])
+        response=self.client.get(reverse('inventory_detail',args=[self.f.customer.pk]),{'kind':'device','q':'Laptop','state':'unknown','page':2})
+        self.assertEqual(len(response.context['records']),5)
+        self.assertIn('page=1',response.context['previous_url'])
+        self.assertIn('kind=device',response.context['previous_url'])
+        self.assertEqual(response.context['selected'],response.context['records'][0]['item'])
+
+    def test_saved_record_returns_to_its_category_and_preview(self):
+        response=self.client.post(reverse('inventory_item_edit',args=[self.f.operation.pk]),{'name':self.f.operation.name,'state':'unknown','criticality':'unknown','archived':'on'})
+        self.assertEqual(response.status_code,302)
+        self.assertIn('kind=operation',response.url)
+        self.assertIn(f'selected={self.f.operation.pk}',response.url)
+        self.assertIn('archived=yes',response.url)

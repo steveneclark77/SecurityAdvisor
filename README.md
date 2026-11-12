@@ -65,3 +65,5 @@ Configurable publisher feeds, daily collection, immutable issue versions with mu
 ## Engagement journey
 
 Version 0.2.0 introduces a grouped engagement rail, record-derived status markers, and suggested-next guidance. Steps remain accessible in any order through consistent actions. See [the walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md#engagement-journey-v020) for status meanings and the preserved work areas.
+
+The v0.2.1 inventory explorer groups customer records by type, with searchable tables, a read-only selected-record preview, and separate relationships, information follow-ups, and history views. See [Inventory](docs/INVENTORY.md).
