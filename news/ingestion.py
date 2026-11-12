@@ -45,7 +45,7 @@ def fetch_feed(url):
         chunks = []
         size = 0
         while True:
-            chunk = response.read(65536)
+            chunk = response.read1(65536)
             size += len(chunk)
             if size > MAX_BYTES or time.monotonic() - started > 30:
                 raise ValueError('Feed exceeds size or duration limit.')

@@ -98,7 +98,7 @@ class IngestionTests(TestCase):
         from contextlib import contextmanager
         from .ingestion import fetch_feed, MAX_BYTES
         class Oversized:
-            def read(self, size):
+            def read1(self, size):
                 return b'x' * size
         @contextmanager
         def response(*args, **kwargs):
