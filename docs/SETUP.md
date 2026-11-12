@@ -162,3 +162,7 @@ News sources use their canonical website URL as the database primary key. The up
 ## Shared application styles
 
 Keep first-party CSS under `library/static/library/`: `shared.css` contains shared typography/components, `app.css` the consultant layout, and `public.css` the public submission layout. Page roots use the single `library/styles.html` include. Reuse these rules rather than adding inline CSS or parallel component definitions; see AGENTS.md for the DRY working agreement.
+
+## Shared record browsers (v0.2.2)
+
+Use the normal updater after the UI PRs are merged. This release requires no new migrations or configuration. Assessment actions, evidence/findings, and contacts reuse the inventory table/preview components and common stylesheet. Existing data, permissions, forms, CSRF checks and historical snapshots remain in place.

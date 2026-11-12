@@ -80,3 +80,11 @@ Feed-deadline regression tests start a real blocked synthetic child process, ver
 ## Inventory explorer
 
 Inventory tests cover preserved filters, category counts, archived visibility, empty types, pagination, invalid navigation parameters, read-only GETs, and assignment-scoped selection including superusers. The real-browser explorer test covers type navigation, contextual Add, table selection and preview, search empty/recovery states, relationships/follow-ups, and mobile overflow. CI artifacts include `inventory-desktop.png` and `inventory-mobile.png` for each browser engine. Existing inventory form submissions remain in the CSRF matrix.
+
+## Shared assessment, evidence and contact browsers
+
+`python manage.py test engagements.test_browsers inventory testsupport.test_styles` verifies frozen instructions, filters, pagination, invalid/foreign selections, full-name search, read-only GETs, customer assignment for superusers, contact-management/reuse boundaries, retained inactive links and archived records. The existing action-verification regression now explicitly selects the action whose observation is checked. The CSRF submission inventory explicitly selects the evidence request whose scoped link is submitted.
+
+The shared real-browser test covers assessment filters/selection, all three evidence collections, single creation/edit entry points, contact link vs shared-person actions, accessible form labels, search, and preview navigation without page overflow at mobile widths. The inventory browser test also exercises the common table/layout after refactoring. Browser CI artifacts include `assessment-desktop.png`, `evidence-findings-desktop.png`, `contacts-desktop.png` and corresponding mobile screenshots, alongside the inventory screenshots. Both Chromium and WebKit remain required CI jobs.
+
+Common table, filter and pagination templates live in `library/templates/library/components/`; safe URL/pagination/selection helpers live in `library/record_browser.py`. Callers must supply already-authorized querysets. Reusable layout/component styles live in `library/static/library/shared.css`; page widths and engagement workspace layout remain in `app.css`. Entity-specific previews and permission checks stay in their owning app. No client-side rendering framework or CSS injection is involved.

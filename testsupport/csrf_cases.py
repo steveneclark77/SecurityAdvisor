@@ -104,7 +104,7 @@ def submissions(f):
     evidence_url=url('public_response',f.evidence_token)
     add('public_response',evidence_url,evidence_url,{**evidence_data,'title':'Public synthetic evidence'},lambda:m.Evidence.objects.filter(title='Public synthetic evidence').exists(),200)
     for purpose in ['intake','evidence']:
-        add('invite_new',url('engagement_detail',e)+('?area=intake' if purpose=='intake' else '?area=evidence'),url('invite_new',e),{'purpose':purpose,'request_id':f.evidence_request.pk},lambda purpose=purpose:m.Invite.objects.filter(engagement=f.engagement,purpose=purpose).count()==2,200)
+        add('invite_new',url('engagement_detail',e)+('?area=intake' if purpose=='intake' else f'?area=evidence&collection=requests&selected={f.evidence_request.pk}'),url('invite_new',e),{'purpose':purpose,'request_id':f.evidence_request.pk},lambda purpose=purpose:m.Invite.objects.filter(engagement=f.engagement,purpose=purpose).count()==2,200)
     add('revoke_invites',url('engagement_detail',e)+'?area=links',url('revoke_invites',e),{},lambda:not m.Invite.objects.filter(engagement=f.engagement,used_at__isnull=True,expires_at__gt=timezone.now()).exists())
     customer_id=f.customer.pk
     item_url=url('inventory_item_new',customer_id)+'?kind=operation'
