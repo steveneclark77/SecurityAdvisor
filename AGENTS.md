@@ -37,3 +37,9 @@ Reviewers Prioritize:
 
 - For each addressed 0-security finding, reply on its existing PR review thread with a brief description of the code change and associated commit. Resolve the thread after verifying the fix.
 - Inspect existing finding threads even when the latest scan reports no findings; leave findings open until their code fixes are verified.
+
+## DRY and shared styling
+
+- Prioritize DRY in every coding task: reuse and improve existing helpers, components, templates, and styles before introducing parallel implementations.
+- Keep all first-party CSS in shared static stylesheets. Do not add embedded `<style>` blocks, `style` attributes, or JavaScript-generated CSS; use reusable classes and class toggles.
+- Share component rules and typography across public and consultant pages. Keep genuinely different page layouts in their layout stylesheet, using the common stylesheet include.

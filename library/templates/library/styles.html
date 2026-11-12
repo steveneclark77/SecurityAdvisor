@@ -1,0 +1,7 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'library/shared.css' %}">
+{% if public_page %}
+<link rel="stylesheet" href="{% static 'library/public.css' %}">
+{% else %}
+<link rel="stylesheet" href="{% static 'library/app.css' %}">
+{% endif %}

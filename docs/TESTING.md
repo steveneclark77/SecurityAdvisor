@@ -68,3 +68,7 @@ Source identity tests cover the actual URL primary key, normalized duplicate rej
 Automatic-scan configuration tests verify that a disabled worker performs no database queries or feed requests, enabled loop mode retains baseline and source restrictions, and manual scans work with automatic scanning disabled.
 
 Feed-deadline regression tests start a real blocked synthetic child process, verify it is killed and reaped at the overall deadline, verify successful payload transfer, and check that a failed source does not prevent later sources from being scanned. Transport validation/pinning/parser/quota tests remain in place.
+
+## Shared styles and DRY
+
+`python manage.py test testsupport.test_styles` checks every first-party template for embedded style blocks and style attributes. All page roots use `library/styles.html`, which loads `shared.css` plus the relevant `app.css` or `public.css` layout. Typography, validation errors, guidance panels, and print guidance have one shared definition. The browser suite checks stylesheet loading on consultant and public pages, responsive table spacing, print visibility, and the submission confirmation panel.
