@@ -45,7 +45,7 @@ class InventoryTests(TestCase):
 
     def test_customer_inventory_shared_across_engagements_and_history_preserved(self):
         second=Engagement.objects.create(customer=self.f.customer,**{**self.f.engagement_data,'title':'Second synthetic engagement'})
-        self.assertContains(self.client.get(reverse('engagement_detail',args=[second.pk])),'Customer inventory and operations')
+        self.assertContains(self.client.get(reverse('engagement_detail',args=[second.pk])),reverse('inventory_detail',args=[self.f.customer.pk]))
         self.assertContains(self.client.get(reverse('inventory_detail',args=[self.f.customer.pk])),'Synthetic biweekly payroll')
         url=reverse('inventory_item_edit',args=[self.f.operation.pk])
         data={'name':'Archived synthetic payroll','state':'unknown','criticality':'unknown','operation_category':'back_office','archived':'on'}

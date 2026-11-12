@@ -1,0 +1,2 @@
+<section><h2>Assessments</h2>{% for assessment in engagement.assessments.all %}<p><a href="{% url 'assessment_detail' assessment.pk %}">Assessment {{ assessment.pk }}</a> · baseline {{ assessment.baseline.version }} · {{ assessment.profile }} · {{ assessment.created_at }}</p>{% empty %}<p>Start from an approved baseline, then review all applicability decisions.</p>{% endfor %}</section>
+{% if journey.assessment_count %}<p><a class="button button-secondary" href="{% url 'assessment_new' engagement.pk %}">Start another assessment</a></p>{% endif %}

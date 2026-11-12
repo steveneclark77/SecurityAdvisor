@@ -86,7 +86,7 @@ def submissions(f):
     add('task_edit',url('task_edit',f.task.pk),url('task_edit',f.task.pk),{**f.task_data,'title':'Edited synthetic remediation'},lambda:m.Remediation.objects.get(pk=f.task.pk).title=='Edited synthetic remediation')
     add('retest_new',url('retest_new',f.task.pk),url('retest_new',f.task.pk),{'tested_on':date.today().isoformat(),'outcome':'passed','procedure_and_result':'Synthetic weak method denied','evidence':[f.evidence.pk],'residual_risk':'Endpoint compromise remains possible'},lambda:m.Remediation.objects.get(pk=f.task.pk).status=='verified')
     add('generate_requests',url('assessment_detail',f.assessment.pk),url('generate_requests',f.assessment.pk),{},lambda:m.EvidenceRequest.objects.filter(assessment=f.assessment).exists())
-    add('report_new',url('engagement_detail',e),url('report_new',e),{},lambda:m.Report.objects.filter(engagement=f.engagement).exists())
+    add('report_new',url('engagement_detail',e)+'?area=reports',url('report_new',e),{},lambda:m.Report.objects.filter(engagement=f.engagement).exists())
     add('reassessment_edit',url('reassessment_edit',f.review.pk),url('reassessment_edit',f.review.pk),{'status':'planned','decision':'Review synthetic guidance','review_date':date.today().isoformat()},lambda:m.Reassessment.objects.get(pk=f.review.pk).status=='planned')
     for prefix in ['',f'?engagement={e}']:
         name='contact_new'
@@ -104,8 +104,8 @@ def submissions(f):
     evidence_url=url('public_response',f.evidence_token)
     add('public_response',evidence_url,evidence_url,{**evidence_data,'title':'Public synthetic evidence'},lambda:m.Evidence.objects.filter(title='Public synthetic evidence').exists(),200)
     for purpose in ['intake','evidence']:
-        add('invite_new',url('engagement_detail',e),url('invite_new',e),{'purpose':purpose,'request_id':f.evidence_request.pk},lambda purpose=purpose:m.Invite.objects.filter(engagement=f.engagement,purpose=purpose).count()==2,200)
-    add('revoke_invites',url('engagement_detail',e),url('revoke_invites',e),{},lambda:not m.Invite.objects.filter(engagement=f.engagement,used_at__isnull=True,expires_at__gt=timezone.now()).exists())
+        add('invite_new',url('engagement_detail',e)+('?area=intake' if purpose=='intake' else '?area=evidence'),url('invite_new',e),{'purpose':purpose,'request_id':f.evidence_request.pk},lambda purpose=purpose:m.Invite.objects.filter(engagement=f.engagement,purpose=purpose).count()==2,200)
+    add('revoke_invites',url('engagement_detail',e)+'?area=links',url('revoke_invites',e),{},lambda:not m.Invite.objects.filter(engagement=f.engagement,used_at__isnull=True,expires_at__gt=timezone.now()).exists())
     customer_id=f.customer.pk
     item_url=url('inventory_item_new',customer_id)+'?kind=operation'
     item_data={'name':'New synthetic payroll operation','state':'unknown','criticality':'unknown','operation_category':'back_office','schedule':'Biweekly payroll cutoff'}
@@ -131,5 +131,5 @@ def submissions(f):
     add('inventory_followup_new',url('inventory_followup_new',customer_id),url('inventory_followup_new',customer_id),followup_data,lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Which payroll service is used?').exists())
     edit_url=url('inventory_followup_edit',f.followup.pk)
     add('inventory_followup_edit',edit_url,edit_url,{**followup_data,'status':'resolved','response':'Synthetic provider identified'},lambda:InventoryFollowUp.objects.get(pk=f.followup.pk).status=='resolved')
-    add('inventory_intake_followups',url('engagement_detail',e),url('inventory_intake_followups',e),{},lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Legacy provider details to confirm').exists(),prepare=lambda:m.Intake.objects.create(engagement=f.engagement,answers={'unknowns':'Legacy provider details to confirm'},recommendation={'profile':f.assessment.profile,'modifiers':[]}))
+    add('inventory_intake_followups',url('engagement_detail',e)+'?area=intake',url('inventory_intake_followups',e),{},lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Legacy provider details to confirm').exists(),prepare=lambda:m.Intake.objects.create(engagement=f.engagement,answers={'unknowns':'Legacy provider details to confirm'},recommendation={'profile':f.assessment.profile,'modifiers':[]}))
     return items

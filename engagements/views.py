@@ -53,7 +53,14 @@ def engagement_new(request, customer_pk):
 @consultant
 def detail(request, pk):
     engagement = engagement_for(request.user, pk)
-    return render(request, 'engagements/detail.html', {'engagement':engagement, 'intake':engagement.intakes.order_by('-submitted_at').first()})
+    from .journey import engagement_journey
+    intake = engagement.intakes.order_by('-submitted_at').first()
+    selected = request.GET.get('area', '')
+    if selected not in {'scope', 'intake', 'assessments', 'evidence', 'remediation', 'reports', 'history', 'links'}:
+        selected = ''
+    return render(request, 'engagements/detail.html', {'engagement': engagement, 'intake': intake,
+        'journey': engagement_journey(engagement, intake), 'selected_area': selected,
+        'workspace_template': f'engagements/journey/{selected}.html' if selected else None})
 
 
 @consultant

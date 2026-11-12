@@ -285,3 +285,7 @@ Global automatic news scanning requires explicit deployment opt-in through `NEWS
 ### Feed fetch deadline (v0.1.13)
 
 Each feed fetch has an overall 30-second parent-enforced deadline covering DNS, redirects, connection/TLS setup, headers, and body reads. Fetching uses a network-only subprocess that is killed and reaped on timeout. A timeout becomes a retained failed scan, and later sources continue. Public-IP pinning, hostname TLS verification, response/parser limits, storage quotas, and the automatic-scanning default-off setting remain enforced.
+
+### Guided engagement UI (v0.2.0)
+
+Use a grouped journey rail with factual work-status text and shape markers, explicit suggested-next guidance, and small downward connectors. Keep one rail action per work area; use Start for untouched work, Edit for started work, and Review for preserved intake. Display only the selected record workspace alongside the rail, retaining existing editing, evidence, finding, remediation, report, and history workflows. Preparation bullets are informational. Recommendation and status derivation is read-only, scoped to the assigned customer/engagement, and does not imply verification or enforce an order. Preserve existing authorization and validation gates. Use shared styles/components and responsive layouts.

@@ -329,3 +329,48 @@ class BrowserForms(StaticLiveServerTestCase):
         self.visit(reverse('public_response', args=[self.fixture.intake]))
         expect(self.page.locator('body')).to_have_css('font-size', '16px')
         expect(self.page.locator('body')).to_have_css('max-width', '760px')
+
+
+    def test_engagement_journey_guidance_actions_and_responsive_layout(self):
+        def fresh():
+            f = self.fixture
+            customer = m.Customer.objects.create(name='Synthetic Harbor Cafe')
+            customer.assigned_users.add(f.user)
+            engagement = m.Engagement.objects.create(customer=customer, **{**f.engagement_data, 'title': 'Initial security improvement exercise'})
+            m.EngagementContact.objects.create(engagement=engagement, contact=f.person, roles=['business_owner'], active=True)
+            m.Intake.objects.create(engagement=engagement, answers={'activities': 'Synthetic cafe'}, recommendation={'profile': 'Restaurants, cafés, and food service', 'modifiers': ['Payment processing'], 'reason': 'Synthetic customer report; review required.'})
+            return engagement
+        engagement = self.db(fresh)
+        self.login()
+        self.page.set_viewport_size({'width': 1536, 'height': 1100})
+        path = reverse('engagement_detail', args=[engagement.pk])
+        self.visit(path)
+        rail = self.page.get_by_role('navigation', name='Engagement workflow')
+        expect(rail.locator('.journey-action')).to_have_count(7)
+        expect(rail.locator('.is-recommended')).to_have_count(1)
+        expect(rail.locator('[data-step=inventory]')).to_have_class('journey-step is-recommended')
+        expect(rail.get_by_role('link', name='Review customer intake')).to_have_text('Review')
+        expect(rail.get_by_role('link', name='Start inventory and operations')).to_have_text('Start')
+        expect(self.page.locator('.journey-context a, .journey-context button, .journey-context input')).to_have_count(0)
+        self.assertEqual(len(set(rail.locator('a').evaluate_all('links => links.map(a => a.href)'))), 7)
+        for button in rail.locator('a').all():
+            expect(button).to_have_css('background-color', 'rgb(255, 255, 255)')
+        marker = rail.locator('[data-step=inventory]')
+        self.assertEqual(marker.evaluate("e => getComputedStyle(e, '::after').borderTopWidth"), '5px')
+        artifacts = Path('test-artifacts') / self.engine
+        artifacts.mkdir(parents=True, exist_ok=True)
+        self.page.screenshot(path=str(artifacts / 'journey-desktop.png'), full_page=True)
+        # Selecting any area is allowed, including reporting before assessment.
+        rail.get_by_role('link', name='Start reports').click()
+        expect(self.page.locator('#work-reports')).to_be_visible()
+        expect(self.page.get_by_role('button', name='Capture executive and technical report')).to_be_visible()
+        self.visit(path)
+        rail.get_by_role('link', name='Review customer intake').click()
+        expect(self.page.locator('#work-intake')).to_be_visible()
+        expect(self.page.get_by_text('Synthetic cafe', exact=True)).to_be_visible()
+        # Small screens stack the same rail and guidance without clipping actions.
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.visit(path)
+        self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+        expect(self.page.get_by_role('link', name='Start inventory and operations')).to_be_visible()
+        self.page.screenshot(path=str(artifacts / 'journey-mobile.png'), full_page=True)
