@@ -73,10 +73,11 @@ class IngestionTests(TestCase):
             SafeRedirect().redirect_request(None, None, 302, '', {}, 'http://127.0.0.1/')
 
     def test_baseline_gate_and_disabled_sources(self):
-        with patch('news.management.commands.scan_news.scan_source') as scan:
+        with patch('news.management.commands.scan_news.close_old_connections') as close_idle, patch('news.management.commands.scan_news.scan_source') as scan:
             with self.assertRaises(CommandError):
                 call_command('scan_news')
             scan.assert_not_called()
+            close_idle.assert_not_called()
         user = get_user_model().objects.create_user('synthetic')
         Baseline.objects.create(version='synthetic', created_by=user, snapshot={}, coverage_gaps='Synthetic only', approved_by=user, approved_at=timezone.now())
         with patch('news.management.commands.scan_news.scan_source') as scan:

@@ -14,7 +14,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         while True:
-            close_old_connections()
             if not Baseline.objects.filter(approved_at__isnull=False).exists():
                 if not options['loop']:
                     raise CommandError('Approve a baseline before scanning news.')
@@ -30,3 +29,6 @@ class Command(BaseCommand):
             if not options['loop']:
                 return
             time.sleep(86400)
+            # Recycle idle worker connections between cycles, never a caller
+            # transaction when scan_news is invoked as a one-shot command.
+            close_old_connections()
