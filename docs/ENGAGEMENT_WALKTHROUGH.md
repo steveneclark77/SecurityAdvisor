@@ -118,3 +118,13 @@ Open the review queue to plan a dated reassessment or dismiss it with a rational
 ## Feedback to capture during the exercise
 
 Record confusing questions, missing evidence examples, awkward navigation, excessive repeated entry, unclear risk definitions, grouping problems, and report omissions. Distinguish a workflow problem from a scenario where the underlying facts are simply unknown. We will refine the application after this exercise.
+
+## Engagement journey (v0.2.0)
+
+The engagement overview groups work into **Understand the business**, **Assess and investigate**, and **Improve and report**. Read the status text and counts beside each node; the filled, half-filled, and hollow circles also distinguish recorded work, open work, and areas without records. These describe stored work, not security verification or complete coverage.
+
+Use the single **Edit**, **Review**, or **Start** action beside a step. The rail opens the relevant work area or existing form. Record collections, original intake, evidence requests, findings, remediation/retests, and reports appear in the right-hand pane when selected. Scope/context and contacts have their existing editing actions there. Inventory opens the shared customer inventory, and a first assessment opens its existing form. Started assessments open their record list, including **Start another assessment**. Engagement history and submission-link revocation are available below the rail.
+
+**Suggested next** is read-only guidance, with an explanation and preparation bullets. It does not lock navigation or indicate that a button is authorized or ready to submit. Existing server-side baseline/contact/change-authorization rules still apply. Reports and other areas remain reachable before earlier work is finished. The recommendation proceeds from contacts/context and optional intake through inventory, assessment, evidence, remediation when findings warrant it, and reporting; active work can send it back to investigation or retesting. Unknown inventory facts do not prevent assessment guidance once inventory records exist.
+
+There is no separate completion checkbox or automatic intake-review-completed flag. Submitted intake is labeled **Recorded** and uses **Review**; it does not claim consultant review is complete. Inventory with unknown facts or open follow-ups remains **In progress**. Assessment status reflects applicable actions still unknown, untested, or inconclusive. Pending evidence requests and unverified remediation remain open work. A failed assessment test may still be a recorded result, and no stage status implies the customer is secure. Existing captures and audit records are preserved.

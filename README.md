@@ -61,3 +61,7 @@ See [the setup guide](docs/SETUP.md) for Windows 10/WSL2 prerequisites, startup,
 ## Security news
 
 Configurable publisher feeds, daily collection, immutable issue versions with multiple supporting sources, and exact-version add/update/ignore reviews are available in Django admin. See [news setup and review](docs/NEWS.md). Automatic news scanning defaults off; enable it explicitly with `NEWS_AUTO_SCAN_ENABLED=true`. Manual scans remain available. Collection never changes approved library or customer records.
+
+## Engagement journey
+
+Version 0.2.0 introduces a grouped engagement rail, record-derived status markers, and suggested-next guidance. Steps remain accessible in any order through consistent actions. See [the walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md#engagement-journey-v020) for status meanings and the preserved work areas.

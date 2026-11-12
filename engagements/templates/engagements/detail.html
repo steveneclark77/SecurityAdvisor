@@ -1,16 +1,54 @@
-{% extends 'library/base.html' %}{% block content %}
-<h1>{{ engagement }}</h1><p class="notice">Synthetic engagement · Three-year retention required; retention trigger and exceptions are not finalized.</p>
-<nav><a class="button button-secondary" href="{% url 'inventory_detail' engagement.customer_id %}">Customer inventory and operations</a> <a class="button button-secondary" href="{% url 'engagement_contacts' engagement.pk %}">Manage contacts</a> <a class="button button-secondary" href="{% url 'engagement_edit' engagement.pk %}">Edit scope and context</a> <a class="button" href="{% url 'assessment_new' engagement.pk %}">Start assessment</a> <a class="button button-secondary" href="{% url 'request_new' engagement.pk %}">Request evidence</a> <a class="button" href="{% url 'evidence_new' engagement.pk %}">Record evidence</a> <a class="button" href="{% url 'finding_new' engagement.pk %}">Create finding</a></nav>
-<section><h2>1. Scope and authority</h2><p class="preserve">{{ engagement.scope }}</p><p>Excluded: {{ engagement.exclusions|default:'None recorded' }}</p><p>Assessment authorization: {{ engagement.assessment_authorization }}</p><p>Change authorization: {{ engagement.change_authorization|default:'Not obtained — assessment permission does not authorize changes.' }}</p><p>Target: {{ engagement.target_date|default:'Not scheduled' }}</p><p>Active contacts: {% for link in engagement.active_contacts %}{{ link.contact }}{% if link.primary %} (primary){% endif %}{% if not forloop.last %}, {% endif %}{% empty %}None — add contacts before starting an assessment.{% endfor %}</p>{% if engagement.legacy_contact_note %}<p class="notice">Legacy contact note requiring review: {{ engagement.legacy_contact_note }}</p>{% endif %}<p>Deliverables: {{ engagement.deliverables }}</p><p>Data handling: {{ engagement.data_handling }}</p></section>
-<section><h2>2. Intake and business context</h2><form method="post" action="{% url 'invite_new' engagement.pk %}">{% csrf_token %}<input type="hidden" name="purpose" value="intake"><button>Create expiring intake link</button></form>
-{% if intake %}<h3>Latest intake · {{ intake.submitted_at }}</h3><table class="detail-table" aria-label="Details"><tbody>{% for key,value in intake.answers.items %}<tr><th scope="row">{% if key == 'unknowns' %}Information to confirm{% else %}{{ key }}{% endif %}</th><td>{{ value }}</td></tr>{% endfor %}</tbody></table><form method="post" action="{% url 'inventory_intake_followups' engagement.pk %}">{% csrf_token %}<button type="submit">Create inventory follow-ups from intake</button></form><h3>Provisional recommendation</h3><p>{{ intake.recommendation.profile }}</p><p>{{ intake.recommendation.modifiers|join:', ' }}</p><p>{{ intake.recommendation.reason }}</p><p>Confirm with the customer and update the engagement context before assessment. Answers do not automatically overwrite consultant decisions.</p>{% else %}<p>No submitted intake. Intake is optional for a consultant-led synthetic exercise; record business context directly.</p>{% endif %}
-<p>Financial thresholds: {{ engagement.financial_thresholds }}</p><p>Outage tolerance: {{ engagement.outage_tolerance }}</p><p>Critical operations: {{ engagement.critical_operations }}</p><p>Reputation: {{ engagement.reputation_context }}</p></section>
-<section><h2>3. Assessments</h2>{% for assessment in engagement.assessments.all %}<p><a href="{% url 'assessment_detail' assessment.pk %}">Assessment {{ assessment.pk }}</a> · baseline {{ assessment.baseline.version }} · {{ assessment.profile }} · {{ assessment.created_at }}</p>{% empty %}<p>Start from an approved baseline, then review all applicability decisions.</p>{% endfor %}</section>
-<section><h2>4. Evidence requests</h2>{% for item in engagement.evidence_requests.all %}<article><h3>{{ item.title }}</h3><p>{{ item.instructions }}</p><p>{{ item.owner }} · due {{ item.due_date|default:'Not scheduled' }} · {{ item.get_status_display }}</p><a class="button button-secondary" href="{% url 'request_edit' item.pk %}">Review request</a><form method="post" action="{% url 'invite_new' engagement.pk %}">{% csrf_token %}<input type="hidden" name="purpose" value="evidence"><input type="hidden" name="request_id" value="{{ item.pk }}"><button>Create scoped submission link</button></form></article>{% empty %}<p>No evidence requests.</p>{% endfor %}
-<h3>Evidence register</h3>{% for item in engagement.evidence.all %}<article><h4>#{{ item.pk }} {{ item.title }}</h4><p>{{ item.notes }}</p><p>{{ item.provenance }} · collected {{ item.collected_on }}</p>{% if item.file %}<a class="button" href="{% url 'evidence_download' item.pk %}">Download private attachment</a>{% endif %}</article>{% empty %}<p>No evidence recorded.</p>{% endfor %}</section>
-<section><h2>5. Findings and improvement plan</h2>{% for finding in engagement.findings.all %}<article><h3>{{ finding.title }}</h3><p>{{ finding.condition }}</p><p>{{ finding.business_consequence }}</p><p>{{ finding.get_priority_display }} · impact {{ finding.impact|default_if_none:'Unknown' }}/5 · likelihood {{ finding.likelihood|default_if_none:'Unknown' }}/5 · confidence {{ finding.get_confidence_display }}</p><p>Recommendation: {{ finding.recommendation }}</p><p>Limitations: {{ finding.limitations }}</p>{% if finding.risk_acceptance %}<p>Risk acceptance: {{ finding.risk_acceptance }} · review {{ finding.acceptance_review }}</p>{% endif %}<p><a class="button button-secondary" href="{% url 'finding_edit' finding.pk %}">Edit finding</a> <a class="button" href="{% url 'task_new' finding.pk %}">Plan remediation</a></p>
-{% for task in finding.tasks.all %}<section><h4>{{ task.title }} · {{ task.get_status_display }}</h4><p>{{ task.owner }} · due {{ task.due_date|default:'Not scheduled' }} · {{ task.estimated_cost }} · {{ task.estimated_effort }}</p><p>{{ task.instructions }}</p><p>Temporary safeguards: {{ task.temporary_safeguards|default:'None recorded' }}</p><p>Authorization: {{ task.authorization|default:'Not obtained' }}</p><p>Verification: {{ task.verification_plan }}</p><p>Verified residual risk: {{ task.verified_residual_risk|default:'Not established' }}</p><p><a class="button button-secondary" href="{% url 'task_edit' task.pk %}">Update task</a> <a class="button button-secondary" href="{% url 'retest_new' task.pk %}">Record retest</a></p>{% for test in task.retests.all %}<p>{{ test.tested_on }} · {{ test.tester }} · {{ test.get_outcome_display }}: {{ test.procedure_and_result }} · residual risk {{ test.residual_risk }}</p>{% endfor %}</section>{% empty %}<p>No remediation tasks yet; a finding is not resolved merely because it has a recommendation.</p>{% endfor %}</article>{% empty %}<p>No findings recorded. This does not demonstrate that the customer is secure; review unknown and untested actions.</p>{% endfor %}</section>
-<section><h2>6. Reports and follow-up</h2><form method="post" action="{% url 'report_new' engagement.pk %}">{% csrf_token %}<button>Capture executive and technical report</button></form>{% for report in engagement.reports.all %}<p><a href="{% url 'report_detail' report.pk %}">Report {{ report.pk }} · {{ report.created_at }}</a></p>{% endfor %}<p>Next review: {{ engagement.next_review|default:'Not scheduled' }}</p><p>Triggers: {{ engagement.review_triggers|default:'Not recorded' }}</p>{% for assessment in engagement.assessments.all %}{% for review in assessment.reassessments.all %}<p><a class="button button-secondary" href="{% url 'reassessment_edit' review.pk %}">{{ review.get_status_display }} · {{ review.baseline.version }}</a>: {{ review.reason }}</p>{% endfor %}{% endfor %}</section>
-<section><h2>Engagement history</h2>{% for event in engagement.events.all %}<details><summary>{{ event.created_at }} · {{ event.actor|default:'Scoped customer submission' }} · {{ event.description }}</summary>{% for phase,state in event.details.items %}<h4>{{ phase }}</h4><table class="detail-table" aria-label="Details"><tbody>{% for key,value in state.items %}<tr><th scope="row">{{ key }}</th><td>{{ value }}</td></tr>{% endfor %}</tbody></table>{% endfor %}</details>{% endfor %}</section>
-<form method="post" action="{% url 'revoke_invites' engagement.pk %}">{% csrf_token %}<button>Revoke all unused submission links</button></form>
+{% extends 'library/base.html' %}
+{% block main_class %}engagement-page{% endblock %}
+{% block content %}
+<header class="engagement-heading">
+  <div><h1>{{ engagement.customer.name }}</h1><p>{{ engagement.title }}</p><small>Synthetic engagement</small></div>
+  <ul class="journey-legend" aria-label="Work status legend">
+    <li><span class="status-marker status-recorded" aria-hidden="true"></span>Recorded</li>
+    <li><span class="status-marker status-progress" aria-hidden="true"></span>In progress</li>
+    <li><span class="status-marker status-new" aria-hidden="true"></span>Not started</li>
+    <li>Work status only — not security verification or a completeness claim.</li>
+  </ul>
+</header>
+<p class="journey-flexibility"><strong>Suggested route</strong> · You can work in any area, in any order. Existing authority and evidence requirements still apply.</p>
+<div class="journey-layout">
+  <nav class="journey-rail" aria-label="Engagement workflow">
+    {% for phase in journey.phases %}
+    <div class="journey-phase">
+      <h2>{{ phase.title }}</h2>
+      <ul>
+      {% for step in phase.steps %}
+        {% include 'engagements/journey/step.html' %}
+      {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </nav>
+  <div class="journey-context">
+    {% if workspace_template %}
+    <div class="workspace" id="work-{{ selected_area }}">
+      <p class="workspace-back"><a href="{% url 'engagement_detail' engagement.pk %}">Back to workflow guidance</a></p>
+      <div class="workspace-body">{% include workspace_template %}</div>
+    </div>
+    {% else %}
+    <aside class="guidance-panel journey-guidance" aria-labelledby="suggested-heading">
+      <span class="guidance-label">Guidance</span>
+      <h2 id="suggested-heading">Suggested next: {{ journey.next.title|lower }}</h2>
+      <p>{{ journey.next.reason }}</p>
+      <p>Use <strong>{{ journey.next.action }}</strong> beside {{ journey.next.title }} to begin or continue.</p>
+      <hr>
+      <h3>What to capture</h3>
+      <p class="muted">Preparation guidance — not a completion checklist.</p>
+      <ul>{% for bullet in journey.next.bullets %}<li>{{ bullet }}</li>{% endfor %}</ul>
+    </aside>
+    <aside class="guidance-panel"><span class="guidance-label">About intake review</span><p>The original customer submission stays preserved. Review it and record consultant corrections or additions in the engagement context and customer inventory.</p></aside>
+    <aside class="guidance-panel"><span class="guidance-label">Flexible workflow</span><p>The suggested next step is guidance. Other work areas remain available, and you can return to recorded work. There is no automatic risk score or security assurance from these statuses.</p></aside>
+    {% endif %}
+  </div>
+</div>
+<nav class="journey-utilities" aria-label="Engagement records">
+<a class="button button-secondary" href="{% url 'engagement_detail' engagement.pk %}?area=history#work-history">Engagement history</a>
+<a class="button button-secondary" href="{% url 'engagement_detail' engagement.pk %}?area=links#work-links">Submission links</a>
+<span class="muted">{{ journey.open_information }} open customer information follow-up{{ journey.open_information|pluralize }}.</span>
+</nav>
 {% endblock %}

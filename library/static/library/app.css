@@ -1,5 +1,5 @@
-body{background:#f3f6fa;color:#182639;margin:0}header{background:#152d46;color:white;padding:24px}header a{color:white;margin-right:24px}main{max-width:1080px;margin:32px auto;padding:0 24px}article,section{background:white;border:1px solid #d4dfeb;border-radius:8px;padding:24px;margin:20px 0}.button,button{background:#176554;color:white;cursor:pointer}input,textarea,select{max-width:100%;padding:8px}textarea{display:block;width:95%}label{font-weight:600}a{color:#125d87}.notice{border-left:5px solid #b77a17;padding:16px;background:#fff5d9}.muted{color:#52657b}summary{cursor:pointer;font-weight:600}dd{margin-bottom:16px;white-space:pre-line}
-@media print{header,nav,.no-print{display:none}body{background:white}main{max-width:none;margin:0}article,section{break-inside:avoid;border:0;padding:8px}} table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #ddd;padding:10px} .preserve{white-space:pre-line} small{color:#52657b}
+body{background:#f3f6fa;color:#182639;margin:0}main{max-width:1080px;margin:32px auto;padding:0 24px}article,section{background:white;border:1px solid #d4dfeb;border-radius:8px;padding:24px;margin:20px 0}.button,button{background:#176554;color:white;cursor:pointer}input,textarea,select{max-width:100%;padding:8px}textarea{display:block;width:95%}label{font-weight:600}a{color:#125d87}.notice{border-left:5px solid #b77a17;padding:16px;background:#fff5d9}.muted{color:#52657b}summary{cursor:pointer;font-weight:600}dd{margin-bottom:16px;white-space:pre-line}
+@media print{nav,.no-print{display:none}body{background:white}main{max-width:none;margin:0}article,section{break-inside:avoid;border:0;padding:8px}} table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #ddd;padding:10px} .preserve{white-space:pre-line} small{color:#52657b}
 .detail-table{table-layout:fixed;margin:8px 0 14px;font-size:.95rem}
 .detail-table th{width:24%;font-weight:600;background:#f6f8fb}
 .detail-table th,.detail-table td{padding:7px 10px;overflow-wrap:anywhere}
@@ -26,4 +26,52 @@ dialog li{margin:12px 0}
 .button:focus-visible,button:focus-visible{outline:3px solid #237eb4;outline-offset:3px}
 .info-button{padding:2px 8px;background:transparent;color:#125d87;font-size:1.2rem}
 @media print{.button,button{display:none}}
-header nav{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:8px}header nav a{margin-right:0}
+
+/* Engagement workflow: shared components; recommendation never changes button color. */
+.engagement-page{max-width:1440px}
+.engagement-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;background:transparent;color:inherit;padding:0;margin-bottom:20px}
+.engagement-heading h1{margin:0 0 8px;font-size:2rem}
+.engagement-heading p{margin:0 0 6px;font-size:1.15rem}
+.journey-legend{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;list-style:none;padding:16px;background:#eaf3fa;border:1px solid #c6d8e8;border-radius:8px;max-width:580px;font-size:.9rem}
+.journey-legend li{display:flex;align-items:center;gap:8px}
+.status-marker{display:inline-block;box-sizing:border-box;width:20px;height:20px;flex-shrink:0;border:2px solid #406482;border-radius:50%;background:white}
+.status-recorded{background:#1769d3;border-color:#1769d3}
+.status-progress{background:linear-gradient(90deg,#1769d3 50%,white 50%);border-color:#1769d3}
+.journey-flexibility{padding:14px 20px;background:#deedfc;border-radius:8px}
+.journey-layout{display:grid;grid-template-columns:minmax(350px,.95fr) minmax(0,1.05fr);gap:24px;align-items:start}
+.journey-rail{position:relative;padding:16px;background:white;border:1px solid #c6d8e8;border-radius:8px}
+.journey-rail::before{content:"";position:absolute;left:42px;top:78px;bottom:64px;border-left:1px solid #879cae}
+.journey-phase h2{position:relative;z-index:1;font-size:.95rem;text-transform:uppercase;letter-spacing:.03em;background:#deedfc;border-radius:4px;padding:6px 12px;margin:0 0 10px}
+.journey-phase + .journey-phase{margin-top:22px}
+.journey-phase ul{list-style:none;padding:0;margin:0}
+.journey-step{box-sizing:border-box;position:relative;display:flex;align-items:center;gap:12px;min-height:72px;margin:0 0 10px;padding:8px 8px 8px 56px;border-radius:8px}
+.journey-step > .status-marker{position:absolute;left:17px;top:24px;z-index:1}
+.journey-step:not(.journey-last)::after{content:"";position:absolute;left:23px;bottom:-10px;border-left:3px solid transparent;border-right:3px solid transparent;border-top:5px solid #657e94}
+.journey-step-copy{flex:1;min-width:0}
+.journey-step h3{font-size:1.06rem;margin:0 0 4px}
+.journey-step p{margin:0 0 4px}
+.journey-action{min-width:78px;flex-shrink:0}
+.is-recommended{background:#eaf3fa;outline:1px solid #c6d8e8}
+.journey-suggestion{display:block;font-size:.67rem;font-weight:700;text-transform:uppercase;color:#125d87;position:absolute;left:52px;top:-10px;background:white;padding:1px 5px;border:1px solid #9bb6cb;border-radius:3px}
+.journey-context > :first-child{margin-top:0}
+.journey-guidance h2{font-size:1.4rem}
+.journey-guidance li{margin:10px 0}
+.journey-guidance hr{border:0;border-top:1px solid #c6d8e8;margin:22px 0}
+.workspace{background:white;border:1px solid #c6d8e8;border-radius:8px;margin:14px 0;scroll-margin-top:16px}
+.workspace-back{padding:0 18px}
+.journey-utilities{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:24px}
+.workspace-body{padding:0 18px 18px;overflow-wrap:anywhere}
+.workspace-body > section:first-child{margin-top:0}
+.workspace-actions{display:flex;flex-wrap:wrap;gap:6px}
+@media(max-width:960px){.engagement-heading{display:block}.journey-legend{max-width:none}.journey-layout{grid-template-columns:1fr}.journey-step{min-height:72px}}
+@media(max-width:480px){.journey-rail{padding:12px 8px}.journey-rail::before{left:34px}.journey-step{gap:6px;padding-left:48px}.journey-action{min-width:64px;padding:8px}.journey-step h3{font-size:1rem}.journey-legend{padding:12px}.workspace-body{padding:0 10px 10px}}
+@media print{.engagement-heading{display:block}.journey-layout{display:block}.journey-rail,.journey-context,.journey-flexibility{display:none}.workspace{border:0;break-inside:auto}.workspace-body{content-visibility:visible}}
+
+/* Compact application chrome and rail keep the overall journey easy to scan. */
+.app-header{background:#152d46;color:white;display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;padding:18px 24px}
+.app-brand{white-space:nowrap}
+.app-header a{color:white}
+.app-header nav{display:flex;flex-wrap:wrap;gap:6px 20px;flex:1;justify-content:flex-end;margin-top:0}
+.journey-step-copy small{display:block;font-size:.8rem;line-height:1.25}
+@media(max-width:700px){.app-header nav{flex-basis:100%;justify-content:flex-start}}
+@media print{.app-header{display:none}}

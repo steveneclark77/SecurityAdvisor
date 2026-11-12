@@ -72,3 +72,7 @@ Feed-deadline regression tests start a real blocked synthetic child process, ver
 ## Shared styles and DRY
 
 `python manage.py test testsupport.test_styles` checks every first-party template for embedded style blocks and style attributes. All page roots use `library/styles.html`, which loads `shared.css` plus the relevant `app.css` or `public.css` layout. Typography, validation errors, guidance panels, and print guidance have one shared definition. The browser suite checks stylesheet loading on consultant and public pages, responsive table spacing, print visibility, and the submission confirmation panel.
+
+## Engagement journey UI
+
+`python manage.py test engagements.test_journey` verifies recommendation/status derivation, optional intake, unknown/archived inventory, immutable GET behavior, safe area selection, and assignment checks for superusers. The CSRF submission inventory selects the relevant work pane through the read-only `area` query parameter; mutating endpoints and their payload/outcome checks are unchanged. Browser coverage verifies the seven unique rail actions, equal button styling, noninteractive preparation guidance, smaller connector arrowheads, arbitrary-order navigation, and mobile layout without horizontal overflow. Synthetic desktop/mobile screenshots are captured with the browser artifacts.

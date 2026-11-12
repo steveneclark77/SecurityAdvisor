@@ -1,0 +1,6 @@
+<li class="journey-step{% if step.recommended %} is-recommended{% endif %}{% if step.key == 'reports' %} journey-last{% endif %}" data-step="{{ step.key }}" data-status="{{ step.state }}">
+  <span class="status-marker status-{{ step.state }}" aria-hidden="true"></span>
+  {% if step.recommended %}<span class="journey-suggestion">Suggested next<span aria-hidden="true"> →</span></span>{% endif %}
+  <div class="journey-step-copy"><h3>{{ step.title }}</h3><p>{{ step.status }}</p><small>{{ step.detail }}</small></div>
+  <a class="button button-secondary journey-action" href="{{ step.href }}" aria-label="{{ step.action }} {{ step.title|lower }}">{{ step.action }}</a>
+</li>
