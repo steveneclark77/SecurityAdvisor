@@ -105,6 +105,8 @@ Inventory navigation tests check safe customer-scoped return destinations and ex
 
 The light-elevation browser check verifies the shared white/charcoal/border/shadow treatment on inventory actions, public submission buttons and admin Save, including hover, keyboard focus and disabled appearance. Layout stylesheets no longer define competing button colors.
 
-## Synthetic cafe operation prefill (v0.2.6)
+## Full synthetic inventory prefill (v0.2.7)
 
-`python manage.py test inventory.test_walkthrough` checks all three examples, optional owner selection, unknown state/unrated impact, audit creation, case/whitespace/alias matching, archived/manual record preservation, repeat after renaming, snapshot preservation, foreign-owner rejection and customer assignment for superusers. The action is synthetic-only and GET returns 405. It is included in the CSRF inventory (now 45 form operations), with valid contact-ID submission and checks for missing/invalid tokens and origins. Real-browser coverage opens the prefill disclosure, chooses an owner, adds the operations, verifies result messages, and repeats without new audit records or duplicates. Existing authenticated-form browser coverage also submits this action.
+`python manage.py test inventory.test_walkthrough` covers all seven kinds, 18 example items, 15 relationships and eight follow-ups; optional scoped owners; unknown/unrated state; audited creation; and repeated calls after editing, renaming, archiving or resolving records. It verifies earlier v1 operation-marker compatibility, kind-aware matching, skipped ambiguous/archived endpoints, snapshot retention, synthetic-only access, assigned-superuser restrictions and forged-owner rollback.
+
+The same protected action remains in the CSRF inventory (45 form operations), with valid contact-ID submission and missing/invalid token/origin rejection. The browser test opens the full-inventory prefill, chooses an owner, checks examples across the kinds and repeats without new records/audits. Existing authenticated-form browser coverage also exercises the new action. No live systems are scanned and no real personal/payment information is used.

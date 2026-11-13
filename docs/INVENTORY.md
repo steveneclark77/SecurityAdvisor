@@ -74,12 +74,22 @@ Inventory record, relationship and information-follow-up forms offer **Cancel** 
 
 Buttons use the approved light-elevation style: white faces, charcoal text, fine gray borders and soft shadows. Hover, focus, pressed and disabled states share the same stylesheet across consultant, public and admin forms. The button family does not indicate workflow priority.
 
-## Prefill the remaining Harbor Cafe operations (v0.2.6)
+## Prefill synthetic Harbor Cafe inventory (v0.2.7)
 
-On the customer's **Operations** tab, expand **Prefill synthetic Harbor Cafe operations**, optionally select **Alex Morgan** as **Owner for new operations**, and choose **Add remaining cafe operations**. This explicitly adds Biweekly payroll, Vendor and rent payments, and Device maintenance and backup recovery; it does not recreate Orders and payments.
+From any customer inventory view, expand **Prefill synthetic Harbor Cafe inventory**, optionally select **Alex Morgan** as **Owner for new records**, and choose **Add missing cafe inventory**. The tool is synthetic-only and requires normal customer assignment, including superusers. Manual entry/editing remains available for targeted testing.
 
-All added facts are synthetic examples, marked Unknown, with unknown criticality and no impact rating. The template fills descriptions, notes, schedules, critical windows, consequences and information gaps so manual entry can be skipped. Review assumptions as part of the exercise; no safeguards are verified by generating examples.
+The full template includes 18 records across all seven types:
 
-Existing operations are kept, matching case/whitespace-normalized names and known walkthrough aliases, including archived entries. Previously generated records remain recognized by their audit marker even after renaming. Existing records, owners and notes are never overwritten or unarchived. An atomic customer-scoped transaction serializes repeated requests; only newly created records receive new audit entries. Repeating the action reports added/kept counts. Historical assessments and reports remain unchanged.
+- Four operations: Orders and payments, Biweekly payroll, Vendor and rent payments, Device maintenance and backup recovery.
+- Three provider placeholders: payment processing, payroll and ISP.
+- One group of two business laptops.
+- Four software examples: hosted POS, QuickBooks Online, Dropbox and an unconfirmed backup service.
+- Two networks: business connectivity and guest Wi-Fi.
+- One physical-system example: cameras/alarm.
+- Three data categories: employee payroll, customer orders/payments and accounting/supplier records. No actual personal, banking or card records are entered.
 
-The tool is available only for customers marked synthetic and requires normal customer assignment, including for superusers. It is a CSRF-protected POST; installation and page visits do not create records automatically. No new migration is needed.
+It also adds 15 directional example relationships and eight open information follow-ups. New facts remain Unknown, criticality Unknown and impact unrated; synthetic provenance distinguishes examples from confirmed customer facts or tested safeguards. Notes and relevant type-specific fields are prefilled. Contact assignment does not grant authorization or certify responsibility.
+
+Existing records are kept by type and normalized name/known aliases, including archived items. Audit markers retain identity after generated records, relationships or questions are edited. Earlier v0.2.6 operation markers remain recognized. Resolved follow-ups are not reopened, and archived objects are not unarchived. Links/questions to archived or ambiguous item matches are skipped; the result message reports added counts and skips. Different kinds sharing a name are not treated as the same record.
+
+The atomic customer-locked service creates only missing records and normal before/after audit entries. Repeating it adds nothing when examples are already present; existing owners, values and historical assessment/report snapshots stay unchanged. A CSRF-protected POST is required. Updates and GET requests do not seed data, and no new migration is needed.

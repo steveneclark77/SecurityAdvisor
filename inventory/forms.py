@@ -49,8 +49,8 @@ class FollowUpForm(StyledModelForm):
         self.fields['item'].queryset = InventoryItem.objects.filter(customer=customer)
 
 
-class WalkthroughOperationsForm(StyledModelForm):
+class WalkthroughInventoryForm(StyledModelForm):
     class Meta:
         model = InventoryItem
         fields = ['owner']
-        labels = {'owner':'Owner for new operations'}
+        labels = {'owner':'Owner for new records'}

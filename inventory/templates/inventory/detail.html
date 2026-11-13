@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Inventory and operations</h1><p>{{ customer.name }} · Shared across this customer's engagements</p>
 <aside class="guidance-panel"><span class="guidance-label">Guidance</span><p>Record facts and dependencies before assessing safeguards. Customer-reported facts are not verified safeguards. Historical assessment and report snapshots stay unchanged. Use synthetic data only; never enter credentials.</p></aside>
+{% if customer.synthetic %}{% include 'inventory/walkthrough.html' %}{% endif %}
 <div class="record-explorer">
 <nav class="record-categories" aria-label="Inventory sections"><h2>Record types</h2>
 <a href="{{ all_url }}" {% if area == 'records' and not kind %}aria-current="page"{% endif %}>All records <span>{{ all_count }}</span></a>
@@ -13,7 +14,7 @@
 {% if area == 'records' %}
 <div class="record-toolbar"><h2>{{ heading }}</h2>
 {% if kind %}<a class="button button-secondary" href="{% url 'inventory_item_new' customer.pk %}?kind={{ kind }}&amp;return_to={{ return_to|urlencode }}">{{ add_label }}</a>{% else %}<details class="record-add"><summary>Add record</summary><div>{% for key,label in kinds %}<a class="button button-secondary" href="{% url 'inventory_item_new' customer.pk %}?kind={{ key }}&amp;return_to={{ return_to|urlencode }}">{{ label }}</a>{% endfor %}</div></details>{% endif %}</div>
-{% if customer.synthetic and kind == 'operation' %}{% include 'inventory/walkthrough.html' %}{% endif %}
+
 <form method="get" class="record-filters" aria-label="Filter inventory"><input type="hidden" name="kind" value="{{ kind }}"><label>Search records <input type="search" name="q" value="{{ query }}" maxlength="200" placeholder="Name, description, owner, product"></label><label>Fact state <select name="state"><option value="">All states</option>{% for key,label in states %}<option value="{{ key }}" {% if state == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label><input type="checkbox" name="archived" value="yes" {% if archived %}checked{% endif %}> Show archived</label><button class="button-secondary" type="submit">Apply filters</button></form>
 <p class="muted">Category counts include all {% if archived %}active and archived{% else %}active{% endif %} records, before search and fact-state filters.</p>
 {% include 'library/components/record_browser.html' %}

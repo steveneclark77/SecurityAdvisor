@@ -76,4 +76,6 @@ Version 0.2.4 adds contextual empty select labels and shared field-help dialogs 
 
 Version 0.2.5 adds Cancel to inventory forms, preserving the originating list view without saving edits, and aligns standard button/control heights with smaller info circles. Buttons use the approved light-elevation style: white faces, restrained borders and soft shadows.
 
-Version 0.2.6 adds an explicit synthetic Harbor Cafe operation-prefill button: three remaining examples, optional scoped owner, preserved existing records, and repeat-safe audit history. See [Inventory](docs/INVENTORY.md#prefill-the-remaining-harbor-cafe-operations-v026).
+Version 0.2.6 adds an explicit synthetic Harbor Cafe operation-prefill button: three remaining examples, optional scoped owner, preserved existing records, and repeat-safe audit history. See [Inventory](docs/INVENTORY.md#prefill-synthetic-harbor-cafe-inventory-v027).
+
+Version 0.2.7 expands synthetic cafe prefill to every inventory type, directional relationships and open information follow-ups, retaining manual/edited/archived/resolved records and earlier operation-prefill identity.

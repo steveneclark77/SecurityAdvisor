@@ -313,3 +313,7 @@ Inventory create/edit forms provide Cancel as safe navigation, not a form submis
 ### Explicit synthetic operation prefill (v0.2.6)
 
 Provide an optional, explicit synthetic-customer-only action to add remaining Harbor Cafe walkthrough operations without repeated manual typing. Reuse scoped owner choices and validation, CSRF protection, shared form styles and normal inventory audit captures. Add only missing examples, recognize retained/archived and renamed generated records, never overwrite existing facts or snapshots, and preserve unknown/unrated status. Report added/kept counts. Page views and updates must not seed customer records implicitly.
+
+### Complete synthetic inventory prefill (v0.2.7)
+
+Expand the explicit synthetic prefill to all seven inventory types, relationships and information follow-ups. Reuse one atomic, assigned-customer-scoped service and the existing contact picker/CSRF/audit components. Match identities by kind and normalized names or retained audit keys, including previous operation markers. Never overwrite existing values, unarchive records, reopen resolved questions or rewrite historical captures. Skip related examples for ambiguous/archived endpoints. Report counts and allow normal manual editing/entry. Generated facts remain unknown and unrated.
