@@ -176,3 +176,11 @@ This release also carries the approved v0.2.2 shared record-browser changes from
 ## Contextual form controls (v0.2.4)
 
 Use the normal updater; no migrations or configuration are required. The shared Django form renderer provides contextual empty-choice labels and field-help metadata. A shared script presents help dialogs, retaining inline help if JavaScript is unavailable. Admin overrides live in `templates/admin/base_site.html`, loaded through the project template directory; they use the same script and stylesheet.
+
+## Synthetic operation prefill (v0.2.6)
+
+After the normal update, use the Operations tab’s explicit walkthrough action to add missing Harbor Cafe examples. No migrations, startup seeding or scanner changes are involved. Existing local inventory stays intact until the consultant chooses the action; matching records and historical captures are retained.
+
+## Complete synthetic inventory prefill (v0.2.7)
+
+The same explicit walkthrough tool now covers every inventory type plus relationships and follow-ups and is available from all customer inventory views. No migrations or automatic seeding are added. Previously generated v0.2.6 operations are recognized by their retained audit markers; review the added/kept/skipped results after invoking the tool. Existing historical captures and manual data remain unchanged.

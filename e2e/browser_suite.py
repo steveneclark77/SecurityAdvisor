@@ -607,3 +607,20 @@ class BrowserForms(StaticLiveServerTestCase):
         admin.hover()
         expect(admin).to_have_css('background-color','rgb(248, 250, 252)')
         self.assertNotEqual(admin.evaluate('e=>getComputedStyle(e).boxShadow'),'none')
+
+    def test_synthetic_inventory_prefill_preserves_existing_records(self):
+        self.login()
+        path=reverse('inventory_detail',args=[self.fixture.customer.pk])+'?kind=operation'
+        self.visit(path)
+        self.page.get_by_text('Prefill synthetic Harbor Cafe inventory',exact=True).click()
+        form=self.page.get_by_role('form',name='Prefill synthetic inventory',exact=True)
+        form.locator('[name=owner]').select_option(str(self.fixture.person.pk))
+        form.get_by_role('button',name='Add missing cafe inventory',exact=True).click()
+        expect(self.page.get_by_role('status')).to_contain_text('Added 18 inventory records')
+        for name in ['Orders and payments','Biweekly payroll','Business laptops','Dropbox','Guest Wi-Fi','Cameras and alarm system','Employee payroll information']:
+            expect(self.page.locator('.record-table-wrap').get_by_role('link',name=name,exact=True)).to_be_visible()
+        self.assertEqual(self.db(lambda:self.fixture.customer.inventory_events.count()),41)
+        self.page.get_by_text('Prefill synthetic Harbor Cafe inventory',exact=True).click()
+        self.page.get_by_role('button',name='Add missing cafe inventory',exact=True).click()
+        expect(self.page.get_by_role('status')).to_contain_text('Added 0 inventory records')
+        self.assertEqual(self.db(lambda:self.fixture.customer.inventory_events.count()),41)

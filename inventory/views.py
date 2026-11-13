@@ -1,4 +1,6 @@
 from django.db import transaction
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import get_object_or_404,redirect,render
 from django.urls import reverse
@@ -27,7 +29,36 @@ def index(request):
 @consultant
 def detail(request,pk):
     customer=customer_for(request.user,pk)
-    return render(request,'inventory/detail.html',{'customer':customer,**explorer_context(customer,request.GET)})
+    return render(request,'inventory/detail.html',detail_context(request,customer))
+
+
+def detail_context(request,customer,walkthrough_form=None,params=None):
+    from .walkthrough_data import ITEMS
+    return {'customer':customer, **explorer_context(customer,request.GET if params is None else params),
+        'show_walkthrough':request.GET.get('walkthrough')=='yes', 'walkthrough_groups':[{'label':label,'count':sum(item['kind']==key for item in ITEMS)} for key,label in ITEM_KINDS],
+        'walkthrough_form':walkthrough_form if walkthrough_form is not None else forms.WalkthroughInventoryForm(instance=InventoryItem(customer=customer,kind='operation'))}
+
+
+@consultant
+@require_POST
+def walkthrough_prefill(request,pk):
+    customer=get_object_or_404(customers_for(request.user).filter(synthetic=True),pk=pk)
+    form=forms.WalkthroughInventoryForm(request.POST,instance=InventoryItem(customer=customer,kind='operation'))
+    if form.is_valid():
+        from .walkthrough import prefill_inventory
+        try:
+            counts=prefill_inventory(customer,request.user,form.cleaned_data['owner'])
+        except ValidationError as exc:
+            form.add_error(None,exc)
+        else:
+            messages.success(request,f"Added {counts['items_added']} inventory records, {counts['connections_added']} relationships and {counts['followups_added']} information follow-ups. Existing records were left unchanged.")
+            if counts['skipped']:
+                messages.info(request,f"Skipped {counts['skipped']} links/questions with archived or ambiguous endpoints.")
+            return redirect(reverse('inventory_detail',args=[customer.pk]))
+    params=request.GET.copy()
+    context=detail_context(request,customer,form,params)
+    context['show_walkthrough']=True
+    return render(request,'inventory/detail.html',context,status=400)
 
 
 def editor(request,customer,obj,form_class,title,*,scoped=False):

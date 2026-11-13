@@ -47,3 +47,10 @@ class FollowUpForm(StyledModelForm):
     def __init__(self,*args,customer,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['item'].queryset = InventoryItem.objects.filter(customer=customer)
+
+
+class WalkthroughInventoryForm(StyledModelForm):
+    class Meta:
+        model = InventoryItem
+        fields = ['owner']
+        labels = {'owner':'Owner for new records'}

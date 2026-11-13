@@ -309,3 +309,11 @@ Empty select labels explain their meaning in context; dashed placeholders are no
 ### Inventory cancel and shared control geometry (v0.2.5)
 
 Inventory create/edit forms provide Cancel as safe navigation, not a form submission, including when required fields are incomplete. Preserve the originating customer inventory view; refuse cross-customer/external return destinations. Normal single-line buttons and inputs/selects share a 36px control rhythm through shared CSS. Multiline labels may grow to avoid clipping, and textareas/multiple selects retain their natural heights. Info circles are approximately 30% smaller visually while retaining a 24px clickable target. Buttons use a shared light-elevation style with white faces, charcoal text, subtle borders and shadows; appearance does not imply workflow priority.
+
+### Explicit synthetic operation prefill (v0.2.6)
+
+Provide an optional, explicit synthetic-customer-only action to add remaining Harbor Cafe walkthrough operations without repeated manual typing. Reuse scoped owner choices and validation, CSRF protection, shared form styles and normal inventory audit captures. Add only missing examples, recognize retained/archived and renamed generated records, never overwrite existing facts or snapshots, and preserve unknown/unrated status. Report added/kept counts. Page views and updates must not seed customer records implicitly.
+
+### Complete synthetic inventory prefill (v0.2.7)
+
+Expand the explicit synthetic prefill to all seven inventory types, relationships and information follow-ups. Reuse one atomic, assigned-customer-scoped service and the existing contact picker/CSRF/audit components. Match identities by kind and normalized names or retained audit keys, including previous operation markers. Never overwrite existing values, unarchive records, reopen resolved questions or rewrite historical captures. Skip related examples for ambiguous/archived endpoints. Report counts and allow normal manual editing/entry. Generated facts remain unknown and unrated.

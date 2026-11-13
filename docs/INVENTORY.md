@@ -73,3 +73,23 @@ The owner selector has a visible **Add contact** button and a small refresh icon
 Inventory record, relationship and information-follow-up forms offer **Cancel** beside Save. Cancel navigates back to the customer inventory without submitting, saving, or writing history. Opening a form from the explorer preserves its list category, search, fact-state/archive filters, page and selected preview. Direct form links fall back to the appropriate customer collection. Return destinations are restricted to this customer's inventory path, including for assigned superusers. Cancel also works when required fields are incomplete.
 
 Buttons use the approved light-elevation style: white faces, charcoal text, fine gray borders and soft shadows. Hover, focus, pressed and disabled states share the same stylesheet across consultant, public and admin forms. The button family does not indicate workflow priority.
+
+## Prefill synthetic Harbor Cafe inventory (v0.2.7)
+
+From any customer inventory view, expand **Prefill synthetic Harbor Cafe inventory**, optionally select **Alex Morgan** as **Owner for new records**, and choose **Add missing cafe inventory**. The tool is synthetic-only and requires normal customer assignment, including superusers. Manual entry/editing remains available for targeted testing.
+
+The full template includes 18 records across all seven types:
+
+- Four operations: Orders and payments, Biweekly payroll, Vendor and rent payments, Device maintenance and backup recovery.
+- Three provider placeholders: payment processing, payroll and ISP.
+- One group of two business laptops.
+- Four software examples: hosted POS, QuickBooks Online, Dropbox and an unconfirmed backup service.
+- Two networks: business connectivity and guest Wi-Fi.
+- One physical-system example: cameras/alarm.
+- Three data categories: employee payroll, customer orders/payments and accounting/supplier records. No actual personal, banking or card records are entered.
+
+It also adds 15 directional example relationships and eight open information follow-ups. New facts remain Unknown, criticality Unknown and impact unrated; synthetic provenance distinguishes examples from confirmed customer facts or tested safeguards. Notes and relevant type-specific fields are prefilled. Contact assignment does not grant authorization or certify responsibility.
+
+Existing records are kept by type and normalized name/known aliases, including archived items. Audit markers retain identity after generated records, relationships or questions are edited. Earlier v0.2.6 operation markers remain recognized. Resolved follow-ups are not reopened, and archived objects are not unarchived. Links/questions to archived or ambiguous item matches are skipped; the result message reports added counts and skips. Different kinds sharing a name are not treated as the same record.
+
+The atomic customer-locked service creates only missing records and normal before/after audit entries. Repeating it adds nothing when examples are already present; existing owners, values and historical assessment/report snapshots stay unchanged. A CSRF-protected POST is required. Updates and GET requests do not seed data, and no new migration is needed.

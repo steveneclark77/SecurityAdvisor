@@ -133,4 +133,5 @@ def submissions(f):
     edit_url=url('inventory_followup_edit',f.followup.pk)
     add('inventory_followup_edit',edit_url,edit_url,{**followup_data,'status':'resolved','response':'Synthetic provider identified'},lambda:InventoryFollowUp.objects.get(pk=f.followup.pk).status=='resolved')
     add('inventory_intake_followups',url('engagement_detail',e)+'?area=intake',url('inventory_intake_followups',e),{},lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Legacy provider details to confirm').exists(),prepare=lambda:m.Intake.objects.create(engagement=f.engagement,answers={'unknowns':'Legacy provider details to confirm'},recommendation={'profile':f.assessment.profile,'modifiers':[]}))
+    add('inventory_walkthrough_prefill',url('inventory_detail',customer_id)+'?kind=operation&walkthrough=yes',url('inventory_walkthrough_prefill',customer_id),{'owner':f.person.pk},lambda:InventoryItem.objects.filter(customer=f.customer,name='Device maintenance and backup recovery',owner=f.person).exists())
     return items

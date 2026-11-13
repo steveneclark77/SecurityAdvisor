@@ -6,7 +6,7 @@ All fixtures are synthetic. Django creates and destroys a dedicated test databas
 
 Run `python manage.py test` in the configured development environment, or `docker compose exec web python manage.py test`.
 
-The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 44 form operations, including intake draft/final submission and evidence response, it verifies:
+The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 45 form operations, including intake draft/final submission and evidence response, it verifies:
 
 - The rendered form contains a token and uses the same-origin referrer policy.
 - Missing/incorrect tokens, foreign origins, and null origins return HTTP 403.
@@ -104,3 +104,9 @@ The real-browser ownership test adds a contact in a new tab, links its role, ref
 Inventory navigation tests check safe customer-scoped return destinations and explorer edit links. The browser cancellation test edits name/notes, cancels back to the filtered list, and verifies unchanged persisted fields/history. It also verifies Cancel remains available on an invalid new-record form. Geometry checks compare the owner select, Add contact, refresh, Save and Cancel heights, and verify a roughly 17px info circle inside a 24px clickable button. Existing responsive/print and full form/CSRF browser checks remain in place.
 
 The light-elevation browser check verifies the shared white/charcoal/border/shadow treatment on inventory actions, public submission buttons and admin Save, including hover, keyboard focus and disabled appearance. Layout stylesheets no longer define competing button colors.
+
+## Full synthetic inventory prefill (v0.2.7)
+
+`python manage.py test inventory.test_walkthrough` covers all seven kinds, 18 example items, 15 relationships and eight follow-ups; optional scoped owners; unknown/unrated state; audited creation; and repeated calls after editing, renaming, archiving or resolving records. It verifies earlier v1 operation-marker compatibility, kind-aware matching, skipped ambiguous/archived endpoints, snapshot retention, synthetic-only access, assigned-superuser restrictions and forged-owner rollback.
+
+The same protected action remains in the CSRF inventory (45 form operations), with valid contact-ID submission and missing/invalid token/origin rejection. The browser test opens the full-inventory prefill, chooses an owner, checks examples across the kinds and repeats without new records/audits. Existing authenticated-form browser coverage also exercises the new action. No live systems are scanned and no real personal/payment information is used.

@@ -1,0 +1,5 @@
+<details {% if show_walkthrough %}open{% endif %}>
+<summary>Prefill synthetic Harbor Cafe inventory</summary>
+<aside class="guidance-panel"><span class="guidance-label">Synthetic walkthrough</span><p>Add missing cafe examples across all types: {% for group in walkthrough_groups %}{{ group.label }} ({{ group.count }}){% if not forloop.last %}; {% endif %}{% endfor %}. Also add example relationships and open information follow-ups.</p><p>Existing, archived, renamed generated, and resolved records stay unchanged. Links/questions for archived or ambiguous item matches are skipped. New facts remain Unknown, with unknown criticality and no impact rating. Historical assessments/reports stay unchanged.</p><p>Optionally choose one owner for new records, or leave them Unassigned. You can still add and edit records manually.</p></aside>
+<form method="post" action="{% url 'inventory_walkthrough_prefill' customer.pk %}" aria-label="Prefill synthetic inventory">{% csrf_token %}{{ walkthrough_form.as_p }}<button type="submit">Add missing cafe inventory</button></form>
+</details>
