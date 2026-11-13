@@ -71,3 +71,5 @@ The owner selector has a visible **Add contact** button and a small refresh icon
 ## Cancel unsaved inventory edits (v0.2.5)
 
 Inventory record, relationship and information-follow-up forms offer **Cancel** beside Save. Cancel navigates back to the customer inventory without submitting, saving, or writing history. Opening a form from the explorer preserves its list category, search, fact-state/archive filters, page and selected preview. Direct form links fall back to the appropriate customer collection. Return destinations are restricted to this customer's inventory path, including for assigned superusers. Cancel also works when required fields are incomplete.
+
+Buttons use the approved light-elevation style: white faces, charcoal text, fine gray borders and soft shadows. Hover, focus, pressed and disabled states share the same stylesheet across consultant, public and admin forms. The button family does not indicate workflow priority.

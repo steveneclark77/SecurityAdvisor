@@ -102,3 +102,5 @@ The real-browser ownership test adds a contact in a new tab, links its role, ref
 ## Inventory cancellation and control sizing
 
 Inventory navigation tests check safe customer-scoped return destinations and explorer edit links. The browser cancellation test edits name/notes, cancels back to the filtered list, and verifies unchanged persisted fields/history. It also verifies Cancel remains available on an invalid new-record form. Geometry checks compare the owner select, Add contact, refresh, Save and Cancel heights, and verify a roughly 17px info circle inside a 24px clickable button. Existing responsive/print and full form/CSRF browser checks remain in place.
+
+The light-elevation browser check verifies the shared white/charcoal/border/shadow treatment on inventory actions, public submission buttons and admin Save, including hover, keyboard focus and disabled appearance. Layout stylesheets no longer define competing button colors.

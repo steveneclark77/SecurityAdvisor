@@ -74,4 +74,4 @@ Version 0.2.3 adds single contact-backed owners and supporting-person notes acro
 
 Version 0.2.4 adds contextual empty select labels and shared field-help dialogs across consultant, public and admin forms, with a visible Add contact button and compact owner refresh icon.
 
-Version 0.2.5 adds Cancel to inventory forms, preserving the originating list view without saving edits, and aligns standard button/control heights with smaller info circles. Button-family mockups are being reviewed separately.
+Version 0.2.5 adds Cancel to inventory forms, preserving the originating list view without saving edits, and aligns standard button/control heights with smaller info circles. Buttons use the approved light-elevation style: white faces, restrained borders and soft shadows.
