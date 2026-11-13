@@ -184,3 +184,7 @@ After the normal update, use the Operations tab’s explicit walkthrough action 
 ## Complete synthetic inventory prefill (v0.2.7)
 
 The same explicit walkthrough tool now covers every inventory type plus relationships and follow-ups and is available from all customer inventory views. No migrations or automatic seeding are added. Previously generated v0.2.6 operations are recognized by their retained audit markers; review the added/kept/skipped results after invoking the tool. Existing historical captures and manual data remain unchanged.
+
+## Persistent headers (v0.2.8)
+
+Use the normal updater; no migrations or new configuration are required. Consultant, public-submission/confirmation and admin screens share persistent header behavior. The shared header script handles the narrow-screen Menu disclosure and focus/anchor clearance. Header CSS remains in the shared stylesheet.

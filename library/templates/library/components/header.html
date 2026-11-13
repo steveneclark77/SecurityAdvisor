@@ -1,0 +1,7 @@
+<header class="site-header {% if public_page %}public-header{% else %}app-header{% endif %}">
+<div class="app-brand"><strong>SecurityAdvisor</strong> <span aria-label="Application version">v{{ app_version }}</span></div>
+{% if not public_page %}
+<button type="button" class="header-menu-toggle" data-header-menu aria-controls="site-navigation" aria-expanded="false" hidden>Menu</button>
+<nav id="site-navigation" aria-label="Main navigation"><a href="/">Library</a><a href="/work/">Customer engagements</a><a href="/work/contacts/">Contacts</a><a href="/inventory/">Inventory</a><a href="/admin/">Manage controls</a></nav>
+{% endif %}
+</header>

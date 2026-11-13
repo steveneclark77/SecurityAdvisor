@@ -20,7 +20,7 @@ body{background:#f3f6fa;color:#182639;margin:0}main{max-width:1080px;margin:32px
 
 
 
-@media print{}
+
 
 /* Engagement workflow: shared components; recommendation never changes button color. */
 .engagement-page{max-width:1440px}
@@ -63,13 +63,13 @@ body{background:#f3f6fa;color:#182639;margin:0}main{max-width:1080px;margin:32px
 @media print{.engagement-heading{display:block}.journey-layout{display:block}.journey-rail,.journey-context,.journey-flexibility{display:none}.workspace{border:0;break-inside:auto}.workspace-body{content-visibility:visible}}
 
 /* Compact application chrome and rail keep the overall journey easy to scan. */
-.app-header{background:#152d46;color:white;display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;padding:18px 24px}
-.app-brand{white-space:nowrap}
-.app-header a{color:white}
-.app-header nav{display:flex;flex-wrap:wrap;gap:6px 20px;flex:1;justify-content:flex-end;margin-top:0}
+
+
+
+
 .journey-step-copy small{display:block;font-size:.8rem;line-height:1.25}
-@media(max-width:700px){.app-header nav{flex-basis:100%;justify-content:flex-start}}
-@media print{.app-header{display:none}}
+
+
 
 
 .record-page{max-width:1600px}
