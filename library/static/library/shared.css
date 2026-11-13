@@ -5,3 +5,53 @@ body{font:16px system-ui}
 .guidance-panel h2{font-size:1.05rem;margin:4px 0 8px}
 .guidance-panel p{margin:6px 0}
 @media print{.guidance-panel{background:white;border-left:2px solid #777}}
+
+/* Shared explorer components: category navigation, tabular list, read-only preview. */
+.record-explorer{display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px}
+.record-categories{background:#fff;border:1px solid #d4dfeb;border-radius:8px;padding:16px;align-self:start}
+.record-categories h2{font-size:1rem}
+.record-categories a{display:flex;justify-content:space-between;gap:8px;padding:10px;text-decoration:none;border-radius:4px}
+.record-categories [aria-current=page]{background:#e4eff8;font-weight:700;border-left:3px solid #125d87}
+.record-workspace{container-type:inline-size;min-width:0;background:#fff;border:1px solid #d4dfeb;border-radius:8px;padding:20px}
+.record-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.record-filters{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin:20px 0}
+.record-filters label{display:block}
+.record-filters input[type=search],.record-filters select{display:block}
+.record-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,30%);gap:20px}
+.record-table-wrap{overflow-x:auto;min-width:0}
+.record-table-wrap table{min-width:550px}
+.record-table-wrap nav{padding:16px 0}
+.record-selected{background:#edf5fc}
+.record-table-wrap small{display:block}
+.record-preview{background:#f5f8fc;border:1px solid #d4dfeb;border-radius:6px;padding:16px;overflow-wrap:anywhere;min-width:0}
+.record-preview h2{font-size:1.2rem;overflow-wrap:anywhere}
+.record-preview dd{margin-left:0;white-space:pre-line}
+.record-add{position:relative}
+.record-add summary{border:1px solid #125d87;border-radius:5px;padding:10px;color:#125d87}
+.record-add>div{position:absolute;right:0;z-index:2;background:#fff;box-shadow:0 4px 16px #18263933;padding:12px;width:260px}
+.record-add a{display:block;margin:6px 0}
+@media(max-width:1150px){.record-split{grid-template-columns:1fr}
+.record-preview{margin-top:12px}}
+@media(max-width:700px){.record-explorer{grid-template-columns:1fr}
+.record-categories{display:flex;flex-wrap:wrap;gap:4px}
+.record-categories h2{flex-basis:100%}
+.record-workspace{padding:12px}
+.record-toolbar{flex-wrap:wrap}
+.record-filters input[type=search]{max-width:100%}}
+@media print{.record-explorer,.record-split{display:block}
+.record-categories,.record-filters,.record-add{display:none}
+.record-table-wrap{overflow:visible}
+.record-table-wrap table{min-width:0}}
+.record-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.record-tabs a{padding:10px 14px;text-decoration:none;border:1px solid #b8cadb;border-radius:5px;background:#fff}
+.record-tabs a[aria-current=page]{background:#e4eff8;border-bottom:3px solid #125d87;font-weight:700}
+.record-preview dt{font-weight:600}
+.record-table-wrap td,.record-table-wrap th{min-width:7rem;overflow-wrap:normal}
+.record-table-wrap th:first-child{min-width:12rem}
+.record-preview form{margin-top:16px}
+.record-preview .button,.record-preview button{white-space:normal;max-width:100%;box-sizing:border-box}
+@media print{.record-tabs{display:none}}
+
+@container(max-width:1000px){.record-split{grid-template-columns:1fr}}
+
+.owner-refresh{margin:0 8px}.owner-status{display:block;font-size:.9rem;color:#52657b;margin-top:6px}

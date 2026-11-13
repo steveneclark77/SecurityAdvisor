@@ -1,0 +1,9 @@
+<h2>{{ selected.control_code }} · {{ selected.control_title }}</h2>
+<h3>Action</h3><p class="preserve">{{ selected.guidance.action.instruction }}</p>
+<h3>Recommendation</h3><p class="preserve">{{ selected.guidance.control.recommendation }}</p>
+<h3>Applicability guidance</h3><p>{{ selected.guidance.action.applicability }}</p>
+<h3>Verification procedure</h3><p class="preserve">{{ selected.guidance.action.verification }}</p>
+<dl><dt>Applicability</dt><dd>{{ selected.get_applicability_display }} · {{ selected.applicability_reason }}</dd><dt>Implementation</dt><dd>{{ selected.get_implementation_display }}</dd><dt>Verification</dt><dd>{{ selected.get_verification_display }}</dd><dt>Confidence</dt><dd>{{ selected.get_confidence_display }}</dd><dt>Observation</dt><dd>{{ selected.observation|default:'Investigation outstanding.' }}</dd><dt>Investigation owner</dt><dd>{{ selected.investigation_owner|default:'Unassigned' }} · follow-up {{ selected.followup_due|default:'Unscheduled' }}</dd>{% if selected.verified_at %}<dt>Recorded by</dt><dd>{{ selected.verified_by }} at {{ selected.verified_at }}</dd>{% endif %}</dl>
+<p><a class="button button-secondary" href="{% url 'action_edit' selected.pk %}">Investigate and record result</a></p><p><a class="button button-secondary" href="{% url 'finding_new' engagement.pk %}?action={{ selected.pk }}">Draft finding from this action</a></p>
+
+{% if selected.notes %}<h3>Notes</h3><p class="preserve">{{ selected.notes }}</p>{% endif %}

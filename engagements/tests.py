@@ -33,7 +33,7 @@ class EngagementTests(TestCase):
         cls.assessment = services.start_assessment(engagement=cls.engagement,baseline=cls.baseline,user=cls.user,profile='Restaurants, cafés, and food service',modifiers=['Payment processing'],rationale='Restaurant and hosted payments; review each exclusion.')
         cls.evidence = Evidence.objects.create(engagement=cls.engagement,title='Synthetic policy export',notes='Made-up MFA configuration, no secrets.',provenance='Synthetic test fixture',collected_on=timezone.localdate())
         cls.finding = Finding.objects.create(engagement=cls.engagement,assessment=cls.assessment,**cls.finding_data())
-        cls.task = Remediation.objects.create(finding=cls.finding,title='Require phishing-resistant sign-in',instructions='Pilot a test policy.',owner='Synthetic owner',estimated_cost='Estimate pending',estimated_effort='Two hours',verification_plan='Reject a weaker sign-in method using a test account.')
+        cls.task = Remediation.objects.create(finding=cls.finding,title='Require phishing-resistant sign-in',instructions='Pilot a test policy.',owner=None,estimated_cost='Estimate pending',estimated_effort='Two hours',verification_plan='Reject a weaker sign-in method using a test account.')
 
     @staticmethod
     def engagement_data():
@@ -59,7 +59,7 @@ class EngagementTests(TestCase):
 
     def test_customer_boundaries_cover_every_record_route(self):
         report = services.capture_report(engagement=self.engagement,user=self.user)
-        request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic export',instructions='Redact identifiers.',owner='Fictional owner')
+        request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic export',instructions='Redact identifiers.',owner=None)
         review = Reassessment.objects.create(assessment=self.assessment,baseline=self.baseline,reason='Test only')
         routes = [('engagement_detail',self.engagement.pk),('engagement_edit',self.engagement.pk),('assessment_new',self.engagement.pk),('assessment_detail',self.assessment.pk),('action_edit',self.assessment.results.first().pk),('request_new',self.engagement.pk),('request_edit',request.pk),('evidence_new',self.engagement.pk),('evidence_download',self.evidence.pk),('finding_new',self.engagement.pk),('finding_edit',self.finding.pk),('task_new',self.finding.pk),('task_edit',self.task.pk),('retest_new',self.task.pk),('report_detail',report.pk),('reassessment_edit',review.pk)]
         self.other.is_superuser = True
@@ -101,14 +101,14 @@ class EngagementTests(TestCase):
         result.refresh_from_db()
         self.assertEqual(result.verified_by,self.user)
         self.assertEqual(result.verification,'failed')
-        self.assertContains(self.client.get(reverse('assessment_detail',args=[self.assessment.pk])),'Synthetic weak method')
+        self.assertContains(self.client.get(reverse('assessment_detail',args=[self.assessment.pk]),{'selected':result.pk}),'Synthetic weak method')
 
     def test_cross_engagement_relationships_rejected(self):
         other_customer = Customer.objects.create(name='Synthetic isolated company')
         other_customer.assigned_users.add(self.other)
         other_engagement = Engagement.objects.create(customer=other_customer,**self.engagement_data())
         foreign_evidence = Evidence.objects.create(engagement=other_engagement,title='Private fixture',notes='Other customer',provenance='Fixture',collected_on=timezone.localdate())
-        foreign_request = EvidenceRequest.objects.create(engagement=other_engagement,title='Other request',instructions='Test',owner='Other')
+        foreign_request = EvidenceRequest.objects.create(engagement=other_engagement,title='Other request',instructions='Test',owner=None)
         result = self.assessment.results.first()
         data = dict(applicability='applicable',applicability_reason='test',implementation='unknown',verification='not_tested',confidence='unknown',evidence=[foreign_evidence.pk])
         form = forms.ActionResultForm(data,instance=result,engagement=self.engagement)
@@ -143,7 +143,7 @@ class EngagementTests(TestCase):
         self.assertEqual(public.get(reverse('public_response',args=[raw])).status_code,404)
 
     def test_public_evidence_is_scoped_and_attachments_are_private(self):
-        request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic MFA export',instructions='Redacted fixture only',owner='Fictional owner')
+        request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic MFA export',instructions='Redacted fixture only',owner=None)
         raw = services.issue_invite(engagement=self.engagement,user=self.user,purpose='evidence',evidence_request=request)
         url = reverse('public_response',args=[raw])
         with tempfile.TemporaryDirectory() as directory, override_settings(MEDIA_ROOT=directory):
@@ -187,7 +187,7 @@ class EngagementTests(TestCase):
         self.task.authorization = 'Fictional owner approved test policy change.'
         self.task.status = 'verified'
         with self.assertRaises(ValidationError): self.task.full_clean()
-        dependency = Remediation.objects.create(finding=self.finding,title='Test recovery first',instructions='Test',owner='Owner',estimated_cost='0',estimated_effort='1h',verification_plan='Test')
+        dependency = Remediation.objects.create(finding=self.finding,title='Test recovery first',instructions='Test',owner=None,estimated_cost='0',estimated_effort='1h',verification_plan='Test')
         data = {field.name:getattr(self.task,field.name) for field in self.task._meta.fields if field.name not in ['id','finding']}
         data.update(status='in_progress',dependencies=[dependency.pk])
         form = forms.RemediationForm(data,instance=self.task,engagement=self.engagement)
@@ -283,7 +283,7 @@ class EngagementTests(TestCase):
         self.assertEqual(finding.actions.get(),result)
         task_url = reverse('task_new',args=[finding.pk])
         self.assertContains(self.client.get(task_url),'Require phishing-resistant MFA')
-        response = self.client.post(task_url,dict(title='Synthetic MFA policy',instructions='Pilot a policy with test identities.',owner='Fictional owner',estimated_cost='Pending',estimated_effort='2 hours',verification_plan='Try a weaker sign-in method.',status='planned'))
+        response = self.client.post(task_url,dict(title='Synthetic MFA policy',instructions='Pilot a policy with test identities.',owner=self.person.pk,estimated_cost='Pending',estimated_effort='2 hours',verification_plan='Try a weaker sign-in method.',status='planned'))
         self.assertEqual(response.status_code,302)
         self.assertEqual(self.client.post(reverse('report_new',args=[self.engagement.pk])).status_code,302)
         self.assertTrue(AuditEvent.objects.filter(engagement=self.engagement).exists())
@@ -415,7 +415,7 @@ class EngagementTests(TestCase):
         self.assertEqual(browser.get(url).status_code,404)
 
     def test_evidence_origin_policy_preserves_csrf_on_https(self):
-        evidence_request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic record',instructions='Redacted data only',owner='Fictional')
+        evidence_request = EvidenceRequest.objects.create(engagement=self.engagement,title='Synthetic record',instructions='Redacted data only',owner=None)
         raw = services.issue_invite(engagement=self.engagement,user=self.user,purpose='evidence',evidence_request=evidence_request)
         url = reverse('public_response',args=[raw])
         browser = Client(enforce_csrf_checks=True)

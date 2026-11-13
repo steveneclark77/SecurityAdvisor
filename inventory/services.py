@@ -15,6 +15,10 @@ def record_fields(obj):
     for field in obj._meta.fields:
         value = getattr(obj,field.attname)
         data[field.name] = value.isoformat() if hasattr(value,'isoformat') else value
+    if hasattr(obj,'owner_id'):
+        from engagements.ownership import owner_snapshot
+        data['owner_contact'] = owner_snapshot(obj.owner)
+        data['owner'] = str(obj.owner) if obj.owner else 'Unassigned'
     return data
 
 

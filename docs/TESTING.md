@@ -80,3 +80,17 @@ Feed-deadline regression tests start a real blocked synthetic child process, ver
 ## Inventory explorer
 
 Inventory tests cover preserved filters, category counts, archived visibility, empty types, pagination, invalid navigation parameters, read-only GETs, and assignment-scoped selection including superusers. The real-browser explorer test covers type navigation, contextual Add, table selection and preview, search empty/recovery states, relationships/follow-ups, and mobile overflow. CI artifacts include `inventory-desktop.png` and `inventory-mobile.png` for each browser engine. Existing inventory form submissions remain in the CSRF matrix.
+
+## Shared assessment, evidence and contact browsers
+
+`python manage.py test engagements.test_browsers inventory testsupport.test_styles` verifies frozen instructions, filters, pagination, invalid/foreign selections, full-name search, read-only GETs, customer assignment for superusers, contact-management/reuse boundaries, retained inactive links and archived records. The existing action-verification regression now explicitly selects the action whose observation is checked. The CSRF submission inventory explicitly selects the evidence request whose scoped link is submitted.
+
+The shared real-browser test covers assessment filters/selection, all three evidence collections, single creation/edit entry points, contact link vs shared-person actions, accessible form labels, search, and preview navigation without page overflow at mobile widths. The inventory browser test also exercises the common table/layout after refactoring. Browser CI artifacts include `assessment-desktop.png`, `evidence-findings-desktop.png`, `contacts-desktop.png` and corresponding mobile screenshots, alongside the inventory screenshots. Both Chromium and WebKit remain required CI jobs.
+
+Common table, filter and pagination templates live in `library/templates/library/components/`; safe URL/pagination/selection helpers live in `library/record_browser.py`. Callers must supply already-authorized querysets. Reusable layout/component styles live in `library/static/library/shared.css`; page widths and engagement workspace layout remain in `app.css`. Entity-specific previews and permission checks stay in their owning app. No client-side rendering framework or CSS injection is involved.
+
+## Contact ownership
+
+`python manage.py test engagements.test_ownership engagements.test_owner_migration` checks all five owner forms, model-level eligibility, foreign-ID rejection, scope through the same active relationship, current archived-owner retention, deletion protection, notes persistence, owner-name snapshots, assigned-superuser restrictions, and the customer-scoped contact creation branch. The isolated migration test checks actual schema conversion, retained records/snapshots/audit JSON and refusal of unexpected text owners on SQLite/PostgreSQL. The existing news migration tests reuse the isolated database harness now located in `testsupport/migration_database.py`.
+
+The real-browser ownership test adds a contact in a new tab, links its role, refreshes the original owner dropdown, verifies unsaved notes survive, selects one owner and saves inventory and an evidence request. The existing CSRF matrix now submits actual contact IDs for owners; all mutation routes and CSRF enforcement remain in place. Owner choices refresh through an authorized, read-only, uncached GET endpoint. The shared picker script creates text-only options and controls; all styles remain in the shared stylesheet.

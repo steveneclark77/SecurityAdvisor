@@ -74,6 +74,9 @@ class Contact(models.Model):
             raise ValidationError('Provide the selected preferred contact method.')
 
 
+CONTACT_ROLES = [('business_owner','Business owner'),('technical','Technical contact'),('evidence','Evidence provider'),('remediation','Remediation implementer'),('other','Other stakeholder')]
+
+
 class EngagementContact(models.Model):
     engagement = models.ForeignKey(Engagement, on_delete=models.PROTECT, related_name='contact_links')
     contact = models.ForeignKey(Contact, on_delete=models.PROTECT, related_name='engagement_links')
@@ -88,6 +91,11 @@ class EngagementContact(models.Model):
             models.UniqueConstraint(fields=['engagement','contact'], name='unique_engagement_contact'),
             models.UniqueConstraint(fields=['engagement'], condition=models.Q(primary=True, active=True), name='one_active_primary_contact'),
         ]
+
+    @property
+    def role_labels(self):
+        labels = dict(CONTACT_ROLES)
+        return ', '.join(labels.get(role, role) for role in self.roles)
 
     def clean(self):
         super().clean()
@@ -127,7 +135,19 @@ VERIFICATION = [('not_tested', 'Not tested'), ('passed', 'Passed'), ('failed', '
 CONFIDENCE = [('unknown', 'Unknown'), ('low', 'Low'), ('medium', 'Medium'), ('high', 'High')]
 
 
-class ActionResult(models.Model):
+class ContactOwned(models.Model):
+    notes = models.TextField(blank=True, help_text='Supporting people, coordination, and other notes. Ownership is assigned to one contact only; never enter credentials.')
+
+    class Meta:
+        abstract = True
+
+    def clean(self):
+        super().clean()
+        from .ownership import validate_owner
+        validate_owner(self)
+
+
+class ActionResult(ContactOwned):
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='results')
     control_code = models.CharField(max_length=80)
     control_title = models.CharField(max_length=200)
@@ -138,7 +158,7 @@ class ActionResult(models.Model):
     verification = models.CharField(max_length=20, choices=VERIFICATION, default='not_tested')
     confidence = models.CharField(max_length=20, choices=CONFIDENCE, default='unknown')
     observation = models.TextField(blank=True)
-    investigation_owner = models.CharField(max_length=180, blank=True)
+    investigation_owner = models.ForeignKey('Contact', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     followup_due = models.DateField(null=True, blank=True)
     evidence = models.ManyToManyField('Evidence', blank=True, related_name='action_results')
     evidence_date = models.DateField(null=True, blank=True)
@@ -152,13 +172,13 @@ class ActionResult(models.Model):
         return f'{self.control_code} · {self.guidance["action"]["instruction"][:90]}'
 
 
-class EvidenceRequest(models.Model):
+class EvidenceRequest(ContactOwned):
     assessment = models.ForeignKey(Assessment, on_delete=models.PROTECT, null=True, blank=True)
     control_code = models.CharField(max_length=80, blank=True)
     engagement = models.ForeignKey(Engagement, on_delete=models.CASCADE, related_name='evidence_requests')
     title = models.CharField(max_length=200)
     instructions = models.TextField(help_text='Request redacted evidence, with examples; never request credentials.')
-    owner = models.CharField(max_length=180)
+    owner = models.ForeignKey('Contact', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     due_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[('requested','Requested'),('received','Received'),('reviewed','Reviewed')], default='requested')
 
@@ -227,11 +247,11 @@ class Finding(models.Model):
             raise ValidationError('Risk acceptance requires a review date.')
 
 
-class Remediation(models.Model):
+class Remediation(ContactOwned):
     finding = models.ForeignKey(Finding, on_delete=models.PROTECT, related_name='tasks')
     title = models.CharField(max_length=200)
     instructions = models.TextField()
-    owner = models.CharField(max_length=180)
+    owner = models.ForeignKey('Contact', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     due_date = models.DateField(null=True, blank=True)
     estimated_cost = models.CharField(max_length=200)
     estimated_effort = models.CharField(max_length=200)

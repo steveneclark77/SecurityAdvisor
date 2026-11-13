@@ -2,18 +2,19 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from engagements.models import ContactOwned
 
 FACT_STATES = [('unknown','Unknown — confirm facts'),('reported','Customer-reported'),('confirmed','Consultant-confirmed')]
 ITEM_KINDS = [('operation','Business operation'),('provider','Provider / outsourced service'),('device','Device / equipment group'),('software','Software / cloud application'),('network','Network / ISP / connectivity'),('physical','Physical security / operational system'),('data','Information / data set')]
 EXPOSURES = [('payments','Payment processing'),('employee_pii','Employee PII'),('customer_pii','Customer PII'),('software_development','Software development / coding agents'),('public_apps','Public applications'),('remote_access','Remote access / remote workers'),('ot','Operational technology')]
 
 
-class InventoryItem(models.Model):
+class InventoryItem(ContactOwned):
     customer = models.ForeignKey('engagements.Customer', on_delete=models.PROTECT, related_name='inventory_items')
     kind = models.CharField(max_length=20, choices=ITEM_KINDS)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    owner = models.CharField(max_length=200, blank=True, help_text='Responsible person/team; unknown is acceptable. Never enter credentials.')
+    owner = models.ForeignKey('engagements.Contact', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     state = models.CharField(max_length=20, choices=FACT_STATES, default='unknown')
     provenance = models.TextField(blank=True, help_text='Who reported/confirmed these facts, evidence reference, and any limitations. Confirmation of inventory facts is not a passed security assessment.')
     last_reviewed = models.DateField(null=True, blank=True)
@@ -89,12 +90,12 @@ class InventoryConnection(models.Model):
             raise ValidationError('Record when the connection was confirmed.')
 
 
-class InventoryFollowUp(models.Model):
+class InventoryFollowUp(ContactOwned):
     customer = models.ForeignKey('engagements.Customer', on_delete=models.PROTECT, related_name='inventory_followups')
     item = models.ForeignKey(InventoryItem, on_delete=models.PROTECT, null=True, blank=True)
     source_intake = models.OneToOneField('engagements.Intake',on_delete=models.PROTECT,null=True,blank=True)
     question = models.TextField(help_text='Missing environment facts, not a verdict on a safeguard.')
-    owner = models.CharField(max_length=200, blank=True)
+    owner = models.ForeignKey('engagements.Contact', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
     due_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[('open','Open — information needed'),('resolved','Resolved with response')], default='open')
     response = models.TextField(blank=True)

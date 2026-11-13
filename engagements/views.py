@@ -3,13 +3,14 @@ from pathlib import Path
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST, require_http_methods
 from . import forms, services
+from .browsers import assessment_browser, evidence_browser, contact_browser
 from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, Report, Reassessment, Contact, EngagementContact
 
 
@@ -59,6 +60,7 @@ def detail(request, pk):
     if selected not in {'scope', 'intake', 'assessments', 'evidence', 'remediation', 'reports', 'history', 'links'}:
         selected = ''
     return render(request, 'engagements/detail.html', {'engagement': engagement, 'intake': intake,
+        **(evidence_browser(engagement, request.GET) if selected == 'evidence' else {}),
         'journey': engagement_journey(engagement, intake), 'selected_area': selected,
         'workspace_template': f'engagements/journey/{selected}.html' if selected else None})
 
@@ -83,6 +85,10 @@ def record_state(obj):
         state[field.name] = value
     for field in obj._meta.many_to_many:
         state[field.name] = list(getattr(obj, field.name).values_list('pk',flat=True))
+    from .ownership import owner_snapshot
+    for name in ['owner', 'investigation_owner']:
+        if hasattr(obj, name + '_id'):
+            state[name + '_contact'] = owner_snapshot(getattr(obj, name))
     return state
 
 
@@ -127,11 +133,7 @@ def assessment_new(request, pk):
 @consultant
 def assessment_detail(request, pk):
     assessment = get_object_or_404(Assessment.objects.filter(engagement__in=engagements_for(request.user)).select_related('engagement','baseline'), pk=pk)
-    results = assessment.results.all()
-    applicability = request.GET.get('applicability','')
-    if applicability in ['applicable','unknown','excluded']:
-        results = results.filter(applicability=applicability)
-    return render(request, 'engagements/assessment.html', {'assessment':assessment,'results':results,'engagement':assessment.engagement})
+    return render(request, 'engagements/assessment.html', {'assessment':assessment,'engagement':assessment.engagement, **assessment_browser(assessment, request.GET)})
 
 
 @consultant
@@ -209,7 +211,7 @@ def finding_edit(request, pk):
 @require_http_methods(['GET','POST'])
 def task_new(request, pk):
     finding = get_object_or_404(Finding.objects.filter(engagement__in=engagements_for(request.user)), pk=pk)
-    obj = Remediation(finding=finding, instructions=finding.recommendation, owner="Unassigned", estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
+    obj = Remediation(finding=finding, instructions=finding.recommendation, estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
     return edit(request, forms.RemediationForm, obj, finding.engagement, 'Plan remediation', scoped=True)
 
 
@@ -331,7 +333,6 @@ def generate_requests(request, pk):
             EvidenceRequest.objects.get_or_create(engagement=assessment.engagement, assessment=assessment, control_code=result.control_code, defaults={
                 'title':f'{result.control_code}: {result.control_title}',
                 'instructions':result.guidance['control'].get('evidence','Provide redacted evidence supporting this control.') + '\nSynthetic/redacted data only. Do not submit credentials.',
-                'owner':'Unassigned',
             })
         services.audit(assessment.engagement, request.user, f'Generated evidence requests for assessment {assessment.pk}; existing requests preserved.')
     return redirect('engagement_detail', pk=assessment.engagement_id)
@@ -343,8 +344,25 @@ def contacts_for(user):
 
 
 @consultant
+@require_http_methods(['GET'])
+def owner_choices(request):
+    from .ownership import owner_contacts, owner_label
+    engagement_id = request.GET.get('engagement_id')
+    customer_id = request.GET.get('customer_id')
+    if engagement_id and engagement_id.isdigit():
+        engagement = engagement_for(request.user, engagement_id)
+        contacts = owner_contacts(engagement_id=engagement.pk)
+    elif customer_id and customer_id.isdigit():
+        customer = get_object_or_404(Customer.objects.filter(assigned_users=request.user), pk=customer_id)
+        contacts = owner_contacts(customer_id=customer.pk)
+    else:
+        raise Http404
+    return JsonResponse({'contacts': [{'id': contact.pk, 'name': owner_label(contact)} for contact in contacts]})
+
+
+@consultant
 def contact_index(request):
-    return render(request, 'engagements/contacts.html', {'contacts':contacts_for(request.user), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+    return render(request, 'engagements/contacts.html', {**contact_browser(contacts_for(request.user), request.GET), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
 
 
 @consultant
@@ -352,7 +370,7 @@ def engagement_contacts(request, pk):
     engagement = engagement_for(request.user, pk)
     linked = engagement.contact_links.values_list('contact_id',flat=True)
     available = request.user.managed_contacts.filter(archived=False).exclude(pk__in=linked)
-    return render(request, 'engagements/contacts.html', {'engagement':engagement, 'links':engagement.contact_links.select_related('contact'), 'available':available, 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+    return render(request, 'engagements/contacts.html', {'engagement':engagement, **contact_browser(engagement.contact_links.select_related('contact'), request.GET, engagement=engagement, available=available), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
 
 
 @consultant
@@ -364,9 +382,22 @@ def contact_new(request):
         if not candidate.isdigit():
             raise Http404
         engagement = engagement_for(request.user, candidate)
+    customer = None
+    if request.GET.get('customer'):
+        candidate_customer = request.GET['customer']
+        if not candidate_customer.isdigit():
+            raise Http404
+        customer = get_object_or_404(Customer.objects.filter(assigned_users=request.user), pk=candidate_customer)
+        if engagement and engagement.customer_id != customer.pk:
+            raise Http404
     form = forms.ContactForm(request.POST if request.method == 'POST' else None)
+    if customer and not engagement:
+        from django import forms as django_forms
+        form.fields['link_engagement'] = django_forms.ModelChoiceField(queryset=engagements_for(request.user).filter(customer=customer), label='Link to engagement', help_text='Select the engagement where this person will have a contact role.')
     duplicates = False
     if request.method == 'POST' and form.is_valid():
+        if customer and not engagement:
+            engagement = form.cleaned_data['link_engagement']
         # Duplicate checks never search records the current user cannot access.
         from django.db.models import Q
         query = Q(first_name__iexact=form.cleaned_data['first_name'],last_name__iexact=form.cleaned_data['last_name'])

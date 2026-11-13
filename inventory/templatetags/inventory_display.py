@@ -10,6 +10,8 @@ def inventory_fields(record):
     for key,value in record.items():
         if key in ['id','customer','updated_at'] or value in ['',None,[]]:
             continue
+        if key == 'owner_contact':
+            continue
         field=InventoryItem._meta.get_field(key)
         if key=='exposures':
             value=', '.join(dict(EXPOSURES).get(v,v) for v in value)
