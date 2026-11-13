@@ -101,7 +101,7 @@ class EngagementTests(TestCase):
         result.refresh_from_db()
         self.assertEqual(result.verified_by,self.user)
         self.assertEqual(result.verification,'failed')
-        self.assertContains(self.client.get(reverse('assessment_detail',args=[self.assessment.pk])),'Synthetic weak method')
+        self.assertContains(self.client.get(reverse('assessment_detail',args=[self.assessment.pk]),{'selected':result.pk}),'Synthetic weak method')
 
     def test_cross_engagement_relationships_rejected(self):
         other_customer = Customer.objects.create(name='Synthetic isolated company')

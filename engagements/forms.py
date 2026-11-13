@@ -3,7 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from library.models import Baseline
 from library.management.commands.seed_library import PROFILES, MODIFIERS
-from .models import Customer, Engagement, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Reassessment, Contact, EngagementContact
+from .models import Customer, Engagement, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Reassessment, Contact, EngagementContact, CONTACT_ROLES
 
 
 class StyledModelForm(forms.ModelForm):
@@ -222,7 +222,6 @@ class ContactForm(StyledModelForm):
             self.fields['confirm_shared_edit'] = forms.BooleanField(label='I understand that these shared contact details change everywhere this person is linked.')
 
 
-CONTACT_ROLES = [('business_owner','Business owner'),('technical','Technical contact'),('evidence','Evidence provider'),('remediation','Remediation implementer'),('other','Other stakeholder')]
 
 
 class EngagementContactForm(StyledModelForm):

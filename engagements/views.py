@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST, require_http_methods
 from . import forms, services
+from .browsers import assessment_browser, evidence_browser, contact_browser
 from .models import Customer, Engagement, Assessment, ActionResult, EvidenceRequest, Evidence, Finding, Remediation, Retest, Invite, Intake, Report, Reassessment, Contact, EngagementContact
 
 
@@ -59,6 +60,7 @@ def detail(request, pk):
     if selected not in {'scope', 'intake', 'assessments', 'evidence', 'remediation', 'reports', 'history', 'links'}:
         selected = ''
     return render(request, 'engagements/detail.html', {'engagement': engagement, 'intake': intake,
+        **(evidence_browser(engagement, request.GET) if selected == 'evidence' else {}),
         'journey': engagement_journey(engagement, intake), 'selected_area': selected,
         'workspace_template': f'engagements/journey/{selected}.html' if selected else None})
 
@@ -127,11 +129,7 @@ def assessment_new(request, pk):
 @consultant
 def assessment_detail(request, pk):
     assessment = get_object_or_404(Assessment.objects.filter(engagement__in=engagements_for(request.user)).select_related('engagement','baseline'), pk=pk)
-    results = assessment.results.all()
-    applicability = request.GET.get('applicability','')
-    if applicability in ['applicable','unknown','excluded']:
-        results = results.filter(applicability=applicability)
-    return render(request, 'engagements/assessment.html', {'assessment':assessment,'results':results,'engagement':assessment.engagement})
+    return render(request, 'engagements/assessment.html', {'assessment':assessment,'engagement':assessment.engagement, **assessment_browser(assessment, request.GET)})
 
 
 @consultant
@@ -344,7 +342,7 @@ def contacts_for(user):
 
 @consultant
 def contact_index(request):
-    return render(request, 'engagements/contacts.html', {'contacts':contacts_for(request.user), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+    return render(request, 'engagements/contacts.html', {**contact_browser(contacts_for(request.user), request.GET), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
 
 
 @consultant
@@ -352,7 +350,7 @@ def engagement_contacts(request, pk):
     engagement = engagement_for(request.user, pk)
     linked = engagement.contact_links.values_list('contact_id',flat=True)
     available = request.user.managed_contacts.filter(archived=False).exclude(pk__in=linked)
-    return render(request, 'engagements/contacts.html', {'engagement':engagement, 'links':engagement.contact_links.select_related('contact'), 'available':available, 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
+    return render(request, 'engagements/contacts.html', {'engagement':engagement, **contact_browser(engagement.contact_links.select_related('contact'), request.GET, engagement=engagement, available=available), 'managed_ids':set(request.user.managed_contacts.values_list('pk',flat=True))})
 
 
 @consultant

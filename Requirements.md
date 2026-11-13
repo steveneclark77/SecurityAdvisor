@@ -293,3 +293,7 @@ Use a grouped journey rail with factual work-status text and shape markers, expl
 ### Inventory explorer usability
 
 Customer inventory uses category navigation with counts, one contextual creation entry, search/fact-state/archive filters, a paginated record table, and a selected-record preview including dependencies and information gaps. Relationships, information follow-ups, and audit history have distinct destinations. Responsive layouts stack the preview below the table. Selection and filtering remain read-only and customer-assignment scoped, including for superusers; historical snapshots remain unchanged.
+
+### Shared record browser UI (v0.2.2)
+
+Assessment actions, engagement evidence/findings collections, and contacts use searchable, paginated tables and selected-record previews. Assessment filters distinguish applicability from verification; findings retain separate impact/likelihood and consultant priority. Evidence submission-link creation remains tied to the selected request and CSRF protected. Contact directory/engagement links keep shared-person management and engagement-role permissions distinct, including explicit reuse permission. Shared templates, URL/selection helpers and stylesheet components also serve inventory, without changing historical baselines, assessment/report snapshots, or audit records.
