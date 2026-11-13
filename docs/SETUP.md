@@ -172,3 +172,7 @@ Use the normal updater after the UI PRs are merged. This release requires no new
 The normal updater applies two owner/notes migrations. Five former text fields become optional protected contact references: inventory item owner, inventory information-follow-up owner, action investigation owner, evidence-request owner, and remediation-task owner. They all have a separate Notes field. As agreed for this synthetic deployment, no existing named owners require conversion; blank/Unassigned values become empty contact references. A migration refuses unexpected meaningful text rather than guessing names or silently deleting that information. No legacy-owner columns or reconciliation UI are added; historical JSON captures and audit details remain untouched.
 
 This release also carries the approved v0.2.2 shared record-browser changes from PR #11, which had been merged into the former inventory feature branch after PR #10 reached main.
+
+## Contextual form controls (v0.2.4)
+
+Use the normal updater; no migrations or configuration are required. The shared Django form renderer provides contextual empty-choice labels and field-help metadata. A shared script presents help dialogs, retaining inline help if JavaScript is unavailable. Admin overrides live in `templates/admin/base_site.html`, loaded through the project template directory; they use the same script and stylesheet.

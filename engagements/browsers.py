@@ -25,7 +25,7 @@ def collection_browser(queryset, params, *, fields, columns, row_values, preview
         filters[name] = value
         if value:
             queryset = queryset.filter(**{name: value})
-        choices.append({'name': name, 'label': label, 'choices': options, 'value': value, 'all_label': 'All'})
+        choices.append({'name': name, 'label': label, 'choices': options, 'value': value, 'all_label': 'All ' + {'Applicability':'applicability states', 'Verification':'verification states', 'Status':'statuses', 'Priority':'priorities'}.get(label, label.lower())})
     browser = page_selection(text_search(queryset, query, fields), params, filters)
     for row in browser['records']:
         row['label'], row['cells'] = row_values(row['item'])

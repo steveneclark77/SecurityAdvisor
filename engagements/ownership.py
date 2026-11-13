@@ -42,7 +42,7 @@ def configure_form(form):
         ordered = [key for key in form.fields if key != 'notes']
         ordered.insert(ordered.index(name) + 1, 'notes')
         form.order_fields(ordered)
-    form.fields[name].help_text = 'One accountable contact. Describe other participants in Notes. Archived/inactive current owners may be retained; choose an active contact for reassignment.'
+    form.fields[name].help_text = 'Choose one accountable contact; supporting people belong in Notes. Add contact opens the contact and role-link flow in a new tab. Return and use the refresh icon, then select the new owner. Archived/inactive current owners may be retained; choose an active contact for reassignment.'
     scope = scope_for(form.instance)
     form.fields[name].widget.attrs.update({
         'data-owner-options': reverse('owner_choices') + '?' + urlencode(scope),
