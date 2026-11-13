@@ -694,3 +694,45 @@ class BrowserForms(StaticLiveServerTestCase):
         artifacts=Path('test-artifacts') / self.engine
         artifacts.mkdir(parents=True,exist_ok=True)
         self.page.screenshot(path=str(artifacts / 'persistent-admin-mobile.png'),full_page=True)
+
+    def test_sortable_tables_and_view_controls_without_field_help(self):
+        self.login()
+        path=reverse('inventory_detail',args=[self.fixture.customer.pk])
+        self.visit(path)
+        filters=self.page.get_by_role('form',name='Filter inventory',exact=True)
+        expect(filters.locator('.info-button')).to_have_count(0)
+        table=self.page.locator('table[data-server-sort]')
+        action=table.get_by_role('columnheader',name='Action',exact=True)
+        expect(action.locator('a,button')).to_have_count(0)
+        table.get_by_role('link',name='Sort by Name ascending',exact=True).click()
+        expect(self.page.locator('th[aria-sort=ascending]').first).to_contain_text('Name')
+        self.assertIn('sort=0',self.page.url)
+        table.get_by_role('link',name='Sort by Name descending',exact=True).click()
+        expect(self.page.locator('th[aria-sort=descending]').first).to_contain_text('Name')
+        # Relationship tables are fully rendered and share client-side sorting.
+        self.visit(path+'?area=relationships')
+        expect(self.page.get_by_role('form').filter(has=self.page.get_by_role('button',name='Apply filters')).locator('.info-button')).to_have_count(0)
+        self.page.get_by_role('button',name='Sort by From → relationship → to ascending',exact=True).click()
+        expect(self.page.locator('th[aria-sort=ascending]')).to_contain_text('From')
+        expect(self.page.get_by_role('columnheader',name='Action',exact=True).locator('button,a')).to_have_count(0)
+        self.visit(reverse('inventory_item_edit',args=[self.fixture.operation.pk]))
+        expect(self.page.get_by_role('button',name='Help for Notes',exact=True)).to_be_visible()
+        self.visit('/')
+        expect(self.page.locator('form[method=get] .info-button')).to_have_count(0)
+        expect(self.page.get_by_label('Show checklist for')).to_be_visible()
+        self.visit(reverse('contact_index'))
+        expect(self.page.get_by_role('form',name='Filter records').locator('.info-button')).to_have_count(0)
+        self.page.get_by_role('link',name='Sort by Organization ascending',exact=True).click()
+        expect(self.page.locator('th[aria-sort=ascending]')).to_contain_text('Organization')
+        def sorting_issue():
+            from news.models import Source,Scan,Issue
+            from django.utils import timezone
+            source,_=Source.objects.get_or_create(url='https://example.test/',defaults={'name':'Synthetic sorting publisher','feed_url':'https://feeds.feedburner.com/synthetic-sort-fixture','enabled':False})
+            scan=Scan.objects.create(source=source,feed_url=source.feed_url)
+            Issue.objects.create(source=source,first_scan=scan,identity='synthetic-sort-issue',last_seen_at=timezone.now())
+        self.db(sorting_issue)
+        self.visit(reverse('admin:news_issue_changelist'))
+        expect(self.page.locator('#changelist-search .info-button,.actions .info-button')).to_have_count(0)
+        # Native admin headers retain their server sort links, including computed columns.
+        expect(self.page.locator('th.column-name a')).to_have_count(1)
+        expect(self.page.locator('th.column-review_status a')).to_have_count(1)

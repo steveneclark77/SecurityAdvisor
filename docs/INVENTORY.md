@@ -93,3 +93,9 @@ It also adds 15 directional example relationships and eight open information fol
 Existing records are kept by type and normalized name/known aliases, including archived items. Audit markers retain identity after generated records, relationships or questions are edited. Earlier v0.2.6 operation markers remain recognized. Resolved follow-ups are not reopened, and archived objects are not unarchived. Links/questions to archived or ambiguous item matches are skipped; the result message reports added counts and skips. Different kinds sharing a name are not treated as the same record.
 
 The atomic customer-locked service creates only missing records and normal before/after audit entries. Repeating it adds nothing when examples are already present; existing owners, values and historical assessment/report snapshots stay unchanged. A CSRF-protected POST is required. Updates and GET requests do not seed data, and no new migration is needed.
+
+## Sort and filter inventory (v0.2.9)
+
+Click **Name**, **Type / quantity**, **Owner** or **Fact state** to sort; click again to reverse direction. **Action** is not sortable. Numbers sort naturally (2 before 10), using the displayed type/owner/state rather than contact IDs or internal choice codes. Sorting applies to the complete filtered record set before paging, returns to the first page and selects its first visible record. Search/archive/fact-state filters, paging and Edit/Cancel navigation preserve the selected sort. Relationships and information-follow-up tables also offer sortable data headers.
+
+Search, fact-state and archive controls have no info icons. Help remains available on record-entry fields such as owner and notes; explanatory page guidance remains visible.

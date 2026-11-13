@@ -1,4 +1,5 @@
-<form method="get" class="record-filters" aria-label="Filter records">
+<form method="get" data-view-controls class="record-filters" aria-label="Filter records">
+{% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
 {% for key,value in fixed_filters.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
 <label>Search records <input type="search" name="q" value="{{ query }}" maxlength="200" placeholder="Search this collection"></label>
 {% for filter in filter_controls %}<div><label for="record-filter-{{ filter.name }}">{{ filter.label }}</label><select id="record-filter-{{ filter.name }}" name="{{ filter.name }}"><option value="">{{ filter.all_label }}</option>{% for value,label in filter.choices %}<option value="{{ value }}" {% if filter.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>{% endfor %}

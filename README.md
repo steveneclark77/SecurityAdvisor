@@ -81,3 +81,5 @@ Version 0.2.6 adds an explicit synthetic Harbor Cafe operation-prefill button: t
 Version 0.2.7 expands synthetic cafe prefill to every inventory type, directional relationships and open information follow-ups, retaining manual/edited/archived/resolved records and earlier operation-prefill identity.
 
 Version 0.2.8 keeps application headers visible while scrolling, with compact mobile navigation, keyboard/focus support and unchanged print/report behavior.
+
+Version 0.2.9 adds sortable data-column headers and removes field-help icons from view controls while retaining help on data-entry forms.

@@ -321,3 +321,7 @@ Expand the explicit synthetic prefill to all seven inventory types, relationship
 ### Persistent application header (v0.2.8)
 
 Keep the global header visible during vertical page scrolling on consultant, public and admin screens. Maintain stable geometry while scrolling. At narrow widths, consultant/admin navigation opens below a compact brand/Menu row without expanding the header itself. Preserve each layout's authorized navigation; public pages do not gain consultant links. Support keyboard navigation, Escape/focus return, anchor/focused-field clearance and usable non-JavaScript navigation. Hide headers in print output and retain existing CSRF/logout behavior.
+
+### Sortable data tables and focused help (v0.2.9)
+
+Data columns offer ascending/descending sorting with visible direction and accessible sort state. Navigation/mutation Action columns stay unsortable. Paginated customer record browsers sort the full filtered scoped result, preserve sort/filter state across paging and record navigation, and reject unknown sort columns without writes. Other rendered data tables sort locally; native admin sorting is retained. Sorting never modifies captured reports, baselines, assessments or audit records. Search/filter/archive/checklist and bulk-action view controls do not receive field-help icons/dialogs. Data-entry fields continue to expose their help, errors and validation.

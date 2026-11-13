@@ -2,6 +2,8 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import OuterRef, Subquery, Value, Q
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.html import format_html
@@ -48,6 +50,19 @@ class IssueAdmin(RetainedAdmin):
     list_filter = ['source', 'current_version__severity', 'current_version__kind']
     search_fields = ['current_version__name', 'current_version__description', 'current_version__identifiers']
     readonly_fields = ['source', 'first_scan', 'identity', 'discovered_at', 'last_seen_at', 'current_version', 'next_version', 'version_history']
+
+    def get_queryset(self, request):
+        reviews = Review.objects.filter(issue_id=OuterRef('pk')).filter(Q(issue_version_id=OuterRef('current_version_id')) | Q(issue_version__isnull=True,issue__current_version__isnull=True)).order_by('-created_at','-pk')
+        return super().get_queryset(request).select_related('source','current_version').annotate(
+            review_label=Coalesce(Subquery(reviews.values('decision')[:1]),Value('Needs review')))
+
+    @admin.display(ordering='current_version__name', description='Name')
+    def name(self, obj):
+        return obj.name
+
+    @admin.display(ordering='review_label', description='Review status')
+    def review_status(self, obj):
+        return obj.review_label
 
     def has_add_permission(self, request):
         return False

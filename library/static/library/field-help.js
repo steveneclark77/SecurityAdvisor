@@ -11,6 +11,7 @@
       if (widget.classList.contains('action-select') || (widget.closest('.selector') && !widget.dataset.fieldInfo)) return;
       if (widget.parentElement.closest('[data-field-info]')) return; // Checkbox/radio group shares one help control.
       const form = widget.closest('form');
+      if (form.method.toLowerCase() !== 'post' || widget.closest('[data-view-controls], .actions')) return;
       const label = (widget.id && form.querySelector(`label[for="${CSS.escape(widget.id)}"]`)) || (widget.dataset.fieldId && form.querySelector(`label[for="${CSS.escape(widget.dataset.fieldId)}"]`)) || widget.closest('label');
       const labelCopy = label?.cloneNode(true);
       labelCopy?.querySelectorAll('input,select,textarea,button').forEach(child => child.remove());
