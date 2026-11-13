@@ -73,3 +73,13 @@ The owner selector has a visible **Add contact** button and a small refresh icon
 Inventory record, relationship and information-follow-up forms offer **Cancel** beside Save. Cancel navigates back to the customer inventory without submitting, saving, or writing history. Opening a form from the explorer preserves its list category, search, fact-state/archive filters, page and selected preview. Direct form links fall back to the appropriate customer collection. Return destinations are restricted to this customer's inventory path, including for assigned superusers. Cancel also works when required fields are incomplete.
 
 Buttons use the approved light-elevation style: white faces, charcoal text, fine gray borders and soft shadows. Hover, focus, pressed and disabled states share the same stylesheet across consultant, public and admin forms. The button family does not indicate workflow priority.
+
+## Prefill the remaining Harbor Cafe operations (v0.2.6)
+
+On the customer's **Operations** tab, expand **Prefill synthetic Harbor Cafe operations**, optionally select **Alex Morgan** as **Owner for new operations**, and choose **Add remaining cafe operations**. This explicitly adds Biweekly payroll, Vendor and rent payments, and Device maintenance and backup recovery; it does not recreate Orders and payments.
+
+All added facts are synthetic examples, marked Unknown, with unknown criticality and no impact rating. The template fills descriptions, notes, schedules, critical windows, consequences and information gaps so manual entry can be skipped. Review assumptions as part of the exercise; no safeguards are verified by generating examples.
+
+Existing operations are kept, matching case/whitespace-normalized names and known walkthrough aliases, including archived entries. Previously generated records remain recognized by their audit marker even after renaming. Existing records, owners and notes are never overwritten or unarchived. An atomic customer-scoped transaction serializes repeated requests; only newly created records receive new audit entries. Repeating the action reports added/kept counts. Historical assessments and reports remain unchanged.
+
+The tool is available only for customers marked synthetic and requires normal customer assignment, including for superusers. It is a CSRF-protected POST; installation and page visits do not create records automatically. No new migration is needed.

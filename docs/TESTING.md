@@ -6,7 +6,7 @@ All fixtures are synthetic. Django creates and destroys a dedicated test databas
 
 Run `python manage.py test` in the configured development environment, or `docker compose exec web python manage.py test`.
 
-The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 44 form operations, including intake draft/final submission and evidence response, it verifies:
+The CSRF matrix enables Django's real CSRF enforcement for every application POST route. For 45 form operations, including intake draft/final submission and evidence response, it verifies:
 
 - The rendered form contains a token and uses the same-origin referrer policy.
 - Missing/incorrect tokens, foreign origins, and null origins return HTTP 403.
@@ -104,3 +104,7 @@ The real-browser ownership test adds a contact in a new tab, links its role, ref
 Inventory navigation tests check safe customer-scoped return destinations and explorer edit links. The browser cancellation test edits name/notes, cancels back to the filtered list, and verifies unchanged persisted fields/history. It also verifies Cancel remains available on an invalid new-record form. Geometry checks compare the owner select, Add contact, refresh, Save and Cancel heights, and verify a roughly 17px info circle inside a 24px clickable button. Existing responsive/print and full form/CSRF browser checks remain in place.
 
 The light-elevation browser check verifies the shared white/charcoal/border/shadow treatment on inventory actions, public submission buttons and admin Save, including hover, keyboard focus and disabled appearance. Layout stylesheets no longer define competing button colors.
+
+## Synthetic cafe operation prefill (v0.2.6)
+
+`python manage.py test inventory.test_walkthrough` checks all three examples, optional owner selection, unknown state/unrated impact, audit creation, case/whitespace/alias matching, archived/manual record preservation, repeat after renaming, snapshot preservation, foreign-owner rejection and customer assignment for superusers. The action is synthetic-only and GET returns 405. It is included in the CSRF inventory (now 45 form operations), with valid contact-ID submission and checks for missing/invalid tokens and origins. Real-browser coverage opens the prefill disclosure, chooses an owner, adds the operations, verifies result messages, and repeats without new audit records or duplicates. Existing authenticated-form browser coverage also submits this action.

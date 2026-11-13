@@ -607,3 +607,20 @@ class BrowserForms(StaticLiveServerTestCase):
         admin.hover()
         expect(admin).to_have_css('background-color','rgb(248, 250, 252)')
         self.assertNotEqual(admin.evaluate('e=>getComputedStyle(e).boxShadow'),'none')
+
+    def test_synthetic_operation_prefill_preserves_existing_records(self):
+        self.login()
+        path=reverse('inventory_detail',args=[self.fixture.customer.pk])+'?kind=operation'
+        self.visit(path)
+        self.page.get_by_text('Prefill synthetic Harbor Cafe operations',exact=True).click()
+        form=self.page.get_by_role('form',name='Prefill synthetic operations',exact=True)
+        form.locator('[name=owner]').select_option(str(self.fixture.person.pk))
+        form.get_by_role('button',name='Add remaining cafe operations',exact=True).click()
+        expect(self.page.get_by_role('status')).to_contain_text('Added 3 synthetic operations')
+        for name in ['Biweekly payroll','Vendor and rent payments','Device maintenance and backup recovery']:
+            expect(self.page.locator('.record-table-wrap').get_by_role('link',name=name,exact=True)).to_be_visible()
+        self.assertEqual(self.db(lambda:self.fixture.customer.inventory_events.count()),3)
+        self.page.get_by_text('Prefill synthetic Harbor Cafe operations',exact=True).click()
+        self.page.get_by_role('button',name='Add remaining cafe operations',exact=True).click()
+        expect(self.page.get_by_role('status')).to_contain_text('Added 0 synthetic operations')
+        self.assertEqual(self.db(lambda:self.fixture.customer.inventory_events.count()),3)

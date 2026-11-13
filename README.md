@@ -75,3 +75,5 @@ Version 0.2.3 adds single contact-backed owners and supporting-person notes acro
 Version 0.2.4 adds contextual empty select labels and shared field-help dialogs across consultant, public and admin forms, with a visible Add contact button and compact owner refresh icon.
 
 Version 0.2.5 adds Cancel to inventory forms, preserving the originating list view without saving edits, and aligns standard button/control heights with smaller info circles. Buttons use the approved light-elevation style: white faces, restrained borders and soft shadows.
+
+Version 0.2.6 adds an explicit synthetic Harbor Cafe operation-prefill button: three remaining examples, optional scoped owner, preserved existing records, and repeat-safe audit history. See [Inventory](docs/INVENTORY.md#prefill-the-remaining-harbor-cafe-operations-v026).

@@ -1,4 +1,6 @@
 from django.db import transaction
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import get_object_or_404,redirect,render
 from django.urls import reverse
@@ -27,7 +29,35 @@ def index(request):
 @consultant
 def detail(request,pk):
     customer=customer_for(request.user,pk)
-    return render(request,'inventory/detail.html',{'customer':customer,**explorer_context(customer,request.GET)})
+    return render(request,'inventory/detail.html',detail_context(request,customer))
+
+
+def detail_context(request,customer,walkthrough_form=None,params=None):
+    from .walkthrough import EXAMPLES
+    return {'customer':customer, **explorer_context(customer,request.GET if params is None else params),
+        'show_walkthrough':request.GET.get('walkthrough')=='yes', 'walkthrough_examples':EXAMPLES,
+        'walkthrough_form':walkthrough_form if walkthrough_form is not None else forms.WalkthroughOperationsForm(instance=InventoryItem(customer=customer,kind='operation'))}
+
+
+@consultant
+@require_POST
+def walkthrough_operations(request,pk):
+    customer=get_object_or_404(customers_for(request.user).filter(synthetic=True),pk=pk)
+    form=forms.WalkthroughOperationsForm(request.POST,instance=InventoryItem(customer=customer,kind='operation'))
+    if form.is_valid():
+        from .walkthrough import prefill_operations
+        try:
+            added,kept=prefill_operations(customer,request.user,form.cleaned_data['owner'])
+        except ValidationError as exc:
+            form.add_error(None,exc)
+        else:
+            messages.success(request,f'Added {len(added)} synthetic operations. Kept {len(kept)} existing operations unchanged. New examples remain unknown until reviewed.')
+            return redirect(reverse('inventory_detail',args=[customer.pk])+'?kind=operation')
+    params=request.GET.copy()
+    params['kind']='operation'
+    context=detail_context(request,customer,form,params)
+    context['show_walkthrough']=True
+    return render(request,'inventory/detail.html',context,status=400)
 
 
 def editor(request,customer,obj,form_class,title,*,scoped=False):

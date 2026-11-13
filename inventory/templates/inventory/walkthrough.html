@@ -1,0 +1,5 @@
+<details {% if show_walkthrough %}open{% endif %}>
+<summary>Prefill synthetic Harbor Cafe operations</summary>
+<aside class="guidance-panel"><span class="guidance-label">Synthetic walkthrough</span><p>Add the remaining cafe examples: {% for example in walkthrough_examples %}{{ example.name }}{% if not forloop.last %}; {% endif %}{% endfor %}. Existing operations—including archived entries—are kept without overwriting them. Renamed examples previously added by this tool are also kept.</p><p>New records remain Unknown, with unknown criticality and no impact rating. This does not verify safeguards or change historical assessments/reports. Choose an owner for new records, or leave them Unassigned.</p></aside>
+<form method="post" action="{% url 'inventory_walkthrough_operations' customer.pk %}" aria-label="Prefill synthetic operations">{% csrf_token %}{{ walkthrough_form.as_p }}<button type="submit">Add remaining cafe operations</button></form>
+</details>
