@@ -317,3 +317,7 @@ Provide an optional, explicit synthetic-customer-only action to add remaining Ha
 ### Complete synthetic inventory prefill (v0.2.7)
 
 Expand the explicit synthetic prefill to all seven inventory types, relationships and information follow-ups. Reuse one atomic, assigned-customer-scoped service and the existing contact picker/CSRF/audit components. Match identities by kind and normalized names or retained audit keys, including previous operation markers. Never overwrite existing values, unarchive records, reopen resolved questions or rewrite historical captures. Skip related examples for ambiguous/archived endpoints. Report counts and allow normal manual editing/entry. Generated facts remain unknown and unrated.
+
+### Persistent application header (v0.2.8)
+
+Keep the global header visible during vertical page scrolling on consultant, public and admin screens. Maintain stable geometry while scrolling. At narrow widths, consultant/admin navigation opens below a compact brand/Menu row without expanding the header itself. Preserve each layout's authorized navigation; public pages do not gain consultant links. Support keyboard navigation, Escape/focus return, anchor/focused-field clearance and usable non-JavaScript navigation. Hide headers in print output and retain existing CSRF/logout behavior.

@@ -79,3 +79,5 @@ Version 0.2.5 adds Cancel to inventory forms, preserving the originating list vi
 Version 0.2.6 adds an explicit synthetic Harbor Cafe operation-prefill button: three remaining examples, optional scoped owner, preserved existing records, and repeat-safe audit history. See [Inventory](docs/INVENTORY.md#prefill-synthetic-harbor-cafe-inventory-v027).
 
 Version 0.2.7 expands synthetic cafe prefill to every inventory type, directional relationships and open information follow-ups, retaining manual/edited/archived/resolved records and earlier operation-prefill identity.
+
+Version 0.2.8 keeps application headers visible while scrolling, with compact mobile navigation, keyboard/focus support and unchanged print/report behavior.
