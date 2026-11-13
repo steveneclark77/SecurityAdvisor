@@ -17,9 +17,11 @@ def page_selection(queryset, params, filters, *, row_values=None, columns=(), or
         # lazy so COUNT and LIMIT happen in SQL before rows are formatted.
         expressions = ordering[int(token.lstrip('-'))]
         descending = token.startswith('-')
+        identity = ordering[0] if int(token.lstrip('-')) != 0 else ()
         queryset = queryset.order_by(
             *(expression.desc(nulls_last=True) if descending else expression.asc(nulls_first=True)
-              for expression in expressions), 'pk')
+              for expression in expressions),
+            *(expression.asc(nulls_first=True) for expression in identity), 'pk')
     page = Paginator(queryset, 50).get_page(params.get('page'))
     items = list(page.object_list)
     selected = next((item for item in items if str(item.pk) == params.get('selected')), None)

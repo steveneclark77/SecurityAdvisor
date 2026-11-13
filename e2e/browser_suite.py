@@ -695,6 +695,34 @@ class BrowserForms(StaticLiveServerTestCase):
         artifacts.mkdir(parents=True,exist_ok=True)
         self.page.screenshot(path=str(artifacts / 'persistent-admin-mobile.png'),full_page=True)
 
+    def test_rendered_table_ties_use_identifying_column_ascending(self):
+        self.login()
+        self.visit('/')
+        # A real DOM table with Name deliberately placed after the sorted column.
+        self.page.evaluate("""() => {
+            const table = document.createElement('table');
+            table.id = 'tie-sort-fixture';
+            table.innerHTML = '<thead><tr><th>State</th><th>Name</th><th>Action</th></tr></thead>' +
+                '<tbody><tr data-record="z"><td>Reported</td><td>Zulu</td><td>Edit</td></tr>' +
+                '<tr data-record="a1"><td>Reported</td><td>Alpha</td><td>Edit</td></tr>' +
+                '<tr data-record="a2"><td>Reported</td><td>Alpha</td><td>Edit</td></tr>' +
+                '<tr data-record="b"><td>Confirmed</td><td>Bravo</td><td>Edit</td></tr></tbody>';
+            document.body.append(table);
+        }""")
+        self.page.add_script_tag(url=self.live_server_url+'/static/library/tables.js')
+        table = self.page.locator('#tie-sort-fixture')
+        table.get_by_role('button', name='Sort by State ascending', exact=True).click()
+        self.assertEqual(table.locator('tbody tr').evaluate_all('(rows) => rows.map(row => row.dataset.record)'),
+                         ['b','a1','a2','z'])
+        table.get_by_role('button', name='Sort by State descending', exact=True).click()
+        self.assertEqual(table.locator('tbody tr').evaluate_all('(rows) => rows.map(row => row.dataset.record)'),
+                         ['a1','a2','z','b'])
+        table.get_by_role('button', name='Sort by Name ascending', exact=True).click()
+        table.get_by_role('button', name='Sort by Name descending', exact=True).click()
+        self.assertEqual(table.locator('tbody tr').evaluate_all('(rows) => rows.map(row => row.dataset.record)'),
+                         ['z','b','a1','a2'])
+        expect(table.get_by_role('columnheader', name='Action', exact=True).locator('button')).to_have_count(0)
+
     def test_sortable_tables_and_view_controls_without_field_help(self):
         self.login()
         path=reverse('inventory_detail',args=[self.fixture.customer.pk])

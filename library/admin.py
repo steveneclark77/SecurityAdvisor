@@ -1,23 +1,26 @@
 from django.contrib import admin
 from django.conf import settings
 from django.db.models import Case, When, Value, CharField
+from .admin_sorting import IdentifiedAdmin
 from .models import Profile, Modifier, Control, Baseline, ControlAction
 admin.site.site_header = f'SecurityAdvisor v{settings.APP_VERSION} · Library'
-admin.site.register(Profile)
-admin.site.register(Modifier)
+admin.site.register(Profile, IdentifiedAdmin)
+admin.site.register(Modifier, IdentifiedAdmin)
 class ControlActionInline(admin.StackedInline):
     model = ControlAction
     extra = 0
 
 @admin.register(Control)
-class ControlAdmin(admin.ModelAdmin):
+class ControlAdmin(IdentifiedAdmin):
+    sort_identity = 'code'
     inlines = [ControlActionInline]
     list_display = ['code','title','function','universal']
     list_filter = ['function','universal','profiles','modifiers']
     search_fields = ['code','title','investigation','recommendation']
     filter_horizontal = ['profiles','modifiers']
 @admin.register(Baseline)
-class BaselineAdmin(admin.ModelAdmin):
+class BaselineAdmin(IdentifiedAdmin):
+    sort_identity = 'version'
     list_display = ['version','status','created_at','approved_at','approved_by']
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(status_label=Case(

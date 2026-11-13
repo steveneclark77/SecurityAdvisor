@@ -325,3 +325,7 @@ Keep the global header visible during vertical page scrolling on consultant, pub
 ### Sortable data tables and focused help (v0.2.9)
 
 Data columns offer ascending/descending sorting with visible direction and accessible sort state. Navigation/mutation Action columns stay unsortable. Paginated customer record browsers sort the full filtered scoped result, preserve sort/filter state across paging and record navigation, and reject unknown sort columns without writes. Other rendered data tables sort locally; native admin sorting is retained. Sorting never modifies captured reports, baselines, assessments or audit records. Search/filter/archive/checklist and bulk-action view controls do not receive field-help icons/dialogs. Data-entry fields continue to expose their help, errors and validation.
+
+### Sort tie-breakers
+
+Selected data columns retain their chosen ascending/descending direction. Ties use the table's identifying column (Name, title, control code, or equivalent) ascending, followed by record ID ascending. Compound columns retain their component order before these tie-breakers. Sorting the identifying column itself retains the selected direction. Rendered tables without record IDs use original row order for identical identifying values. Keep database ordering before pagination and allowlist selectable columns. Record-name uniqueness remains an open topic in docs/OPEN_TOPICS.md.

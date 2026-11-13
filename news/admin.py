@@ -1,4 +1,5 @@
 from django import forms
+from library.admin_sorting import IdentifiedAdmin
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -11,7 +12,7 @@ from .models import Issue, IssueVersion, IssueVersionReference, Review, Scan, So
 from .versioning import CONTENT_FIELDS, create_version, reference_data
 
 
-class RetainedAdmin(admin.ModelAdmin):
+class RetainedAdmin(IdentifiedAdmin):
     class Media:
         js = ['library/forms.js']
 
@@ -46,6 +47,7 @@ class SourceAdmin(RetainedAdmin):
 
 @admin.register(Issue)
 class IssueAdmin(RetainedAdmin):
+    sort_identity = 'current_version__name'
     list_display = ['name', 'source', 'current_version', 'discovered_at', 'review_status']
     list_filter = ['source', 'current_version__severity', 'current_version__kind']
     search_fields = ['current_version__name', 'current_version__description', 'current_version__identifiers']
@@ -180,6 +182,7 @@ class VersionAdmin(RetainedAdmin):
 
 @admin.register(IssueVersionReference)
 class ReferenceAdmin(RetainedAdmin):
+    sort_identity = 'version__name'
     list_display = ['version', 'source_name', 'source_url', 'source_published_at']
     def has_add_permission(self, request):
         return False
@@ -189,6 +192,7 @@ class ReferenceAdmin(RetainedAdmin):
 
 @admin.register(Scan)
 class ScanAdmin(RetainedAdmin):
+    sort_identity = 'source__name'
     list_display = ['source', 'started_at', 'status', 'created_count', 'error']
     def has_add_permission(self, request):
         return False
@@ -215,6 +219,7 @@ class ReviewForm(forms.ModelForm):
 
 @admin.register(Review)
 class ReviewAdmin(RetainedAdmin):
+    sort_identity = 'issue__current_version__name'
     form = ReviewForm
     class Media:
         js = ['library/forms.js', 'news/review.js']

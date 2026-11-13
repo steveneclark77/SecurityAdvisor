@@ -83,3 +83,5 @@ Version 0.2.7 expands synthetic cafe prefill to every inventory type, directiona
 Version 0.2.8 keeps application headers visible while scrolling, with compact mobile navigation, keyboard/focus support and unchanged print/report behavior.
 
 Version 0.2.9 adds sortable data-column headers and removes field-help icons from view controls while retaining help on data-entry forms.
+
+Open product questions are tracked in [docs/OPEN_TOPICS.md](docs/OPEN_TOPICS.md).

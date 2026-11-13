@@ -42,6 +42,47 @@ class TableSortingTests(TestCase):
         self.assertEqual(len(response.context['sort_headers']),4)
         self.assertNotIn('Action',[header['label'] for header in response.context['sort_headers']])
 
+    def test_all_inventory_columns_break_ties_by_name_then_id_across_pages(self):
+        # Reverse insertion order makes an accidental ID-only fallback visible.
+        items = InventoryItem.objects.bulk_create([
+            InventoryItem(customer=self.f.customer, kind='device', name=f'Tie {number:03}', quantity=2)
+            for number in range(60, 0, -1)])
+        duplicate = InventoryItem.objects.create(customer=self.f.customer, kind='device',
+                                                name='Tie 001', quantity=2)
+        expected = sorted([*items, duplicate], key=lambda item:(item.name.lower(), item.pk))
+        for column in range(1,4):
+            for direction in ['', '-']:
+                actual = []
+                for page in [1,2]:
+                    response = self.client.get(self.url, {'q':'Tie ', 'sort':direction+str(column), 'page':page})
+                    actual.extend(row['item'].pk for row in response.context['records'])
+                with self.subTest(column=column, direction=direction):
+                    self.assertEqual(actual, [item.pk for item in expected])
+
+    def test_compound_sort_retains_quantity_before_name(self):
+        for name, quantity in [('Compound Zulu',2),('Compound Alpha',2),('Compound Bravo',10)]:
+            InventoryItem.objects.create(customer=self.f.customer, kind='device', name=name, quantity=quantity)
+        for token, expected in [('1',['Compound Alpha','Compound Zulu','Compound Bravo']),
+                                ('-1',['Compound Bravo','Compound Alpha','Compound Zulu'])]:
+            response = self.client.get(self.url, {'q':'Compound ', 'sort':token})
+            self.assertEqual([row['item'].name for row in response.context['records']], expected)
+
+    def test_admin_column_ties_use_name_in_both_directions(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from news.admin import SourceAdmin
+        from news.models import Source
+        Source.objects.bulk_create([
+            Source(url='https://zulu.example.test/', name='Tie Zulu', enabled=False),
+            Source(url='https://alpha.example.test/', name='Tie Alpha', enabled=False)])
+        screen = SourceAdmin(Source, admin.site)
+        for direction in ['', '-']:
+            request = RequestFactory().get('/admin/news/source/', {'o':direction+'3'})
+            request.user = self.f.user
+            changelist = screen.get_changelist_instance(request)
+            rows = list(changelist.queryset.filter(name__startswith='Tie '))
+            self.assertEqual([row.name for row in rows], ['Tie Alpha','Tie Zulu'])
+
     def test_bad_sort_is_ignored_and_get_does_not_write(self):
         before=self.f.customer.inventory_events.count()
         for invalid in ['999','owner__customer','0; DROP TABLE inventory_inventoryitem','9'*5000]:

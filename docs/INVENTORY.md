@@ -99,3 +99,5 @@ The atomic customer-locked service creates only missing records and normal befor
 Click **Name**, **Type / quantity**, **Owner** or **Fact state** to sort; click again to reverse direction. **Action** is not sortable. Quantities sort numerically (2 before 10); names sort alphabetically (Laptop 10 before Laptop 2), using the displayed type/owner/state rather than contact IDs or internal choice codes. Sorting applies to the complete filtered record set before paging, returns to the first page and selects its first visible record. Search/archive/fact-state filters, paging and Edit/Cancel navigation preserve the selected sort. Relationships and information-follow-up tables also offer sortable data headers.
 
 Search, fact-state and archive controls have no info icons. Help remains available on record-entry fields such as owner and notes; explanatory page guidance remains visible.
+
+For tied sort values, Name is always ascending, followed by record ID ascending. Type / quantity sorts by type and numeric quantity in the selected direction before applying those tie-breakers. Sorting Name itself keeps the selected Name direction.
