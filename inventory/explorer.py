@@ -1,8 +1,9 @@
 """Read-only, customer-scoped inventory explorer navigation."""
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from urllib.parse import urlencode
 from django.urls import reverse
 from library.record_browser import page_selection, query_url
+from library.table_sorting import text_order, choice_order, owner_order
 from .models import ITEM_KINDS, FACT_STATES
 from . import services
 from .templatetags.inventory_display import inventory_fields
@@ -39,17 +40,22 @@ def explorer_context(customer, params):
         items = items.filter(state=state)
     if query:
         items = items.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(owner__first_name__icontains=query) | Q(owner__last_name__icontains=query) | Q(vendor_product__icontains=query))
-    browser = page_selection(items, params, filters)
+    def values(item):
+        kind_label = item.get_kind_display()
+        if item.quantity:
+            kind_label += f' · {item.quantity} devices'
+        return item.name, [kind_label, item.owner or 'Unassigned', item.get_state_display()]
+
+    columns = ['Type / quantity', 'Owner', 'Fact state']
+    browser = page_selection(items, params, filters, row_values=values, columns=columns, ordering=[
+        [text_order('name')], [choice_order('kind', ITEM_KINDS), F('quantity')],
+        [owner_order('owner')], [choice_order('state', FACT_STATES)]])
+    filters['sort'] = browser['sort']
     selected = browser['selected']
     return_to = reverse('inventory_detail', args=[customer.pk]) + query_url({**filters, 'area': area, 'page': browser['page'].number, 'selected': selected.pk if selected else ''})
     for row in browser['records']:
         item = row['item']
-        row['label'] = item.name
         row['note'] = 'Archived' if item.archived else ''
-        kind_label = item.get_kind_display()
-        if item.quantity:
-            kind_label += f' · {item.quantity} devices'
-        row['cells'] = [kind_label, item.owner or 'Unassigned', item.get_state_display()]
         row['actions'] = [{'label': 'Edit', 'url': reverse('inventory_item_edit', args=[item.pk]) + '?' + urlencode({'return_to': return_to})}]
     connections = customer.inventory_connections.select_related('source', 'target')
     if not archived:
@@ -58,7 +64,7 @@ def explorer_context(customer, params):
     return {
         'return_to': return_to, 'area': area, 'kind': kind, 'query': query, 'state': state, 'archived': archived,
         'states': FACT_STATES, **browser, 'row_actions': 1,
-        'columns': ['Type / quantity', 'Owner', 'Fact state'], 'preview_template': 'inventory/preview.html',
+        'columns': columns, 'preview_template': 'inventory/preview.html',
         'categories': [{'key': key, 'label': label, 'count': counts.get(key, 0), 'url': url(kind=key)} for key, label in CATEGORIES],
         'all_count': sum(counts.values()), 'all_url': url(kind=''),
         'collections': [{'key': key, 'label': label, 'url': url(area=key)} for key, label in [('relationships', 'Relationships'), ('followups', 'Information to confirm'), ('history', 'History')]],

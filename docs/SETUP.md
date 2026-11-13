@@ -188,3 +188,7 @@ The same explicit walkthrough tool now covers every inventory type plus relation
 ## Persistent headers (v0.2.8)
 
 Use the normal updater; no migrations or new configuration are required. Consultant, public-submission/confirmation and admin screens share persistent header behavior. The shared header script handles the narrow-screen Menu disclosure and focus/anchor clearance. Header CSS remains in the shared stylesheet.
+
+## Sortable tables and view-control cleanup (v0.2.9)
+
+No migrations or new dependencies. Sorting uses the existing authorized views plus a shared script for fully rendered tables.

@@ -3,5 +3,5 @@
 {% block branding %}<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:'Django administration' }}</a></div>{% endblock %}
 {% block usertools %}{% if has_permission %}<button type="button" class="header-menu-toggle" data-header-menu aria-controls="user-tools" aria-expanded="false" hidden>Menu</button>{% endif %}{{ block.super }}{% endblock %}
 {% block nav-global %}{% endblock %}
-{% block extrahead %}{{ block.super }}<script src="{% static 'library/field-help.js' %}" defer></script><script src="{% static 'library/header.js' %}" defer></script>{% endblock %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'library/field-help.js' %}" defer></script><script src="{% static 'library/header.js' %}" defer></script><script src="{% static 'library/tables.js' %}" defer></script>{% endblock %}
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'library/shared.css' %}">{% endblock %}

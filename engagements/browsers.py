@@ -1,8 +1,10 @@
 """Screen-specific columns and filters using the shared read-only browser."""
-from django.db.models import Q, Value
-from django.db.models.functions import Concat
+from django.db.models import Case, CharField, F, Q, TextField, Value, When
+from django.db.models.functions import Cast, Coalesce, Concat, NullIf, Replace
 from library.record_browser import page_selection, query_url
-from .models import APPLICABILITY, VERIFICATION, PRIORITY, EvidenceRequest
+from library.table_sorting import text_order, choice_order, owner_order
+from django.db.models.fields.json import KeyTextTransform
+from .models import APPLICABILITY, VERIFICATION, PRIORITY, CONFIDENCE, CONTACT_ROLES, EvidenceRequest
 
 
 def text_search(queryset, query, fields):
@@ -14,7 +16,7 @@ def text_search(queryset, query, fields):
     return queryset.filter(condition)
 
 
-def collection_browser(queryset, params, *, fields, columns, row_values, preview, fixed=None, controls=()):
+def collection_browser(queryset, params, *, fields, columns, row_values, preview, ordering, fixed=None, controls=()):
     query = params.get('q', '').strip()[:200]
     filters = {**(fixed or {}), 'q': query}
     choices = []
@@ -26,9 +28,7 @@ def collection_browser(queryset, params, *, fields, columns, row_values, preview
         if value:
             queryset = queryset.filter(**{name: value})
         choices.append({'name': name, 'label': label, 'choices': options, 'value': value, 'all_label': 'All ' + {'Applicability':'applicability states', 'Verification':'verification states', 'Status':'statuses', 'Priority':'priorities'}.get(label, label.lower())})
-    browser = page_selection(text_search(queryset, query, fields), params, filters)
-    for row in browser['records']:
-        row['label'], row['cells'] = row_values(row['item'])
+    browser = page_selection(text_search(queryset, query, fields), params, filters, row_values=row_values, columns=columns, ordering=ordering)
     return {**browser, 'query': query, 'fixed_filters': fixed or {}, 'filter_controls': choices,
             'columns': columns, 'row_actions': 0, 'preview_template': preview}
 
@@ -36,6 +36,10 @@ def collection_browser(queryset, params, *, fields, columns, row_values, preview
 def assessment_browser(assessment, params):
     return collection_browser(assessment.results.select_related('investigation_owner'), params,
         fields=['control_code', 'control_title', 'investigation_owner__first_name', 'investigation_owner__last_name', 'observation', 'guidance__action__instruction'],
+        ordering=[[text_order(Concat('control_code', Value(' · '), 'control_title'))],
+                  [text_order(KeyTextTransform('instruction', KeyTextTransform('action', 'guidance')))],
+                  [choice_order('applicability', APPLICABILITY)], [choice_order('verification', VERIFICATION)],
+                  [owner_order('investigation_owner')]],
         columns=['Action', 'Applicability', 'Verification', 'Owner'],
         row_values=lambda item: (f'{item.control_code} · {item.control_title}', [item.guidance.get('action', {}).get('instruction', ''), item.get_applicability_display(), item.get_verification_display(), item.investigation_owner or 'Unassigned']),
         controls=[('applicability', 'Applicability', APPLICABILITY), ('verification', 'Verification', VERIFICATION)],
@@ -57,7 +61,15 @@ def evidence_browser(engagement, params):
                      [('priority', 'Priority', PRIORITY)]),
     }
     queryset, fields, columns, values, controls = definitions[tab]
-    browser = collection_browser(queryset, params, fields=fields, columns=columns, row_values=values, controls=controls,
+    ordering = {
+        'requests': [[text_order('title')], [owner_order('owner')], [F('due_date')],
+                     [choice_order('status', EvidenceRequest._meta.get_field('status').choices)]],
+        'evidence': [[text_order('title')], [F('collected_on')], [text_order('provenance')],
+                     [text_order(Case(When(file='', then=Value('None')), default=Value('Available')))]],
+        'findings': [[text_order('title')], [choice_order('priority', PRIORITY)],
+                     [F('impact'), F('likelihood')], [choice_order('confidence', CONFIDENCE)]],
+    }[tab]
+    browser = collection_browser(queryset, params, ordering=ordering, fields=fields, columns=columns, row_values=values, controls=controls,
         fixed={'area': 'evidence', 'collection': tab}, preview='engagements/browsers/evidence_preview.html')
     tabs = [(key, label, definitions[key][0].count()) for key, label in [('requests', 'Evidence requests'), ('evidence', 'Evidence register'), ('findings', 'Findings')]]
     return {**browser, 'collection': tab, 'collection_title': dict((key, label) for key, label, count in tabs)[tab],
@@ -97,9 +109,24 @@ def contact_browser(queryset, params, *, engagement=None, available=None):
         organization = (item.affiliation_override or person.organization) if linked else person.organization
         return str(person), [organization or 'Not provided', item.role_labels if linked else person.title or 'Not provided', state]
 
+    organization = F(prefix + 'organization')
+    roles = F(prefix + 'title')
+    state = Case(When(**{prefix + 'archived': True}, then=Value('Archived')),
+                 *([When(active=False, then=Value('Inactive'))] if linked else []),
+                 default=Value('Active'), output_field=CharField())
+    if linked:
+        organization = Coalesce(NullIf('affiliation_override', Value('')), organization)
+        # JSON list punctuation is common to all rows; substitute the configured
+        # role labels in SQL without loading every linked contact into Python.
+        roles = Cast('roles', TextField())
+        for key, label in CONTACT_ROLES:
+            roles = Replace(roles, Value('"' + key + '"'), Value('"' + label + '"'))
+        state = Concat(state, Case(When(primary=True, then=Value(' · Primary')), default=Value('')))
+    ordering = [[text_order('browser_name')], [text_order(organization, 'Not provided')],
+                [text_order(roles, 'Not provided')], [text_order(state)]]
     fixed = {'collection': tab, 'visibility': status}
     browser = collection_browser(queryset.order_by(prefix + 'last_name', prefix + 'first_name', 'pk'), params, fields=fields, columns=['Organization', 'Roles' if linked else 'Title', 'Status'],
-        row_values=values, fixed=fixed, preview='engagements/browsers/contact_preview.html')
+        row_values=values, ordering=ordering, fixed=fixed, preview='engagements/browsers/contact_preview.html')
     # Visibility combines linked-record and person state, so it is handled above.
     options = [('active', 'Active'), ('archived', 'Archived')]
     if linked:
