@@ -73,3 +73,5 @@ Version 0.2.2 extends the shared record browser to assessment actions, evidence 
 Version 0.2.3 adds single contact-backed owners and supporting-person notes across inventory, information follow-ups, investigations, evidence requests and remediation. Owner choices respect customer/engagement scope, with an Add contact / refresh flow that preserves unsaved entries. See [Inventory ownership](docs/INVENTORY.md#one-accountable-owner-v023).
 
 Version 0.2.4 adds contextual empty select labels and shared field-help dialogs across consultant, public and admin forms, with a visible Add contact button and compact owner refresh icon.
+
+Version 0.2.5 adds Cancel to inventory forms, preserving the originating list view without saving edits, and aligns standard button/control heights with smaller info circles. Button-family mockups are being reviewed separately.

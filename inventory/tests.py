@@ -177,3 +177,16 @@ class InventoryTests(TestCase):
         self.assertIn('kind=operation',response.url)
         self.assertIn(f'selected={self.f.operation.pk}',response.url)
         self.assertIn('archived=yes',response.url)
+
+    def test_cancel_returns_only_to_the_same_customer_inventory(self):
+        url=reverse('inventory_item_edit',args=[self.f.operation.pk])
+        destination=reverse('inventory_detail',args=[self.f.customer.pk])+'?kind=operation&q=payroll&state=unknown&page=1'
+        response=self.client.get(url,{'return_to':destination})
+        self.assertEqual(response.context['cancel_url'],destination)
+        self.assertContains(response,'>Cancel</a>')
+        for bad in ['https://example.test/', '//example.test/', reverse('inventory_detail',args=[self.other_customer.pk]), '/admin/']:
+            response=self.client.get(url,{'return_to':bad})
+            self.assertTrue(response.context['cancel_url'].startswith(reverse('inventory_detail',args=[self.f.customer.pk])+'?'))
+        records=self.client.get(reverse('inventory_detail',args=[self.f.customer.pk]),{'kind':'operation','q':'payroll'})
+        self.assertIn('return_to=',records.context['records'][0]['actions'][0]['url'])
+        self.assertEqual(self.f.customer.inventory_events.count(),0)

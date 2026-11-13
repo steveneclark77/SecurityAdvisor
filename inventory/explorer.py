@@ -1,5 +1,6 @@
 """Read-only, customer-scoped inventory explorer navigation."""
 from django.db.models import Count, Q
+from urllib.parse import urlencode
 from django.urls import reverse
 from library.record_browser import page_selection, query_url
 from .models import ITEM_KINDS, FACT_STATES
@@ -40,6 +41,7 @@ def explorer_context(customer, params):
         items = items.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(owner__first_name__icontains=query) | Q(owner__last_name__icontains=query) | Q(vendor_product__icontains=query))
     browser = page_selection(items, params, filters)
     selected = browser['selected']
+    return_to = reverse('inventory_detail', args=[customer.pk]) + query_url({**filters, 'area': area, 'page': browser['page'].number, 'selected': selected.pk if selected else ''})
     for row in browser['records']:
         item = row['item']
         row['label'] = item.name
@@ -48,13 +50,13 @@ def explorer_context(customer, params):
         if item.quantity:
             kind_label += f' · {item.quantity} devices'
         row['cells'] = [kind_label, item.owner or 'Unassigned', item.get_state_display()]
-        row['actions'] = [{'label': 'Edit', 'url': reverse('inventory_item_edit', args=[item.pk])}]
+        row['actions'] = [{'label': 'Edit', 'url': reverse('inventory_item_edit', args=[item.pk]) + '?' + urlencode({'return_to': return_to})}]
     connections = customer.inventory_connections.select_related('source', 'target')
     if not archived:
         connections = connections.filter(archived=False)
     followups = customer.inventory_followups.select_related('item', 'source_intake')
     return {
-        'area': area, 'kind': kind, 'query': query, 'state': state, 'archived': archived,
+        'return_to': return_to, 'area': area, 'kind': kind, 'query': query, 'state': state, 'archived': archived,
         'states': FACT_STATES, **browser, 'row_actions': 1,
         'columns': ['Type / quantity', 'Owner', 'Fact state'], 'preview_template': 'inventory/preview.html',
         'categories': [{'key': key, 'label': label, 'count': counts.get(key, 0), 'url': url(kind=key)} for key, label in CATEGORIES],

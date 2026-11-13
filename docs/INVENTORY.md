@@ -67,3 +67,7 @@ An existing archived/inactive owner can remain recorded, but cannot be newly ass
 Empty select choices use meaningful labels, such as **Select an operation category**, **Unassigned**, and **No preference**. They retain their existing stored blank values and validation rules. Each editable field has an info icon beside its label; open it to read field guidance in a dialog, then use Close or Escape to return. Checkbox/radio groups share one info control. Required indicators and validation errors remain on the form. Page-level guidance remains visible.
 
 The owner selector has a visible **Add contact** button and a small refresh icon with an accessible **Refresh contacts** name. Complete contact creation and role linking in the new tab, then return, refresh and select the owner. Other unsaved form fields are preserved. The old Add option inside the dropdown and the long owner-guidance panel have been removed.
+
+## Cancel unsaved inventory edits (v0.2.5)
+
+Inventory record, relationship and information-follow-up forms offer **Cancel** beside Save. Cancel navigates back to the customer inventory without submitting, saving, or writing history. Opening a form from the explorer preserves its list category, search, fact-state/archive filters, page and selected preview. Direct form links fall back to the appropriate customer collection. Return destinations are restricted to this customer's inventory path, including for assigned superusers. Cancel also works when required fields are incomplete.

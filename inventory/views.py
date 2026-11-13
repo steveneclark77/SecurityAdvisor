@@ -1,4 +1,3 @@
-from urllib.parse import urlencode
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404,redirect,render
@@ -8,6 +7,7 @@ from engagements.models import Customer
 from engagements.views import consultant,engagement_for
 from . import forms,services
 from .explorer import explorer_context
+from .navigation import cancel_url, list_url
 from .models import InventoryItem,InventoryConnection,InventoryFollowUp,InventoryEvent,ITEM_KINDS
 
 
@@ -31,6 +31,7 @@ def detail(request,pk):
 
 
 def editor(request,customer,obj,form_class,title,*,scoped=False):
+    back_url=cancel_url(customer,obj,request.GET.get('return_to',''))
     before=services.record_fields(obj) if obj.pk else {}
     kwargs={'instance':obj}
     if scoped:
@@ -41,16 +42,8 @@ def editor(request,customer,obj,form_class,title,*,scoped=False):
             Customer.objects.select_for_update().get(pk=customer.pk)
             saved=form.save()
             InventoryEvent.objects.create(customer=customer,actor=request.user,description=f'{title}: record {saved.pk}.',details={'before':before,'after':services.record_fields(saved)})
-        if isinstance(saved,InventoryItem):
-            params={'kind':saved.kind,'selected':saved.pk}
-            if saved.archived:
-                params['archived']='yes'
-        else:
-            params={'area':'relationships' if isinstance(saved,InventoryConnection) else 'followups'}
-            if isinstance(saved,InventoryConnection) and saved.archived:
-                params['archived']='yes'
-        return redirect(reverse('inventory_detail',args=[customer.pk])+'?'+urlencode(params))
-    return render(request,'inventory/form.html',{'customer':customer,'form':form,'title':title},status=400 if request.method=='POST' else 200)
+        return redirect(list_url(customer,saved))
+    return render(request,'inventory/form.html',{'customer':customer,'form':form,'title':title,'cancel_url':back_url},status=400 if request.method=='POST' else 200)
 
 
 @consultant

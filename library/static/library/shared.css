@@ -57,7 +57,7 @@ body{font:16px system-ui}
 .owner-status{display:block;font-size:.9rem;color:#52657b;margin-top:6px}
 
 /* Field help and compact owner actions, shared by consultant, public and admin forms. */
-button.info-button{display:inline-flex;align-items:center;justify-content:center;padding:0;width:1.5rem;height:1.5rem;margin:0 6px;border:1px solid #6d91ae;border-radius:50%;background:white;color:#125d87;font:bold 1rem Georgia,serif;vertical-align:middle;cursor:pointer}
+button.info-button{display:inline-flex;align-items:center;justify-content:center;padding:0;width:1.5rem;height:1.5rem;margin:0 3px;border:0;border-radius:50%;background:transparent;color:#125d87;font:bold .7rem Georgia,serif;vertical-align:middle;cursor:pointer}
 button.icon-button{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;padding:0;margin:0 4px;background:white;color:#125d87;border:1px solid #9bb6cb;border-radius:5px;font-size:1.35rem;cursor:pointer}
 button.info-button:focus-visible,button.icon-button:focus-visible{outline:2px solid #125d87;outline-offset:3px}
 dialog{max-width:600px;width:calc(100% - 64px);max-height:80vh;overflow:auto;box-sizing:border-box;border:1px solid #d4dfeb;border-radius:8px;padding:24px;color:#182639;background:white}
@@ -68,4 +68,13 @@ dialog li{margin:12px 0}
 @media print{button.info-button,button.icon-button,.owner-add{display:none}}
 
 .field-help-dialog{overflow-wrap:anywhere}
-.field-help-dialog [data-close-dialog]{padding:8px 12px;border:1px solid #9bb6cb;border-radius:5px;font:inherit;background:white;color:#125d87;cursor:pointer}
+.field-help-dialog [data-close-dialog]{padding:6px 14px;border:1px solid #9bb6cb;border-radius:5px;font:inherit;background:white;color:#125d87;cursor:pointer}
+
+/* One control rhythm; multiline labels may grow to avoid clipping. */
+:root{--control-height:2.25rem}
+body input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]):not([type=file]):not([type=image]),body select:not([multiple]){box-sizing:border-box;height:var(--control-height);font:inherit;line-height:1.25;padding:6px 8px}
+body button:not(.info-button),body a.button,body input[type=submit],body input[type=button],body input[type=reset]{box-sizing:border-box;min-height:var(--control-height);height:auto;padding:6px 14px;font:inherit;line-height:1.25;vertical-align:middle}
+body button.icon-button{width:var(--control-height);min-height:var(--control-height);padding:0;font-size:1.2rem}
+button.info-button span{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:1.05rem;height:1.05rem;border:1px solid #6d91ae;border-radius:50%;background:white}
+.form-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:20px}
+.form-actions .button{margin:0}

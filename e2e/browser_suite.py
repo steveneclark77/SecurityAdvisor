@@ -541,3 +541,34 @@ class BrowserForms(StaticLiveServerTestCase):
         self.page.keyboard.press('Escape')
         self.page.locator('.add-row a').click()
         self.assertGreater(self.page.locator('button[aria-label="Help for Verification"]').count(),0)
+
+    def test_inventory_cancel_discards_edits_and_shared_control_sizes(self):
+        self.login()
+        destination=reverse('inventory_detail',args=[self.fixture.customer.pk])+'?kind=operation&q=payroll&state=unknown'
+        self.visit(destination)
+        self.page.get_by_role('link',name='Edit '+self.fixture.operation.name,exact=True).click()
+        original=self.fixture.operation.name
+        original_notes=self.fixture.operation.notes
+        before=self.db(lambda: self.fixture.customer.inventory_events.count())
+        self.page.locator('[name=name]').fill('Unsaved operation name')
+        self.page.locator('[name=notes]').fill('Unsaved notes')
+        select=self.page.locator('select[name=owner]')
+        height=select.bounding_box()['height']
+        for control in [self.page.get_by_role('link',name='Add contact (opens in a new tab)',exact=True),self.page.get_by_role('button',name='Refresh contacts',exact=True),self.page.get_by_role('button',name='Save inventory record',exact=True),self.page.get_by_role('link',name='Cancel',exact=True)]:
+            self.assertAlmostEqual(control.bounding_box()['height'],height,delta=1)
+        info=self.page.get_by_role('button',name='Help for Owner',exact=True)
+        self.assertAlmostEqual(info.locator('span').bounding_box()['width'],16.8,delta=1)
+        self.assertGreaterEqual(info.bounding_box()['width'],24)
+        self.page.get_by_role('link',name='Cancel',exact=True).click()
+        self.assertIn('q=payroll',self.page.url)
+        self.assertIn('kind=operation',self.page.url)
+        self.db(self.fixture.operation.refresh_from_db)
+        self.assertEqual(self.fixture.operation.name,original)
+        self.assertEqual(self.fixture.operation.notes,original_notes)
+        self.assertEqual(self.db(lambda: self.fixture.customer.inventory_events.count()),before)
+        # Cancel remains available while required fields are invalid.
+        self.visit(reverse('inventory_item_new',args=[self.fixture.customer.pk])+'?kind=operation')
+        expect(self.page.get_by_role('button',name='Save inventory record',exact=True)).to_be_disabled()
+        expect(self.page.get_by_role('link',name='Cancel',exact=True)).to_be_enabled()
+        self.page.get_by_role('link',name='Cancel',exact=True).click()
+        self.assertFalse(self.db(lambda: self.fixture.customer.inventory_items.filter(name='Unsaved operation name').exists()))

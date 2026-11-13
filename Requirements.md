@@ -305,3 +305,7 @@ Every owner field stores one optional contact reference, not text or multiple ow
 ### Contextual field controls (v0.2.4)
 
 Empty select labels explain their meaning in context; dashed placeholders are not shown. Preserve existing blank values and validation semantics. Fields expose help through accessible circled-info buttons and modal dialogs, with one help control per checkbox/radio group. Help must not submit forms; Close/Escape restore focus. Validation errors remain visible. Owner controls provide a visible Add contact navigation button and compact refresh icon without losing unsaved inputs. Shared rendering metadata, scripts and CSS cover consultant, customer-facing and admin forms, including dynamically added admin inline fields. Without enhancement, existing help remains available inline.
+
+### Inventory cancel and shared control geometry (v0.2.5)
+
+Inventory create/edit forms provide Cancel as safe navigation, not a form submission, including when required fields are incomplete. Preserve the originating customer inventory view; refuse cross-customer/external return destinations. Normal single-line buttons and inputs/selects share a 36px control rhythm through shared CSS. Multiline labels may grow to avoid clipping, and textareas/multiple selects retain their natural heights. Info circles are approximately 30% smaller visually while retaining a 24px clickable target. Visual button-family alternatives are mockups pending user selection; sizing does not imply workflow priority.
