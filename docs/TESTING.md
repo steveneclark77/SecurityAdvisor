@@ -98,3 +98,9 @@ The real-browser ownership test adds a contact in a new tab, links its role, ref
 ## Contextual choices and field-help dialogs
 
 `python manage.py test library.test_form_rendering testsupport.test_styles` checks contextual blank choices, preservation of explicit filter/unknown values, escaped field metadata and the shared CSS rule across app and project-level templates. The browser suite verifies operation-category/owner labels; visible Add contact and icon-only refresh; help without submitting an incomplete form; dialog Escape/Close and focus return; hidden inline help; one icon per checkbox group; public intake help; admin help and dynamically added inline fields. Existing full browser form/CSRF tests continue to exercise legitimate submissions and browser headers. A synthetic `contextual-form-help.png` screenshot is included in browser artifacts.
+
+## Inventory cancellation and control sizing
+
+Inventory navigation tests check safe customer-scoped return destinations and explorer edit links. The browser cancellation test edits name/notes, cancels back to the filtered list, and verifies unchanged persisted fields/history. It also verifies Cancel remains available on an invalid new-record form. Geometry checks compare the owner select, Add contact, refresh, Save and Cancel heights, and verify a roughly 17px info circle inside a 24px clickable button. Existing responsive/print and full form/CSRF browser checks remain in place.
+
+The light-elevation browser check verifies the shared white/charcoal/border/shadow treatment on inventory actions, public submission buttons and admin Save, including hover, keyboard focus and disabled appearance. Layout stylesheets no longer define competing button colors.
