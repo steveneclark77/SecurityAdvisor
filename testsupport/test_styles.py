@@ -10,6 +10,7 @@ class SharedStyleTests(SimpleTestCase):
     def test_all_first_party_templates_keep_css_in_stylesheets(self):
         templates = []
         root = Path(settings.BASE_DIR).resolve()
+        templates.extend((root / 'templates').rglob('*.html'))
         for app in apps.get_app_configs():
             app_root = Path(app.path).resolve()
             if app_root.parent == root:

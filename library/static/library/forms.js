@@ -26,11 +26,5 @@
   document.addEventListener('change', event => { if (event.target.form) update(event.target.form); });
   document.addEventListener('focusin', event => { if (event.target.form) update(event.target.form); });
   window.addEventListener('pageshow', refresh);
-  document.querySelectorAll('[data-open-dialog]').forEach(button => {
-    button.addEventListener('click', () => document.getElementById(button.dataset.openDialog).showModal());
-  });
-  document.querySelectorAll('[data-close-dialog]').forEach(button => {
-    button.addEventListener('click', () => button.closest('dialog').close());
-  });
   refresh();
 })();

@@ -71,3 +71,5 @@ The v0.2.1 inventory explorer groups customer records by type, with searchable t
 Version 0.2.2 extends the shared record browser to assessment actions, evidence requests/evidence/findings, and contacts, with entity-specific previews and unchanged authorization/history. See [the walkthrough](docs/ENGAGEMENT_WALKTHROUGH.md#shared-record-browsers-v022).
 
 Version 0.2.3 adds single contact-backed owners and supporting-person notes across inventory, information follow-ups, investigations, evidence requests and remediation. Owner choices respect customer/engagement scope, with an Add contact / refresh flow that preserves unsaved entries. See [Inventory ownership](docs/INVENTORY.md#one-accountable-owner-v023).
+
+Version 0.2.4 adds contextual empty select labels and shared field-help dialogs across consultant, public and admin forms, with a visible Add contact button and compact owner refresh icon.

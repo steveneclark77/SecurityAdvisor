@@ -301,3 +301,7 @@ Assessment actions, engagement evidence/findings collections, and contacts use s
 ### Contact-backed single ownership (v0.2.3)
 
 Every owner field stores one optional contact reference, not text or multiple owners. Customer inventory/information follow-ups draw from active contacts linked within that customer; engagement investigations, evidence requests and remediation draw from that engagement. Separate Notes capture supporting people. Existing archived/inactive ownership may be retained, with reassignment restricted to active linked contacts. A shared Add contact / refresh flow preserves unsaved form data and retains normal contact-management and role-link permissions. Historical captures preserve owner identity/display details and are not rewritten on contact edits. No legacy-owner text or reconciliation UI is required.
+
+### Contextual field controls (v0.2.4)
+
+Empty select labels explain their meaning in context; dashed placeholders are not shown. Preserve existing blank values and validation semantics. Fields expose help through accessible circled-info buttons and modal dialogs, with one help control per checkbox/radio group. Help must not submit forms; Close/Escape restore focus. Validation errors remain visible. Owner controls provide a visible Add contact navigation button and compact refresh icon without losing unsaved inputs. Shared rendering metadata, scripts and CSS cover consultant, customer-facing and admin forms, including dynamically added admin inline fields. Without enhancement, existing help remains available inline.

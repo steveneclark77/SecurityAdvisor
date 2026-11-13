@@ -12,7 +12,7 @@ class BaselineForm(forms.Form):
     coverage_gaps = forms.CharField(widget=forms.Textarea, help_text='Record missing coverage, unverified mappings, and review limitations.')
 class ApprovalForm(forms.Form):
     note = forms.CharField(widget=forms.Textarea, label='Review and approval rationale')
-    confirmed = forms.BooleanField(label='I have reviewed the baseline.')
+    confirmed = forms.BooleanField(label='I have reviewed the baseline.', widget=forms.CheckboxInput(attrs={'data-no-field-info': 'true'}))
 
 @staff_member_required
 def dashboard(request):

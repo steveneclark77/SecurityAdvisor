@@ -54,4 +54,18 @@ body{font:16px system-ui}
 
 @container(max-width:1000px){.record-split{grid-template-columns:1fr}}
 
-.owner-refresh{margin:0 8px}.owner-status{display:block;font-size:.9rem;color:#52657b;margin-top:6px}
+.owner-status{display:block;font-size:.9rem;color:#52657b;margin-top:6px}
+
+/* Field help and compact owner actions, shared by consultant, public and admin forms. */
+button.info-button{display:inline-flex;align-items:center;justify-content:center;padding:0;width:1.5rem;height:1.5rem;margin:0 6px;border:1px solid #6d91ae;border-radius:50%;background:white;color:#125d87;font:bold 1rem Georgia,serif;vertical-align:middle;cursor:pointer}
+button.icon-button{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;padding:0;margin:0 4px;background:white;color:#125d87;border:1px solid #9bb6cb;border-radius:5px;font-size:1.35rem;cursor:pointer}
+button.info-button:focus-visible,button.icon-button:focus-visible{outline:2px solid #125d87;outline-offset:3px}
+dialog{max-width:600px;width:calc(100% - 64px);max-height:80vh;overflow:auto;box-sizing:border-box;border:1px solid #d4dfeb;border-radius:8px;padding:24px;color:#182639;background:white}
+dialog::backdrop{background:rgba(10,25,40,.5)}
+dialog li{margin:12px 0}
+.field-help-dialog .helptext,.field-help-dialog .help{display:block;margin:16px 0;font-size:1rem;color:#344e64}
+.owner-add{margin-left:8px}
+@media print{button.info-button,button.icon-button,.owner-add{display:none}}
+
+.field-help-dialog{overflow-wrap:anywhere}
+.field-help-dialog [data-close-dialog]{padding:8px 12px;border:1px solid #9bb6cb;border-radius:5px;font:inherit;background:white;color:#125d87;cursor:pointer}

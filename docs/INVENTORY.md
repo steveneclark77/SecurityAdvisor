@@ -58,6 +58,12 @@ Assessment actions, evidence/findings, and contacts adopt the same shared table/
 
 Inventory records and information follow-ups have one optional **Owner** contact and separate **Notes** for supporting people and coordination. Eligible owners are active contacts linked to any engagement for this customer. Engagement investigations, evidence requests and remediation tasks instead use contacts linked to that engagement. Unassigned is valid; a name in Notes is not an owner assignment.
 
-Choose **Add a new contact…** in the owner dropdown to open the existing contact flow in another tab. For customer inventory, choose which customer engagement will hold the new person's contact role, then save the contact and role link. Return to the original form and choose **Refresh contacts** to update its dropdown without losing unsaved fields. Select the new contact explicitly before saving. Contact creation alone does not make an unlinked person eligible.
+Choose **Add contact** beside the owner dropdown to open the existing contact flow in another tab. For customer inventory, choose which customer engagement will hold the new person's contact role, then save the contact and role link. Return to the original form and choose the **refresh icon** to update its dropdown without losing unsaved fields. Select the new contact explicitly before saving. Contact creation alone does not make an unlinked person eligible.
 
 An existing archived/inactive owner can remain recorded, but cannot be newly assigned. Reassignment choices are active linked contacts. Ownership references protect contacts against deletion. New assessment/report/audit captures store the owner ID and display details; changing a contact's name later does not rewrite captures. Historical JSON remains untouched. There is no previous-owner text field or reconciliation workflow.
+
+## Contextual form help (v0.2.4)
+
+Empty select choices use meaningful labels, such as **Select an operation category**, **Unassigned**, and **No preference**. They retain their existing stored blank values and validation rules. Each editable field has an info icon beside its label; open it to read field guidance in a dialog, then use Close or Escape to return. Checkbox/radio groups share one info control. Required indicators and validation errors remain on the form. Page-level guidance remains visible.
+
+The owner selector has a visible **Add contact** button and a small refresh icon with an accessible **Refresh contacts** name. Complete contact creation and role linking in the new tab, then return, refresh and select the owner. Other unsaved form fields are preserved. The old Add option inside the dropdown and the long owner-guidance panel have been removed.
