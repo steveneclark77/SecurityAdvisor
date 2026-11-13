@@ -53,3 +53,11 @@ Search matches names, descriptions, owners, and vendor/products. Apply fact-stat
 **Relationships**, **Information to confirm**, and **History** are distinct sidebar destinations. They retain existing editing/archiving/resolution actions and history. Relationships default to active connections; **Show archived** includes archived connections. Connections to archived endpoints remain explicitly labeled. Fact confirmation still does not establish control effectiveness. Historical snapshots retain their original read-only presentation.
 
 Assessment actions, evidence/findings, and contacts adopt the same shared table/preview components in v0.2.2; see [the walkthrough](ENGAGEMENT_WALKTHROUGH.md#shared-record-browsers-v022). The engagement journey remains a workflow. News retains Django admin list/detail conventions. Inventory keeps its type-specific row Edit actions and preview fields while sharing pagination, safe selection, table markup and responsive styles with the other browsers.
+
+## One accountable owner (v0.2.3)
+
+Inventory records and information follow-ups have one optional **Owner** contact and separate **Notes** for supporting people and coordination. Eligible owners are active contacts linked to any engagement for this customer. Engagement investigations, evidence requests and remediation tasks instead use contacts linked to that engagement. Unassigned is valid; a name in Notes is not an owner assignment.
+
+Choose **Add a new contact…** in the owner dropdown to open the existing contact flow in another tab. For customer inventory, choose which customer engagement will hold the new person's contact role, then save the contact and role link. Return to the original form and choose **Refresh contacts** to update its dropdown without losing unsaved fields. Select the new contact explicitly before saving. Contact creation alone does not make an unlinked person eligible.
+
+An existing archived/inactive owner can remain recorded, but cannot be newly assigned. Reassignment choices are active linked contacts. Ownership references protect contacts against deletion. New assessment/report/audit captures store the owner ID and display details; changing a contact's name later does not rewrite captures. Historical JSON remains untouched. There is no previous-owner text field or reconciliation workflow.

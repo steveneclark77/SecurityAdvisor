@@ -22,7 +22,7 @@ def explorer_context(customer, params):
         state = ''
     query = params.get('q', '').strip()[:200]
     archived = params.get('archived') == 'yes'
-    base = customer.inventory_items.all()
+    base = customer.inventory_items.select_related('owner')
     if not archived:
         base = base.filter(archived=False)
     counts = dict(base.values('kind').annotate(total=Count('pk')).values_list('kind', 'total'))
@@ -37,7 +37,7 @@ def explorer_context(customer, params):
     if state:
         items = items.filter(state=state)
     if query:
-        items = items.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(owner__icontains=query) | Q(vendor_product__icontains=query))
+        items = items.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(owner__first_name__icontains=query) | Q(owner__last_name__icontains=query) | Q(vendor_product__icontains=query))
     browser = page_selection(items, params, filters)
     selected = browser['selected']
     for row in browser['records']:
@@ -47,7 +47,7 @@ def explorer_context(customer, params):
         kind_label = item.get_kind_display()
         if item.quantity:
             kind_label += f' · {item.quantity} devices'
-        row['cells'] = [kind_label, item.owner or 'Unknown', item.get_state_display()]
+        row['cells'] = [kind_label, item.owner or 'Unassigned', item.get_state_display()]
         row['actions'] = [{'label': 'Edit', 'url': reverse('inventory_item_edit', args=[item.pk])}]
     connections = customer.inventory_connections.select_related('source', 'target')
     if not archived:

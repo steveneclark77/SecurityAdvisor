@@ -9,6 +9,8 @@ from .models import Customer, Engagement, ActionResult, EvidenceRequest, Evidenc
 class StyledModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from .ownership import configure_form
+        configure_form(self)
         for field in self.fields.values():
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs['rows'] = 3
@@ -80,7 +82,7 @@ class ScopedForm(StyledModelForm):
 class ActionResultForm(ScopedForm):
     class Meta:
         model = ActionResult
-        fields = ['applicability','applicability_reason','implementation','verification','confidence','observation','investigation_owner','followup_due','evidence','evidence_date']
+        fields = ['applicability','applicability_reason','implementation','verification','confidence','observation','investigation_owner','notes','followup_due','evidence','evidence_date']
 
     def clean(self):
         data = super().clean()

@@ -297,3 +297,7 @@ Customer inventory uses category navigation with counts, one contextual creation
 ### Shared record browser UI (v0.2.2)
 
 Assessment actions, engagement evidence/findings collections, and contacts use searchable, paginated tables and selected-record previews. Assessment filters distinguish applicability from verification; findings retain separate impact/likelihood and consultant priority. Evidence submission-link creation remains tied to the selected request and CSRF protected. Contact directory/engagement links keep shared-person management and engagement-role permissions distinct, including explicit reuse permission. Shared templates, URL/selection helpers and stylesheet components also serve inventory, without changing historical baselines, assessment/report snapshots, or audit records.
+
+### Contact-backed single ownership (v0.2.3)
+
+Every owner field stores one optional contact reference, not text or multiple owners. Customer inventory/information follow-ups draw from active contacts linked within that customer; engagement investigations, evidence requests and remediation draw from that engagement. Separate Notes capture supporting people. Existing archived/inactive ownership may be retained, with reassignment restricted to active linked contacts. A shared Add contact / refresh flow preserves unsaved form data and retains normal contact-management and role-link permissions. Historical captures preserve owner identity/display details and are not rewritten on contact edits. No legacy-owner text or reconciliation UI is required.

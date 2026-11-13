@@ -3,7 +3,7 @@ from pathlib import Path
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -85,6 +85,10 @@ def record_state(obj):
         state[field.name] = value
     for field in obj._meta.many_to_many:
         state[field.name] = list(getattr(obj, field.name).values_list('pk',flat=True))
+    from .ownership import owner_snapshot
+    for name in ['owner', 'investigation_owner']:
+        if hasattr(obj, name + '_id'):
+            state[name + '_contact'] = owner_snapshot(getattr(obj, name))
     return state
 
 
@@ -207,7 +211,7 @@ def finding_edit(request, pk):
 @require_http_methods(['GET','POST'])
 def task_new(request, pk):
     finding = get_object_or_404(Finding.objects.filter(engagement__in=engagements_for(request.user)), pk=pk)
-    obj = Remediation(finding=finding, instructions=finding.recommendation, owner="Unassigned", estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
+    obj = Remediation(finding=finding, instructions=finding.recommendation, estimated_cost='Estimate pending', estimated_effort='Estimate pending', verification_plan='\n'.join(a.guidance['action'].get('verification','') for a in finding.actions.all()))
     return edit(request, forms.RemediationForm, obj, finding.engagement, 'Plan remediation', scoped=True)
 
 
@@ -329,7 +333,6 @@ def generate_requests(request, pk):
             EvidenceRequest.objects.get_or_create(engagement=assessment.engagement, assessment=assessment, control_code=result.control_code, defaults={
                 'title':f'{result.control_code}: {result.control_title}',
                 'instructions':result.guidance['control'].get('evidence','Provide redacted evidence supporting this control.') + '\nSynthetic/redacted data only. Do not submit credentials.',
-                'owner':'Unassigned',
             })
         services.audit(assessment.engagement, request.user, f'Generated evidence requests for assessment {assessment.pk}; existing requests preserved.')
     return redirect('engagement_detail', pk=assessment.engagement_id)
@@ -338,6 +341,23 @@ def generate_requests(request, pk):
 def contacts_for(user):
     from django.db.models import Q
     return Contact.objects.filter(Q(managers=user) | Q(engagement_links__engagement__customer__assigned_users=user)).distinct()
+
+
+@consultant
+@require_http_methods(['GET'])
+def owner_choices(request):
+    from .ownership import owner_contacts, owner_label
+    engagement_id = request.GET.get('engagement_id')
+    customer_id = request.GET.get('customer_id')
+    if engagement_id and engagement_id.isdigit():
+        engagement = engagement_for(request.user, engagement_id)
+        contacts = owner_contacts(engagement_id=engagement.pk)
+    elif customer_id and customer_id.isdigit():
+        customer = get_object_or_404(Customer.objects.filter(assigned_users=request.user), pk=customer_id)
+        contacts = owner_contacts(customer_id=customer.pk)
+    else:
+        raise Http404
+    return JsonResponse({'contacts': [{'id': contact.pk, 'name': owner_label(contact)} for contact in contacts]})
 
 
 @consultant
@@ -362,9 +382,22 @@ def contact_new(request):
         if not candidate.isdigit():
             raise Http404
         engagement = engagement_for(request.user, candidate)
+    customer = None
+    if request.GET.get('customer'):
+        candidate_customer = request.GET['customer']
+        if not candidate_customer.isdigit():
+            raise Http404
+        customer = get_object_or_404(Customer.objects.filter(assigned_users=request.user), pk=candidate_customer)
+        if engagement and engagement.customer_id != customer.pk:
+            raise Http404
     form = forms.ContactForm(request.POST if request.method == 'POST' else None)
+    if customer and not engagement:
+        from django import forms as django_forms
+        form.fields['link_engagement'] = django_forms.ModelChoiceField(queryset=engagements_for(request.user).filter(customer=customer), label='Link to engagement', help_text='Select the engagement where this person will have a contact role.')
     duplicates = False
     if request.method == 'POST' and form.is_valid():
+        if customer and not engagement:
+            engagement = form.cleaned_data['link_engagement']
         # Duplicate checks never search records the current user cannot access.
         from django.db.models import Q
         query = Q(first_name__iexact=form.cleaned_data['first_name'],last_name__iexact=form.cleaned_data['last_name'])

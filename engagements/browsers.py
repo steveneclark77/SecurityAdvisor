@@ -34,8 +34,8 @@ def collection_browser(queryset, params, *, fields, columns, row_values, preview
 
 
 def assessment_browser(assessment, params):
-    return collection_browser(assessment.results.all(), params,
-        fields=['control_code', 'control_title', 'investigation_owner', 'observation', 'guidance__action__instruction'],
+    return collection_browser(assessment.results.select_related('investigation_owner'), params,
+        fields=['control_code', 'control_title', 'investigation_owner__first_name', 'investigation_owner__last_name', 'observation', 'guidance__action__instruction'],
         columns=['Action', 'Applicability', 'Verification', 'Owner'],
         row_values=lambda item: (f'{item.control_code} · {item.control_title}', [item.guidance.get('action', {}).get('instruction', ''), item.get_applicability_display(), item.get_verification_display(), item.investigation_owner or 'Unassigned']),
         controls=[('applicability', 'Applicability', APPLICABILITY), ('verification', 'Verification', VERIFICATION)],
@@ -47,8 +47,8 @@ def evidence_browser(engagement, params):
     if tab not in ['requests', 'evidence', 'findings']:
         tab = 'requests'
     definitions = {
-        'requests': (engagement.evidence_requests.order_by('pk'), ['title', 'instructions', 'owner'], ['Owner', 'Due', 'Status'],
-                     lambda item: (item.title, [item.owner, item.due_date or 'Not scheduled', item.get_status_display()]),
+        'requests': (engagement.evidence_requests.select_related('owner').order_by('pk'), ['title', 'instructions', 'owner__first_name', 'owner__last_name'], ['Owner', 'Due', 'Status'],
+                     lambda item: (item.title, [item.owner or 'Unassigned', item.due_date or 'Not scheduled', item.get_status_display()]),
                      [('status', 'Status', EvidenceRequest._meta.get_field('status').choices)]),
         'evidence': (engagement.evidence.order_by('-collected_on', '-pk'), ['title', 'notes', 'provenance'], ['Collected', 'Provenance', 'Attachment'],
                      lambda item: (item.title, [item.collected_on, item.provenance, 'Available' if item.file else 'None']), []),

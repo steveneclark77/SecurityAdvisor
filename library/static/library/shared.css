@@ -53,3 +53,5 @@ body{font:16px system-ui}
 @media print{.record-tabs{display:none}}
 
 @container(max-width:1000px){.record-split{grid-template-columns:1fr}}
+
+.owner-refresh{margin:0 8px}.owner-status{display:block;font-size:.9rem;color:#52657b;margin-top:6px}

@@ -166,3 +166,9 @@ Keep first-party CSS under `library/static/library/`: `shared.css` contains shar
 ## Shared record browsers (v0.2.2)
 
 Use the normal updater after the UI PRs are merged. This release requires no new migrations or configuration. Assessment actions, evidence/findings, and contacts reuse the inventory table/preview components and common stylesheet. Existing data, permissions, forms, CSRF checks and historical snapshots remain in place.
+
+## Contact ownership (v0.2.3)
+
+The normal updater applies two owner/notes migrations. Five former text fields become optional protected contact references: inventory item owner, inventory information-follow-up owner, action investigation owner, evidence-request owner, and remediation-task owner. They all have a separate Notes field. As agreed for this synthetic deployment, no existing named owners require conversion; blank/Unassigned values become empty contact references. A migration refuses unexpected meaningful text rather than guessing names or silently deleting that information. No legacy-owner columns or reconciliation UI are added; historical JSON captures and audit details remain untouched.
+
+This release also carries the approved v0.2.2 shared record-browser changes from PR #11, which had been merged into the former inventory feature branch after PR #10 reached main.

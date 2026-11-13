@@ -2,7 +2,7 @@ from django import forms
 from engagements.forms import StyledModelForm
 from .models import InventoryItem, InventoryConnection, InventoryFollowUp, EXPOSURES
 
-COMMON = ['name','description','owner','state','provenance','last_reviewed','criticality','criticality_reason','exposures','archived']
+COMMON = ['name','description','owner','notes','state','provenance','last_reviewed','criticality','criticality_reason','exposures','archived']
 OPERATION = ['operation_category','schedule','critical_windows','outage_tolerance','acceptable_data_loss','workaround','financial_impact','availability_impact','reputation_impact','other_impact','impact']
 TECHNOLOGY = ['location','vendor_product','support_status','security_configuration','access_method','data_handling']
 

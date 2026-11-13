@@ -82,7 +82,7 @@ class RecordBrowserTests(TestCase):
         self.assertEqual(self.client.get(url, {'visibility': 'active'}).context['page'].paginator.count, 0)
 
     def test_pagination_preserves_collection_search_and_status(self):
-        m.EvidenceRequest.objects.bulk_create([m.EvidenceRequest(engagement=self.f.engagement, title=f'Browser request {i}', instructions='Synthetic', owner='Owner') for i in range(55)])
+        m.EvidenceRequest.objects.bulk_create([m.EvidenceRequest(engagement=self.f.engagement, title=f'Browser request {i}', instructions='Synthetic', owner=None) for i in range(55)])
         response = self.client.get(reverse('engagement_detail', args=[self.f.engagement.pk]), {'area': 'evidence', 'collection': 'requests', 'q': 'Browser request', 'status': 'requested', 'page': '2'})
         self.assertEqual(len(response.context['records']), 5)
         self.assertIn('collection=requests', response.context['previous_url'])
@@ -96,7 +96,7 @@ class RecordBrowserTests(TestCase):
         engagement = m.Engagement.objects.create(customer=customer, **self.f.engagement_data)
         assessment = m.Assessment.objects.create(engagement=engagement, baseline=self.f.baseline, profile='Synthetic', created_by=self.outsider, applicability_rationale='Private')
         action = m.ActionResult.objects.create(assessment=assessment, control_code='PRIVATE', control_title='Private action', guidance={'action': {'instruction': 'Private guidance'}}, applicability_reason='Private')
-        request = m.EvidenceRequest.objects.create(engagement=engagement, title='Private request', instructions='Private evidence', owner='Private owner')
+        request = m.EvidenceRequest.objects.create(engagement=engagement, title='Private request', instructions='Private evidence', owner=None)
         evidence = m.Evidence.objects.create(engagement=engagement, title='Private evidence', notes='Private notes', provenance='Private source', collected_on=self.f.evidence.collected_on)
         finding = m.Finding.objects.create(engagement=engagement, assessment=assessment, **{**self.f.finding_data, 'title':'Private finding'})
         url = reverse('engagement_detail', args=[self.f.engagement.pk])

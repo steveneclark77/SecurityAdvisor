@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 urlpatterns = [
+    path('contacts/owners/', views.owner_choices, name='owner_choices'),
     path('contacts/', views.contact_index, name='contact_index'),
     path('contacts/new/', views.contact_new, name='contact_new'),
     path('contacts/<int:pk>/edit/', views.contact_edit, name='contact_edit'),
