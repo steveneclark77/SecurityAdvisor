@@ -15,17 +15,17 @@ class TableSortingTests(TestCase):
         self.client.force_login(self.f.user)
         self.url=reverse('inventory_detail',args=[self.f.customer.pk])
 
-    def test_natural_name_sort_spans_pages_and_preserves_filters(self):
+    def test_alphabetical_name_sort_spans_pages_and_preserves_filters(self):
         response=self.client.get(self.url,{'kind':'device','q':'Sort','sort':'0'})
-        self.assertEqual([row['item'].name for row in response.context['records']][:3],['Sort 1','Sort 2','Sort 3'])
-        self.assertEqual(response.context['records'][-1]['item'].name,'Sort 50')
+        self.assertEqual([row['item'].name for row in response.context['records']][:3],['Sort 1','Sort 10','Sort 11'])
+        self.assertEqual(response.context['records'][-1]['item'].name,sorted(f'Sort {n}' for n in range(1,61))[49])
         self.assertIn('sort=0',response.context['next_url'])
         self.assertIn('q=Sort',response.context['next_url'])
         self.assertIn('sort=0',response.context['records'][0]['url'])
         response=self.client.get(self.url,{'kind':'device','q':'Sort','sort':'0','page':2})
-        self.assertEqual(response.context['records'][0]['item'].name,'Sort 51')
+        self.assertEqual(response.context['records'][0]['item'].name,sorted(f'Sort {n}' for n in range(1,61))[50])
         response=self.client.get(self.url,{'kind':'device','q':'Sort','sort':'-0'})
-        self.assertEqual(response.context['records'][0]['item'].name,'Sort 60')
+        self.assertEqual(response.context['records'][0]['item'].name,'Sort 9')
         self.assertEqual(response.context['sort_headers'][0]['order'],'descending')
 
     def test_quantity_owner_and_state_use_display_values(self):
@@ -50,10 +50,48 @@ class TableSortingTests(TestCase):
             self.assertEqual(response.context['sort'],'')
         self.assertEqual(self.f.customer.inventory_events.count(),before)
 
-    def test_large_numeric_text_is_safe_to_sort(self):
-        from .table_sorting import natural_key
-        self.assertLess(natural_key('Value 2'),natural_key('Value 10'))
-        self.assertLess(natural_key('9'*5000),natural_key('1'+'0'*5000))
+    def test_sort_only_materializes_and_formats_one_page(self):
+        from unittest.mock import Mock
+        from django.db import connection
+        from django.db.models import F
+        from django.db.models.query import QuerySet
+        from django.test.utils import CaptureQueriesContext
+        from .record_browser import page_selection
+        rows = Mock(side_effect=lambda item: (item.name, []))
+        queryset = InventoryItem.objects.filter(customer=self.f.customer, name__startswith='Sort ')
+        with CaptureQueriesContext(connection) as queries:
+            browser = page_selection(queryset, {'sort':'0', 'page':'2'}, {},
+                                     row_values=rows, ordering=[[F('quantity')]])
+        self.assertIsInstance(browser['page'].paginator.object_list, QuerySet)
+        self.assertIsNone(queryset._result_cache)
+        self.assertEqual(rows.call_count, 10)
+        self.assertEqual([row['item'].quantity for row in browser['records']], list(range(51,61)))
+        self.assertEqual(len(queries), 2)
+        self.assertIn('COUNT(', queries[0]['sql'])
+        self.assertIn('LIMIT 10 OFFSET 50', queries[1]['sql'])
+        self.assertIn('ORDER BY', queries[1]['sql'])
+
+    def test_all_browser_columns_execute_in_database(self):
+        from engagements.browsers import assessment_browser, evidence_browser, contact_browser
+        from engagements.models import Contact
+        from inventory.explorer import explorer_context
+        browsers = [
+            (lambda params: explorer_context(self.f.customer, params), 4),
+            (lambda params: assessment_browser(self.f.assessment, params), 5),
+            (lambda params: contact_browser(Contact.objects.filter(pk=self.f.person.pk), params), 4),
+            (lambda params: contact_browser(self.f.engagement.contact_links.all(), params,
+                                           engagement=self.f.engagement), 4),
+        ]
+        for collection in ['requests', 'evidence', 'findings']:
+            browsers.append((lambda params, collection=collection: evidence_browser(
+                self.f.engagement, {**params, 'collection':collection}), 4))
+        for browser, count in browsers:
+            for column in range(count):
+                for direction in ['', '-']:
+                    with self.subTest(browser=browser, column=column, direction=direction):
+                        result = browser({'sort': direction + str(column)})
+                        self.assertEqual(result['sort'], direction + str(column))
+                        self.assertTrue(result['page'].paginator.object_list.ordered)
 
     def test_admin_computed_review_status_preserves_legacy_display(self):
         from django.contrib import admin

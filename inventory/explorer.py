@@ -1,8 +1,9 @@
 """Read-only, customer-scoped inventory explorer navigation."""
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from urllib.parse import urlencode
 from django.urls import reverse
 from library.record_browser import page_selection, query_url
+from library.table_sorting import text_order, choice_order, owner_order
 from .models import ITEM_KINDS, FACT_STATES
 from . import services
 from .templatetags.inventory_display import inventory_fields
@@ -46,7 +47,9 @@ def explorer_context(customer, params):
         return item.name, [kind_label, item.owner or 'Unassigned', item.get_state_display()]
 
     columns = ['Type / quantity', 'Owner', 'Fact state']
-    browser = page_selection(items, params, filters, row_values=values, columns=columns)
+    browser = page_selection(items, params, filters, row_values=values, columns=columns, ordering=[
+        [text_order('name')], [choice_order('kind', ITEM_KINDS), F('quantity')],
+        [owner_order('owner')], [choice_order('state', FACT_STATES)]])
     filters['sort'] = browser['sort']
     selected = browser['selected']
     return_to = reverse('inventory_detail', args=[customer.pk]) + query_url({**filters, 'area': area, 'page': browser['page'].number, 'selected': selected.pk if selected else ''})

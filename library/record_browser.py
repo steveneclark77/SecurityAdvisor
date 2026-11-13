@@ -1,27 +1,25 @@
 """Small read-only helpers; callers must supply an already authorized queryset."""
 from urllib.parse import urlencode
 from django.core.paginator import Paginator
-from .table_sorting import natural_key, sort_token
+from .table_sorting import sort_token
 
 
 def query_url(filters, **changes):
     return '?' + urlencode({key: value for key, value in {**filters, **changes}.items() if value != ''})
 
 
-def page_selection(queryset, params, filters, *, row_values=None, columns=()):
+def page_selection(queryset, params, filters, *, row_values=None, columns=(), ordering=()):
     labels = ['Name', *columns]
-    token = sort_token(params.get('sort', ''), len(labels)) if row_values else ''
+    token = sort_token(params.get('sort', ''), len(ordering)) if row_values else ''
     filters = {**filters, 'sort':token}
-    values = {}
     if token:
-        # Computed display columns (roles, state labels, combined quantity) share
-        # one ordering rule. Sort the scoped result before pagination, never just
-        # the current page and never turn a request parameter into an ORM field.
-        queryset = list(queryset)
-        for item in queryset:
-            values[item.pk] = row_values(item)
-        index = int(token.lstrip('-'))
-        queryset.sort(key=lambda item:natural_key([values[item.pk][0], *values[item.pk][1]][index]), reverse=token.startswith('-'))
+        # Only caller-defined ORM expressions are selectable. Keep the queryset
+        # lazy so COUNT and LIMIT happen in SQL before rows are formatted.
+        expressions = ordering[int(token.lstrip('-'))]
+        descending = token.startswith('-')
+        queryset = queryset.order_by(
+            *(expression.desc(nulls_last=True) if descending else expression.asc(nulls_first=True)
+              for expression in expressions), 'pk')
     page = Paginator(queryset, 50).get_page(params.get('page'))
     items = list(page.object_list)
     selected = next((item for item in items if str(item.pk) == params.get('selected')), None)
@@ -31,7 +29,7 @@ def page_selection(queryset, params, filters, *, row_values=None, columns=()):
     for item in items:
         row = {'item':item, 'url':query_url(filters,selected=item.pk,page=page.number)+'#record-preview', 'selected':item == selected}
         if row_values:
-            row['label'], row['cells'] = values[item.pk] if item.pk in values else row_values(item)
+            row['label'], row['cells'] = row_values(item)
         records.append(row)
     headers = []
     for index, label in enumerate(labels):
