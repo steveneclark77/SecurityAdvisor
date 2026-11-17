@@ -1,0 +1,16 @@
+{
+  "name": "securityadvisor",
+  "private": true,
+  "description": "Development-only JavaScript lint tooling for SecurityAdvisor",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "globals": "17.14.0"
+  }
+}
