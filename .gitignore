@@ -9,3 +9,5 @@ private-evidence/
 test-artifacts/
 
 work/
+
+node_modules/

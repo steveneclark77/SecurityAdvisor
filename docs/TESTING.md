@@ -126,3 +126,23 @@ The browser regression checks both server-sort header links and rendered relatio
 Paginated record browsers sort the filtered, authorized result by displayed values before pagination, including computed roles/state/quantity columns; unsorted views keep queryset pagination. Sorting uses allowlisted database expressions and ascending identifying-column (Name, title, control code, etc.) and primary-key tie-breakers; COUNT and LIMIT run in SQL and only the current page (at most 50 records) is materialized and formatted. Text uses case-insensitive alphabetical ordering; numeric quantities and dates retain their native ordering. Other fully rendered data/detail/report tables use the shared `tables.js` enhancement without changing saved data. Data-entry inline-form layouts are not reordered. Detail tables receive Field/Value headings; action columns and empty-state rows are excluded. All sort styles are in shared CSS. View-control GET forms and admin bulk-action controls do not get field-help dialogs; POST data-entry fields keep them.
 
 Sorting tie-breakers (v0.2.11): selected columns keep their chosen direction, followed by the identifying column ascending and then record ID ascending. Sorting the identifying column itself retains its chosen direction. Compound columns retain all components before the tie-breakers. Rendered tables use the identifying column (or first data column) ascending, then original row order for identical labels. Application admin tables share the same identifying-column/ID fallback. Names remain non-unique; see [open topics](OPEN_TOPICS.md).
+
+
+## JavaScript linting
+
+Use Node.js 24 LTS (CI uses the same major version) and npm from the repository root:
+
+```bash
+npm ci --ignore-scripts
+npm run lint
+```
+
+ESLint's recommended rules check all first-party JavaScript and the lint configuration.
+Browser scripts use browser globals and classic-script parsing; Node configuration
+files use Node globals. Warnings fail the check. Generated/collected static files,
+dependencies, uploaded media, test artifacts, and scratch work are excluded.
+`package-lock.json` pins development-only dependencies. The **ESLint checks** job
+runs alongside **Ruff checks** on pull requests and main pushes. Node is only needed
+for development linting; the Django/Docker application and `./update.command` do
+not install or run npm dependencies. `node_modules` is excluded from Git and Docker
+build context.
