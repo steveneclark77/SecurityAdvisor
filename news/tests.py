@@ -8,10 +8,25 @@ from django.utils import timezone
 from library.models import Baseline
 from .ingestion import parse_feed, scan_source, validate_url
 from .feed_transport import SafeRedirect
-from .models import Issue, IssueVersion, IssueVersionReference, Review, Scan, Source
+from .models import Article, ArticleRevision, Issue, IssueVersion, IssueVersionReference, Review, Scan, Source
 from .versioning import create_version, CONTENT_FIELDS
 
 RSS = b'''<rss><channel><item><title>Synthetic vulnerability</title><link>https://example.test/advisory</link><description>Unverified publisher excerpt</description><pubDate>Wed, 11 Nov 2026 10:00:00 GMT</pubDate></item></channel></rss>'''
+
+
+def legacy_issue(source):
+    """Explicit historical issue fixture; feed capture no longer publishes issues."""
+    existing=Issue.objects.filter(source=source).first()
+    if existing:
+        return existing
+    article=Article.objects.filter(source=source).first()
+    revision=article.current_revision
+    issue=Issue.objects.create(source=source,first_scan=article.first_scan,identity=article.identity,last_seen_at=timezone.now())
+    create_version(issue=issue,expected_version_id=None,actor=None,origin='publisher_ingestion',
+        change_reason='Synthetic historical issue',content={'name':revision.title,'description':revision.text,'url':article.url,'published_at':revision.published_at},
+        references=[{'source_id':source.pk,'source_url':article.url}])
+    issue.refresh_from_db()
+    return issue
 
 
 class IngestionTests(TestCase):
@@ -25,7 +40,7 @@ class IngestionTests(TestCase):
     def test_idempotent_and_preserves_reviewed_content(self):
         scan = scan_source(self.source.pk, lambda url: RSS)
         self.assertEqual((scan.status, scan.created_count), ('success', 1))
-        issue = Issue.objects.get()
+        issue = legacy_issue(self.source)
         self.assertEqual(issue.current_version.severity, 'unknown')
         self.assertEqual(issue.current_version.remediation, '')
         self.assertIsNotNone(issue.current_version.published_at)
@@ -35,12 +50,13 @@ class IngestionTests(TestCase):
         self.assertEqual(second.created_count, 0)
         issue.refresh_from_db()
         self.assertEqual(issue.current_version.remediation, 'Reviewed synthetic action')
-        self.assertEqual(issue.current_version.description, 'Updated text')
+        self.assertEqual(issue.current_version.description, 'Unverified publisher excerpt')
+        self.assertEqual(Article.objects.get().current_revision.text, 'Updated text')
         self.assertEqual(issue.versions.get(version_number=1).description, 'Unverified publisher excerpt')
-        self.assertEqual(issue.current_version.origin, 'automated_proposal')
-        self.assertEqual(issue.versions.count(), 3)
+        self.assertEqual(issue.current_version.origin, 'consultant_edit')
+        self.assertEqual(issue.versions.count(), 2)
         scan_source(self.source.pk, lambda url: RSS.replace(b'Unverified publisher excerpt', b'Updated text'))
-        self.assertEqual(issue.versions.count(), 3)
+        self.assertEqual(issue.versions.count(), 2)
         self.assertEqual(issue.first_scan, scan)
 
     def test_atom_and_unsafe_article_links(self):
@@ -88,7 +104,7 @@ class IngestionTests(TestCase):
 
     def test_review_requires_guidance_and_no_self_duplicate(self):
         scan_source(self.source.pk, lambda url: RSS)
-        issue = Issue.objects.get()
+        issue = legacy_issue(self.source)
         review = Review(issue=issue, issue_version=issue.current_version, decision='add', rationale='Synthetic test')
         with self.assertRaises(ValidationError):
             review.clean()
@@ -120,7 +136,7 @@ class IngestionTests(TestCase):
     def test_admin_csrf_and_preserved_review_snapshot(self):
         from django.test import Client
         scan_source(self.source.pk, lambda url: RSS)
-        issue = Issue.objects.get()
+        issue = legacy_issue(self.source)
         user = get_user_model().objects.create_superuser('reviewer', password='synthetic-password')
         client = Client(enforce_csrf_checks=True)
         client.force_login(user)
@@ -148,7 +164,7 @@ class VersioningTests(TestCase):
         self.source = Source.objects.create(name='Synthetic original', url='https://example.test/', feed_url='https://example.test/rss')
         self.other_source = Source.objects.create(name='Synthetic second publisher', url='https://second.test/', feed_url='https://second.test/rss')
         scan_source(self.source.pk, lambda url: RSS)
-        self.issue = Issue.objects.get()
+        self.issue = legacy_issue(self.source)
         self.first = self.issue.current_version
 
     def edit(self, **kwargs):
@@ -276,8 +292,8 @@ class VersioningTests(TestCase):
         self.issue.refresh_from_db()
         latest = self.issue.current_version
         self.assertEqual(latest.severity, 'high')
-        self.assertEqual(latest.origin, 'automated_proposal')
-        self.assertEqual(latest.references.count(), 2)
+        self.assertEqual(latest.origin, 'consultant_edit')
+        self.assertEqual(latest.references.count(), 1)
         self.assertTrue(latest.references.filter(source=self.other_source).exists())
 
 
@@ -295,7 +311,7 @@ class VersionConcurrencyTests(TransactionTestCase):
         source = Source.objects.create(name='Synthetic concurrent source', url='https://example.test/', feed_url='https://example.test/rss')
         user = get_user_model().objects.create_user('synthetic-concurrent-editor')
         scan_source(source.pk, lambda url: RSS)
-        issue = Issue.objects.get()
+        issue = legacy_issue(source)
         expected = issue.current_version_id
         barrier = Barrier(2)
 
@@ -331,8 +347,8 @@ class FeedBoundaryTests(TestCase):
         self.assertEqual(first.status, 'success')
         self.assertEqual(second.status, 'failed')
         self.assertIn('Storage quota', second.error)
-        self.assertEqual(Issue.objects.count(), 1)
-        self.assertEqual(IssueVersion.objects.count(), 1)
+        self.assertEqual(Article.objects.count(), 1)
+        self.assertEqual(ArticleRevision.objects.count(), 1)
 
     @override_settings(NEWS_MAX_AUTO_VERSIONS_PER_ISSUE=1)
     def test_automatic_version_quota_preserves_history(self):
@@ -340,7 +356,7 @@ class FeedBoundaryTests(TestCase):
         second = scan_source(self.source.pk, lambda url: RSS.replace(b'Unverified publisher excerpt', b'Changed excerpt'))
         self.assertEqual(second.status, 'failed')
         self.assertIn('Storage quota', second.error)
-        self.assertEqual(IssueVersion.objects.count(), 1)
+        self.assertEqual(ArticleRevision.objects.count(), 1)
 
     def test_xml_structural_limits_fail_during_parsing(self):
         for data in [b'<rss>' + b'<item/>' * 501 + b'</rss>', b'<rss>' + b'<nested>' * 65 + b'</nested>' * 65 + b'</rss>', b'<rss>' + b'<node/>' * 10001 + b'</rss>']:

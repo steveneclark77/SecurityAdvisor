@@ -146,3 +146,19 @@ runs alongside **Ruff checks** on pull requests and main pushes. Node is only ne
 for development linting; the Django/Docker application and `./update.command` do
 not install or run npm dependencies. `node_modules` is excluded from Git and Docker
 build context.
+
+
+## Public-news analysis (v0.2.13)
+
+`python manage.py test news` includes synthetic article capture, immutable revisions
+and analysis results, identifier-based cross-source consolidation, stale review
+protection, duplicate acceptance checks, citations/structured-output validation,
+retained retry attempts, daily/per-run reservations, explicit manual CLI selection,
+default-off idle behavior, sanitized failures, authorization and admin CSRF.
+Migration tests preserve legacy issues, review JSON and publisher attribution while
+backfilling article/revision/link records. No test calls a publisher or AI provider.
+The real-browser suite includes editing/accepting an analysis proposal with required
+input gating and real admin CSRF. The existing customer-isolation and 45-route CSRF
+matrix remain unchanged. PostgreSQL concurrency and both browser engines run in CI.
+Live model quality, chosen pricing and provider connectivity require a separately
+configured deployment and consultant evaluation before enabling automatic processing.

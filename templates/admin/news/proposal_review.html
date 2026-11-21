@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% block content %}
+{% if proposal_id %}<form method="get" aria-label="Find an existing issue for review"><input type="hidden" name="proposal" value="{{ proposal_id }}"><label for="target-search">Search issues by name or identifier</label> <input id="target-search" type="search" name="target_search" value="{{ target_search }}" maxlength="200"> <button type="submit">Search issues</button><p>Search before editing the review below; searching reloads its fields.</p></form>{% endif %}
+{{ block.super }}
+{% endblock %}
+{% block form_top %}
+<aside class="guidance-panel"><strong>Guidance</strong><p>This is an unverified automated proposal. Compare the evidence and existing version, then correct the fields before accepting. Acceptance creates a preserved issue version; it does not update controls or customer assessments.</p></aside>
+{% if analysis_evidence %}<details><summary>Article evidence, matching rationale and previous issue content</summary><pre class="analysis-evidence">{{ analysis_evidence }}</pre></details>{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -242,3 +242,6 @@ class ReviewAdmin(RetainedAdmin):
             obj.issue_snapshot['published_at'] = obj.issue_version.published_at.isoformat() if obj.issue_version.published_at else None
             obj.issue_snapshot.update(version_number=obj.issue_version.version_number, references=[{**r, 'source_published_at': str(r['source_published_at']) if r['source_published_at'] else None} for r in reference_data(obj.issue_version)])
             super().save_model(request, obj, form, change)
+
+# Register the public-news analysis review screens without changing customer admin access.
+from . import analysis_admin  # noqa: F401, E402

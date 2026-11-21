@@ -52,3 +52,17 @@ NEWS_AUTO_SCAN_ENABLED = os.getenv('NEWS_AUTO_SCAN_ENABLED', 'false').strip().lo
 
 # Consistent empty choices and field-help metadata, including admin/auth forms.
 FORM_RENDERER = 'library.form_rendering.AppFormRenderer'
+
+# Review-only public-news analysis; automatic processing requires separate opt-in.
+NEWS_ANALYSIS_ENABLED = os.getenv('NEWS_ANALYSIS_ENABLED','false').strip().lower() == 'true'
+NEWS_ANALYSIS_MODEL = os.getenv('NEWS_ANALYSIS_MODEL','gpt-4.1-mini')
+NEWS_ANALYSIS_MAX_ATTEMPTS = int(os.getenv('NEWS_ANALYSIS_MAX_ATTEMPTS','3'))
+if not 1 <= NEWS_ANALYSIS_MAX_ATTEMPTS <= 10:
+    raise ImproperlyConfigured('NEWS_ANALYSIS_MAX_ATTEMPTS must be between 1 and 10.')
+NEWS_ANALYSIS_MAX_OUTPUT_TOKENS = 4000
+NEWS_ANALYSIS_MAX_INPUT_BYTES = 60000
+NEWS_ANALYSIS_PER_RUN_CENTS = int(os.getenv('NEWS_ANALYSIS_PER_RUN_CENTS','25'))
+NEWS_ANALYSIS_DAILY_CENTS = int(os.getenv('NEWS_ANALYSIS_DAILY_CENTS','500'))
+# Conservative configurable estimates, USD per million tokens; not billing guarantees.
+NEWS_ANALYSIS_INPUT_PRICE = os.getenv('NEWS_ANALYSIS_INPUT_PRICE','1')
+NEWS_ANALYSIS_OUTPUT_PRICE = os.getenv('NEWS_ANALYSIS_OUTPUT_PRICE','5')
