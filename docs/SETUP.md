@@ -192,3 +192,16 @@ Use the normal updater; no migrations or new configuration are required. Consult
 ## Sortable tables and view-control cleanup (v0.2.9)
 
 No migrations or new dependencies. Sorting uses the existing authorized views plus a shared script for fully rendered tables.
+
+
+## Review-only news analysis (v0.2.13)
+
+The updater now stops/builds/restarts `news_analyzer` as well as web/scanner. Both
+`NEWS_AUTO_SCAN_ENABLED` and `NEWS_ANALYSIS_ENABLED` default off. Back up before
+these additive, irreversible history migrations. They preserve existing issue
+versions/reviews and backfill public article revisions and associations; future
+feed capture no longer directly publishes or revises issues. See [NEWS.md](NEWS.md)
+for API-key configuration, costs, CLI selection of one/some/all unanalyzed articles,
+and consultant proposal review. No provider account/key or network request is
+required merely to install/update. The API key belongs only in the local .env or
+secret environment, never in chat or Git.

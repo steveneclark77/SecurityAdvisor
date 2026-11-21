@@ -53,6 +53,13 @@ with temporary_database():
     assert preserved.issue_snapshot == old_snapshot
     assert preserved.issue_version_id is None
     assert preserved.rationale == 'Historical rationale'
+    from news.models import Article, ArticleRevision, IssueArticleLink
+    article=Article.objects.get(source=migrated.source)
+    assert article.current_revision.title=='Legacy title'
+    assert article.current_revision.text=='Legacy excerpt'
+    assert ArticleRevision.objects.count()==1
+    assert IssueArticleLink.objects.get(issue=migrated).revision_id==article.current_revision_id
+    assert migrated.versions.count()==1
     from django.db.migrations.exceptions import IrreversibleError
     try:
         MigrationExecutor(connection).migrate(target)

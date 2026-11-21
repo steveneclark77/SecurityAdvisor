@@ -215,7 +215,7 @@ Resolve these decisions before implementing their relevant milestones. Technolog
 - Remediation separates planned, in-progress, implemented/unverified, partial, verified, and reopened states. Change authorization and verified dependencies gate implementation. Passing evidence-backed retests establish verification; later failures reopen tasks.
 - Reports preserve executive and technical views, evidence provenance, unknowns, exclusions, and baseline coverage gaps. Browser printing/PDF is supported; dedicated document export is not yet implemented.
 - Approved relevant library changes create review tasks, not automatic customer finding updates. Matching is conservatively based on captured profile/modifiers and requires consultant confirmation.
-- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification is performed. Daily RSS/Atom news collection and manual review are implemented; AI classification remains planned.
+- Form edits retain before/after history. Current production data safeguards remain incomplete; only synthetic customers are supported for this milestone. No external email/notification is performed. Daily RSS/Atom news collection and manual review are implemented; Review-only AI analysis is available; automatic acceptance remains deferred.
 
 
 ### Draft baseline revision
@@ -329,3 +329,21 @@ Data columns offer ascending/descending sorting with visible direction and acces
 ### Sort tie-breakers
 
 Selected data columns retain their chosen ascending/descending direction. Ties use the table's identifying column (Name, title, control code, or equivalent) ascending, followed by record ID ascending. Compound columns retain their component order before these tie-breakers. Sorting the identifying column itself retains the selected direction. Rendered tables without record IDs use original row order for identical identifying values. Keep database ordering before pagination and allowlist selectable columns. Record-name uniqueness remains an open topic in docs/OPEN_TOPICS.md.
+
+
+### Review-only public-news analysis (v0.2.13)
+
+Separate publications/immutable revisions from underlying issues. Preserve legacy
+versions/reviews/attribution. Queue bounded, idempotent analysis by current article
+revision and model/prompt/schema policy; automatic analysis defaults off separately
+from feed collection. Provide explicit manual CLI selection of one, several, or all
+unanalyzed current articles and explicit bounded retries. Extract evidence-backed
+severity/type/remediation defaults, affected products/versions, identifiers,
+uncertainty and candidate matches into immutable pending proposals. Start with
+exact-CVE and bounded keyword candidate retrieval; embeddings/full-text retrieval
+and automatic acceptance remain deferred. Require consultant acceptance or editing
+before publishing issue versions; retain rejected/superseded proposals and corrected
+associations. Never overwrite consultant work, mutate old snapshots, or alter customer
+records/controls automatically. Enforce provider timeouts, input/output limits,
+conservative cost reservations, structured output validation, explicit permissions,
+CSRF and retained provenance. See docs/NEWS.md for operations and limitations.

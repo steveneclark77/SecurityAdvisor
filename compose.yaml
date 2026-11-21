@@ -42,6 +42,24 @@ services:
       db:
         condition: service_healthy
 
+  news_analyzer:
+    build: .
+    command: ["python", "manage.py", "analyze_news", "--loop"]
+    restart: unless-stopped
+    environment:
+      <<: *app_environment
+      NEWS_ANALYSIS_ENABLED: ${NEWS_ANALYSIS_ENABLED:-false}
+      NEWS_ANALYSIS_API_KEY: ${NEWS_ANALYSIS_API_KEY:-}
+      NEWS_ANALYSIS_MODEL: ${NEWS_ANALYSIS_MODEL:-gpt-4.1-mini}
+      NEWS_ANALYSIS_MAX_ATTEMPTS: ${NEWS_ANALYSIS_MAX_ATTEMPTS:-3}
+      NEWS_ANALYSIS_PER_RUN_CENTS: ${NEWS_ANALYSIS_PER_RUN_CENTS:-25}
+      NEWS_ANALYSIS_DAILY_CENTS: ${NEWS_ANALYSIS_DAILY_CENTS:-500}
+      NEWS_ANALYSIS_INPUT_PRICE: ${NEWS_ANALYSIS_INPUT_PRICE:-1}
+      NEWS_ANALYSIS_OUTPUT_PRICE: ${NEWS_ANALYSIS_OUTPUT_PRICE:-5}
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   evidence_data:

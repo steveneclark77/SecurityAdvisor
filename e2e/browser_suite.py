@@ -30,11 +30,17 @@ class BrowserForms(StaticLiveServerTestCase):
         if connection.vendor != 'sqlite':
             return super()._fixture_teardown()
         editor = connection.schema_editor(atomic=False)
+        analysis_guards = importlib.import_module('news.migrations.0008_article_history')
+        run_guards = importlib.import_module('news.migrations.0010_analysis_run_guards')
+        run_guards.uninstall(None, editor)
+        analysis_guards.uninstall(None, editor)
         guards.uninstall(None, editor)
         try:
             return super()._fixture_teardown()
         finally:
             guards.install(None, editor)
+            analysis_guards.install(None, editor)
+            run_guards.install(None, editor)
 
     def setUp(self):
         self.media = tempfile.TemporaryDirectory(prefix='securityadvisor-browser-media-')
@@ -694,6 +700,41 @@ class BrowserForms(StaticLiveServerTestCase):
         artifacts=Path('test-artifacts') / self.engine
         artifacts.mkdir(parents=True,exist_ok=True)
         self.page.screenshot(path=str(artifacts / 'persistent-admin-mobile.png'),full_page=True)
+
+    def test_news_analysis_review_creates_edited_version_with_csrf(self):
+        def proposal_fixture():
+            from unittest.mock import patch
+            from news.models import Source, Article
+            from news.ingestion import scan_source
+            from news.analysis import queue_articles, process_run
+            from news.test_analysis import RSS, output
+            source=Source.objects.create(name='Synthetic analysis feed',url='https://example.test/',feed_url='https://example.test/rss')
+            scan_source(source.pk,lambda url:RSS)
+            article=Article.objects.get(source=source)
+            with patch.dict('os.environ',{'NEWS_ANALYSIS_API_KEY':'synthetic-key'}):
+                run=process_run(queue_articles([article.pk])[0],call=lambda payload:output())
+            return run.result.proposals.get().pk
+        proposal_id=self.db(proposal_fixture)
+        self.login()
+        self.visit(reverse('admin:news_proposaldecision_add')+f'?proposal={proposal_id}')
+        expect(self.page.locator('.guidance-panel')).to_contain_text('unverified automated proposal')
+        save=self.page.locator('input[name=_save]')
+        expect(save).to_be_disabled()
+        self.page.get_by_label('Decision:',exact=True).select_option('accept')
+        self.page.get_by_label('Rationale:',exact=True).fill('Consultant reviewed synthetic vendor advice.')
+        self.page.get_by_label('Name:',exact=True).fill('')
+        expect(save).to_be_disabled()
+        self.page.get_by_label('Name:',exact=True).fill('Consultant edited synthetic issue')
+        self.page.get_by_label('Severity:',exact=True).select_option('medium')
+        self.page.get_by_label('Remediation:',exact=True).fill('Consultant approved synthetic update plan.')
+        expect(save).to_be_enabled()
+        save.click()
+        expect(self.page.locator('.success')).to_be_visible()
+        def verify():
+            from news.models import ProposalDecision
+            decision=ProposalDecision.objects.get(proposal_id=proposal_id)
+            return decision.issue_version.name,decision.issue_version.severity,decision.actor_id
+        self.assertEqual(self.db(verify),('Consultant edited synthetic issue','medium',self.fixture.user.pk))
 
     def test_rendered_table_ties_use_identifying_column_ascending(self):
         self.login()

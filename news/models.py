@@ -189,3 +189,108 @@ class Review(models.Model):
             raise ValidationError('An issue cannot duplicate itself.')
         if self.decision in ['add', 'update'] and not self.proposed_guidance.strip():
             raise ValidationError('Add/update decisions require proposed guidance.')
+
+
+class Article(models.Model):
+    source = models.ForeignKey(Source, on_delete=models.PROTECT, related_name='articles')
+    url = models.URLField(max_length=2000)
+    identity = models.CharField(max_length=64)
+    first_scan = models.ForeignKey(Scan, on_delete=models.PROTECT)
+    current_revision = models.ForeignKey('ArticleRevision', on_delete=models.PROTECT, null=True, blank=True, related_name='+', editable=False)
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['source', 'identity'], name='unique_source_article')]
+
+    def __str__(self):
+        return f'{self.source}: {self.url}'
+
+
+class ArticleRevision(ImmutableRecord):
+    article = models.ForeignKey(Article, on_delete=models.PROTECT, related_name='revisions')
+    title = models.CharField(max_length=500)
+    text = models.TextField()
+    published_at = models.DateTimeField(null=True, blank=True)
+    captured_at = models.DateTimeField(auto_now_add=True)
+    content_hash = models.CharField(max_length=64)
+    source_name = models.CharField(max_length=200)
+    source_website = models.URLField(max_length=1000)
+
+    class Meta:
+        ordering = ['-pk']
+        constraints = [models.UniqueConstraint(fields=['article', 'content_hash'], name='unique_article_content')]
+
+    def __str__(self):
+        return self.title
+
+
+class AnalysisRun(models.Model):
+    revision = models.ForeignKey(ArticleRevision, on_delete=models.PROTECT, related_name='analysis_runs')
+    policy_key = models.CharField(max_length=64)
+    model = models.CharField(max_length=100)
+    prompt_version = models.CharField(max_length=30)
+    schema_version = models.CharField(max_length=30)
+    attempt = models.PositiveSmallIntegerField(default=1)
+    status = models.CharField(max_length=20, default='queued', choices=[(x,x.title()) for x in ['queued','running','succeeded','failed']])
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True)
+    finished_at = models.DateTimeField(null=True)
+    error = models.CharField(max_length=300, blank=True)
+    input_snapshot = models.JSONField(default=dict)
+    reserved_cents = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['revision','policy_key','attempt'], name='unique_analysis_attempt')]
+
+    def __str__(self):
+        return f'Analysis {self.pk}: {self.status}'
+
+
+class AnalysisBudget(models.Model):
+    day = models.DateField(primary_key=True)
+    reserved_cents = models.PositiveIntegerField(default=0)
+
+
+class AnalysisResult(ImmutableRecord):
+    run = models.OneToOneField(AnalysisRun, on_delete=models.PROTECT, related_name='result')
+    output = models.JSONField()
+    input_tokens = models.PositiveIntegerField()
+    output_tokens = models.PositiveIntegerField()
+    estimated_cost_cents = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class IssueProposal(ImmutableRecord):
+    result = models.ForeignKey(AnalysisResult, on_delete=models.PROTECT, related_name='proposals')
+    position = models.PositiveSmallIntegerField()
+    target_issue = models.ForeignKey(Issue, on_delete=models.PROTECT, null=True, blank=True)
+    base_version = models.ForeignKey(IssueVersion, on_delete=models.PROTECT, null=True, blank=True)
+    content = models.JSONField()
+    matching = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['result','position'], name='unique_result_proposal')]
+
+    def __str__(self):
+        return f'Proposal {self.pk}: {self.content.get("name", "")}'
+
+
+class ProposalDecision(ImmutableRecord):
+    proposal = models.OneToOneField(IssueProposal, on_delete=models.PROTECT, related_name='decision')
+    decision = models.CharField(max_length=20, choices=[('accept','Accept'),('reject','Reject'),('supersede','Supersede')])
+    rationale = models.TextField()
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    issue_version = models.ForeignKey(IssueVersion, on_delete=models.PROTECT, null=True, blank=True)
+    content_snapshot = models.JSONField(default=dict)
+
+
+class IssueArticleLink(ImmutableRecord):
+    issue = models.ForeignKey(Issue, on_delete=models.PROTECT, related_name='article_links')
+    revision = models.ForeignKey(ArticleRevision, on_delete=models.PROTECT, related_name='issue_links')
+    relationship = models.CharField(max_length=20, choices=[('supports','Supports'),('retracts','Retracts association')])
+    rationale = models.TextField()
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)

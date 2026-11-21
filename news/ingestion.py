@@ -13,7 +13,7 @@ from defusedxml import ElementTree
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from .models import Issue, Scan, Source
+from .models import Scan, Source
 from .feed_transport import validate_url
 
 MAX_BYTES = 2 * 1024 * 1024
@@ -111,32 +111,10 @@ def scan_source(source_id, fetch=fetch_feed):
         with transaction.atomic():
             # Serialize source writes on PostgreSQL; uniqueness is a second guard.
             Source.objects.select_for_update().get(pk=source_id)
+            from .articles import capture_article
             for entry in entries:
-                identity = entry.pop('identity')
-                from .versioning import create_version, CONTENT_FIELDS, reference_data
-                issue, created = Issue.objects.get_or_create(source=source, identity=identity,
-                    defaults={'first_scan': scan, 'last_seen_at': timezone.now()})
-                if created:
-                    if Issue.objects.filter(source=source).count() > settings.NEWS_MAX_ISSUES_PER_SOURCE:
-                        raise IngestionQuotaExceeded('Publisher candidate quota reached.')
-                    create_version(issue=issue, expected_version_id=None, content=entry, actor=None,
-                        change_reason='First publisher feed discovery.', origin='publisher_ingestion',
-                        references=[{'source_id': source.pk, 'source_url': entry['url'], 'source_published_at': entry['published_at'], 'notes': 'Publisher feed discovery.'}])
+                if capture_article(source, scan, entry):
                     scan.created_count += 1
-                else:
-                    Issue.objects.filter(pk=issue.pk).update(last_seen_at=timezone.now())
-                    previous_publisher = issue.versions.filter(origin__in=['publisher_ingestion', 'automated_proposal']).first()
-                    publisher_fields = ['name', 'url', 'description', 'published_at']
-                    if previous_publisher and any(getattr(previous_publisher, field) != entry[field] for field in publisher_fields):
-                        if issue.versions.filter(origin__in=['publisher_ingestion', 'automated_proposal']).count() >= settings.NEWS_MAX_AUTO_VERSIONS_PER_ISSUE:
-                            raise IngestionQuotaExceeded('Automated issue version quota reached.')
-                        current = issue.current_version
-                        content = {field: getattr(current, field) for field in CONTENT_FIELDS}
-                        content.update(entry)
-                        references = [ref for ref in reference_data(current) if ref['source_url'] != entry['url']]
-                        references.append({'source_id': source.pk, 'source_url': entry['url'], 'source_published_at': entry['published_at'], 'notes': 'Changed publisher feed content; unverified proposal.'})
-                        create_version(issue=issue, expected_version_id=current.pk, content=content, actor=None,
-                            change_reason='Publisher feed content changed; consultant review required.', origin='automated_proposal', references=references)
         scan.status = 'success'
     except Exception as exc:
         scan.status = 'failed'

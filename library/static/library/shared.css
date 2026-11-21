@@ -129,3 +129,6 @@ body .table-sort,body button.table-sort{display:inline-flex;align-items:center;g
 body .table-sort:hover,body button.table-sort:hover{background:transparent;box-shadow:none;text-decoration:underline}
 .table-sort [aria-hidden]{font-size:.85em;color:#52657b}
 @media print{body button.table-sort{display:inline-flex}.table-sort [aria-hidden]{display:none}}
+
+/* Readable captured analysis evidence in both admin and shared layouts. */
+.analysis-evidence{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
