@@ -200,6 +200,19 @@ class AnalysisTests(TestCase):
         call_command('analyze_news',article=[self.article.pk],queue_only=True,stdout=StringIO())
         self.assertEqual(AnalysisRun.objects.count(),3)
 
+    def test_exact_identifier_matches_take_priority_over_keyword_candidates(self):
+        from .analysis import candidates
+        for number in range(21):
+            issue=Issue.objects.create(source=self.source,first_scan=self.article.first_scan,
+                identity=f'keyword-{number}',last_seen_at=timezone.now())
+            create_version(issue=issue,expected_version_id=None,actor=self.user,change_reason='Synthetic keyword fixture',
+                content={'name':f'Synthetic Widget unrelated {number}','url':f'https://example.test/{number}'})
+        proposal=self.analyze().result.proposals.get()
+        accepted=self.accept(proposal)
+        matches=candidates(self.article.current_revision)
+        self.assertEqual(matches[0]['issue_id'],accepted.issue_version.issue_id)
+        self.assertLessEqual(len(matches),20)
+
     def test_retracted_association_does_not_supply_future_link_match(self):
         from .analysis import candidates
         proposal=self.analyze().result.proposals.get()

@@ -11,7 +11,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, F, OuterRef, Subquery
+from django.db.models import Q, F, OuterRef, Subquery, Case, When, Value, IntegerField
 from django.utils import timezone
 from .models import (AnalysisBudget, AnalysisRun, AnalysisResult, Article, Issue,
                      IssueProposal, ProposalDecision, IssueArticleLink, IssueVersion, Source)
@@ -92,16 +92,21 @@ def candidates(revision):
     latest = IssueArticleLink.objects.filter(issue_id=OuterRef('issue_id'),revision__article_id=revision.article_id).order_by('-pk')
     linked = IssueArticleLink.objects.filter(revision__article_id=revision.article_id).annotate(
         latest_relation=Subquery(latest.values('relationship')[:1])).filter(latest_relation='supports')
-    condition = Q(pk__in=linked.values('issue_id'))
+    linked_condition = Q(pk__in=linked.values('issue_id'))
+    exact_condition = Q(pk__in=[])
     for identifier in sorted(identifiers)[:20]:
-        condition |= Q(current_version__identifiers__icontains=identifier)
+        pattern=r'(^|[^A-Za-z0-9])'+re.escape(identifier)+r'([^A-Za-z0-9]|$)'
+        exact_condition |= Q(current_version__identifiers__iregex=pattern)
+    condition = linked_condition | exact_condition
     # Keyword retrieval proposes review candidates only; semantic matching is deferred.
     for word in re.findall(r'[A-Za-z][A-Za-z0-9-]{4,}',revision.title)[:5]:
         condition |= Q(current_version__name__icontains=word)
     return [{'issue_id':issue.pk,'base_version_id':issue.current_version_id,
              'name':issue.current_version.name,'identifiers':issue.current_version.identifiers[:2000],
              'description':issue.current_version.description[:600]}
-            for issue in Issue.objects.filter(condition,current_version__isnull=False).distinct().select_related('current_version').order_by('pk')[:20]]
+            for issue in Issue.objects.filter(condition,current_version__isnull=False).distinct().select_related('current_version').annotate(
+                match_priority=Case(When(exact_condition,then=Value(0)),When(linked_condition,then=Value(1)),
+                                    default=Value(2),output_field=IntegerField())).order_by('match_priority','pk')[:20]]
 
 
 def queue_articles(article_ids=None, *, retry_failed=False, limit=50):
