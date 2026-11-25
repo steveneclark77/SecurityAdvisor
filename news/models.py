@@ -1,3 +1,4 @@
+import uuid
 from django.conf import settings
 from django.db import models
 
@@ -451,3 +452,18 @@ class MatchQueue(models.Model):
     calibration_id_snapshot = models.PositiveBigIntegerField(default=0)
     embedding_model = models.CharField(max_length=100,blank=True)
     last_processed_at = models.DateTimeField(null=True)
+
+
+class SlackTestRequest(models.Model):
+    request_uuid = models.UUIDField(default=uuid.uuid4,unique=True,editable=False)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True,blank=True)
+    origin = models.CharField(max_length=10,choices=[('admin','App admin'),('cli','CLI')],default='admin')
+    status = models.CharField(max_length=20,choices=[('pending','Queued'),('sending','Sending'),('sent','Sent'),('failed','Failed'),('unknown','Unconfirmed')],default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True,blank=True)
+    finished_at = models.DateTimeField(null=True,blank=True)
+    message = models.CharField(max_length=300,blank=True)
+    slack_timestamp = models.CharField(max_length=100,blank=True)
+
+    def __str__(self):
+        return f'Slack test {self.pk}: {self.status}'

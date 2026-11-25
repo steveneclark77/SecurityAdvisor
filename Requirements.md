@@ -364,3 +364,14 @@ security-news reviewer group inbox and source-recall UI. Send counts/brief title
 links only in a daily 09:00 America/Los_Angeles Slack digest, weekends included, to
 securityadvisor/security-advisor-notifications; send nothing on empty days. Keep
 notifications/costs/credentials bounded and processing off until configured.
+
+
+### Explicit Slack connection tests (v0.2.15)
+
+Provide an app-admin-only confirmed test action and `test_news_slack` CLI command.
+Send a labeled test with timestamp/app link even with no news or disabled scheduling;
+validate workspace/channel and report specific sanitized outcomes. Keep bot secrets
+only in the notification worker: admin requests are queued with actor/status history.
+Never consume or alter the daily digest slot/cursor. Startup checks log configuration
+presence/validity without network calls or messages. Do not blindly retry an uncertain
+test. Preserve CSRF and required confirmation gating, and reuse the digest transport.

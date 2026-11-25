@@ -179,10 +179,10 @@ on the reader's own computer and will not work for other reviewers remotely.
 
 Slack's `auth.test` workspace URL and the exact channel name are validated before
 posting. Network egress must allow `slack.com`. No Slack message is sent by tests,
-installation, migration or an unconfigured worker. You can explicitly test delivery:
+installation, migration or an unconfigured worker. Use an explicit connection test, even if there are no news items:
 
 ```bash
-docker compose run --rm news_notifications python manage.py send_news_digest --now
+docker compose run --rm news_notifications python manage.py test_news_slack
 ```
 
 A DB outbox prevents concurrent daily sends and records a fixed event window/payload.
@@ -203,3 +203,43 @@ be guaranteed after network failure; reconciliation is intentional. Redirects ar
 rejected, requests have an overall 60-second subprocess deadline, and remote error
 bodies/tokens are not saved. Digest deliveries and embedding attempts are operational
 status records; content/feedback/calibration/notification history is immutable.
+
+
+## Explicit Slack connection test (v0.2.15)
+
+After rebuilding/migrating with `./update.command`, run:
+
+```bash
+docker compose run --rm news_notifications python manage.py test_news_slack
+```
+
+This sends a real, clearly labeled test with app version, request number, timestamp
+and app link. It works with the daily digest disabled and with no news records.
+It validates the bot's workspace and channel before posting. It creates its own
+retained test record, never advances the digest cursor, never consumes the day's
+digest slot, and never changes issue/inbox data. Success exits zero; configuration,
+Slack rejection and unconfirmed delivery exit nonzero with sanitized diagnostics.
+An unconfirmed result means check the actual channel before asking for another test.
+
+In **Admin > News > Matching configuration**, choose **Send test notification**,
+confirm that a real message should be sent, then submit. The same confirmation is
+available through **News > Slack test requests > Add**. Only active app superusers
+can access it. The web app queues the request without receiving the bot token.
+The running `news_notifications` worker processes explicit tests even while daily
+digests are disabled. Reload the test list to see queued/sending/sent/failed/unconfirmed
+status and its safe diagnostic. Pending tests require the worker to be running;
+interrupted sending attempts become unconfirmed after five minutes and are not
+blindly retried. Each new button/CLI invocation is an explicit new request.
+
+On startup, the notification command logs whether digests are enabled, whether the
+bot token is present and whether the app origin is syntactically valid. This check
+has no network/database calls and posts nothing. The daemon separately polls the
+explicit test queue, even if scheduling is off. No automatic startup message is sent.
+Actual token validity/channel access is established only by the explicit test.
+Public-channel discovery requires `channels:read`; private discovery is attempted
+only if needed and requires `groups:read`. Posting requires `chat:write` and bot
+membership. Do not paste bot tokens into the UI, logs, Git or chat.
+
+`send_news_digest --now` remains a manual **digest** run; it can legitimately skip an
+empty day and is not the connection-test command. No external Slack messages are
+sent by automated tests or migrations.

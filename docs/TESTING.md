@@ -177,3 +177,15 @@ links, destination checks and uncertain-delivery reconciliation. No live provide
 Slack calls occur. The CSRF inventory now covers 47 valid form operations plus 188
 rejections per origin/referer matrix. Browser checks exercise learning inbox review,
 required-input gating, personal read controls and incident-source recall.
+
+
+## Slack connection-test regression checks (v0.2.15)
+
+`python manage.py test news.test_slack_connection` covers explicit CLI/admin tests
+without news, unchanged digest windows, local-only startup checks, missing settings,
+known sanitized failures, uncertain POSTs, confirmation/CSRF/superuser enforcement,
+worker processing with scheduling disabled, public/private scope discovery, retained
+history and no duplicate send for one request. Tests mock Slack transport; no real
+message is posted. The real-browser suite checks the admin configuration link,
+disabled-until-confirmed action and asynchronously updated result. Existing digest
+schedule/calibration/customer-isolation/CSRF suites remain in place.

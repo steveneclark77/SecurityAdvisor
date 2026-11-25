@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections
 from news.digest import send_digest
 from news.models import DigestDelivery
+from news.slack_tests import configuration_status,process_test_requests
 
 
 class Command(BaseCommand):
@@ -26,7 +27,11 @@ class Command(BaseCommand):
                 status='sent' if options['resolve_sent'] else 'failed',error='Operator reconciled Slack delivery from CLI.')
             self.stdout.write(f'Reconciled {updated} delivery record(s); no message sent.')
             return
+        self.stdout.write(configuration_status())
         while True:
+            if options['loop']:
+                for result in process_test_requests():
+                    self.stdout.write(f'Slack test {result.pk}: {result.message}')
             try:
                 if options['now'] or settings.NEWS_SLACK_DIGEST_ENABLED:
                     delivery=send_digest(force=options['now'],retry=options['retry'])
