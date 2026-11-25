@@ -85,3 +85,5 @@ Version 0.2.8 keeps application headers visible while scrolling, with compact mo
 Version 0.2.9 adds sortable data-column headers and removes field-help icons from view controls while retaining help on data-entry forms.
 
 Open product questions are tracked in [docs/OPEN_TOPICS.md](docs/OPEN_TOPICS.md).
+
+Learning-mode matching, admin-enabled calibrated autonomy, reviewer inbox and daily Slack configuration are documented in [docs/MATCHING.md](docs/MATCHING.md). All processing remains off until configured; autonomy starts disabled.

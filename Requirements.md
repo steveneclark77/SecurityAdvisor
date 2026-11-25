@@ -347,3 +347,20 @@ associations. Never overwrite consultant work, mutate old snapshots, or alter cu
 records/controls automatically. Enforce provider timeouts, input/output limits,
 conservative cost reservations, structured output validation, explicit permissions,
 CSRF and retained provenance. See docs/NEWS.md for operations and limitations.
+
+
+### Approved calibrated matching and notifications (v0.2.14)
+
+Start in learning mode and review all proposed matches/new incidents. Cache public
+article extractions, normalized issue identity profiles, embeddings, indexed semantic
+neighbors and pair comparisons by relevant content/model/policy versions. Preserve
+human corrections as labels, exclude automatic labels, evaluate versioned calibration
+against distinct incident-held-out examples, and require app-admin activation plus
+an explicit autonomy switch. Only supported >=90% confidence with ambiguity,
+contradiction, freshness and index-coverage checks may auto-link duplicate-source
+articles or create an unreviewed new issue. Never auto-update an existing issue's
+severity/remediation. Pause autonomy when consumed labels are corrected. Provide a
+security-news reviewer group inbox and source-recall UI. Send counts/brief titles/app
+links only in a daily 09:00 America/Los_Angeles Slack digest, weekends included, to
+securityadvisor/security-advisor-notifications; send nothing on empty days. Keep
+notifications/costs/credentials bounded and processing off until configured.

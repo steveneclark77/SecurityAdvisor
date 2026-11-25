@@ -45,6 +45,8 @@ def workflow_fixture():
     review = m.Reassessment.objects.create(assessment=assessment,baseline=drafts[0],reason='Synthetic guidance review')
     intake = services.issue_invite(engagement=engagement,user=user,purpose='intake')
     evidence_token = services.issue_invite(engagement=engagement,user=user,purpose='evidence',evidence_request=evidence_request)
+    from .news_matching import make_proposal
+    news_fixture=make_proposal()
     return SimpleNamespace(**locals())
 
 
@@ -134,4 +136,16 @@ def submissions(f):
     add('inventory_followup_edit',edit_url,edit_url,{**followup_data,'status':'resolved','response':'Synthetic provider identified'},lambda:InventoryFollowUp.objects.get(pk=f.followup.pk).status=='resolved')
     add('inventory_intake_followups',url('engagement_detail',e)+'?area=intake',url('inventory_intake_followups',e),{},lambda:InventoryFollowUp.objects.filter(customer=f.customer,question='Legacy provider details to confirm').exists(),prepare=lambda:m.Intake.objects.create(engagement=f.engagement,answers={'unknowns':'Legacy provider details to confirm'},recommendation={'profile':f.assessment.profile,'modifiers':[]}))
     add('inventory_walkthrough_prefill',url('inventory_detail',customer_id)+'?kind=operation&walkthrough=yes',url('inventory_walkthrough_prefill',customer_id),{'owner':f.person.pk},lambda:InventoryItem.objects.filter(customer=f.customer,name='Device maintenance and backup recovery',owner=f.person).exists())
+    from news.models import InboxReceipt, MatchFeedback
+    from news.access import REVIEWER_GROUP
+    from django.contrib.auth.models import Group
+    def reviewer():
+        group,_=Group.objects.get_or_create(name=REVIEWER_GROUP)
+        f.user.groups.add(group)
+    add('news_inbox_read',url('news_inbox'),url('news_inbox_read'),{'event':f.news_fixture.event.pk},
+        lambda:InboxReceipt.objects.filter(event=f.news_fixture.event,user=f.user).exists(),prepare=reviewer)
+    add('news_match_review',url('news_match_review',f.news_fixture.proposal.pk),url('news_match_review',f.news_fixture.proposal.pk),
+        {'token':f.news_fixture.token,'outcome':'irrelevant','rationale':'Synthetic irrelevant news',
+         'name':'Synthetic matching incident','description':'Synthetic','severity':'unknown','kind':'unclassified','remediation':'','identifiers':''},
+        lambda:MatchFeedback.objects.filter(proposal=f.news_fixture.proposal,outcome='irrelevant',actor=f.user).exists(),prepare=reviewer)
     return items

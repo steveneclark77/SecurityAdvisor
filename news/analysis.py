@@ -266,12 +266,15 @@ def decide_proposal(*, proposal, actor, decision, rationale, content=None, targe
         raise PermissionDenied
     if decision not in ['accept','reject','supersede'] or not rationale.strip():
         raise ValidationError('A decision and rationale are required.')
+    Source.objects.select_for_update().order_by('pk').first()
     proposal = IssueProposal.objects.select_for_update().select_related('result__run__revision__article').get(pk=proposal.pk)
     if ProposalDecision.objects.filter(proposal=proposal).exists():
         raise ValidationError('This proposal was already decided.')
     version = None
     snapshot = {}
     if decision=='accept':
+        if target_issue_id is None and proposal.match_decisions.filter(issue__isnull=False).exists():
+            raise ValidationError('This proposal already has an incident. Select that issue as the target.')
         revision = proposal.result.run.revision
         article = revision.article
         snapshot = {**proposal.content,**(content or {})}
@@ -301,5 +304,9 @@ def decide_proposal(*, proposal, actor, decision, rationale, content=None, targe
         snapshot = {field:getattr(version,field) for field in CONTENT_FIELDS}
         if snapshot['published_at']:
             snapshot['published_at']=snapshot['published_at'].isoformat()
-    return ProposalDecision.objects.create(proposal=proposal,decision=decision,rationale=rationale,actor=actor,
+    recorded=ProposalDecision.objects.create(proposal=proposal,decision=decision,rationale=rationale,actor=actor,
         issue_version=version,content_snapshot=snapshot)
+
+    from .match_review import record_content_review
+    record_content_review(recorded,target_issue_id)
+    return recorded

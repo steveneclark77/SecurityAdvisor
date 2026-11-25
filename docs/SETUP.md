@@ -205,3 +205,16 @@ for API-key configuration, costs, CLI selection of one/some/all unanalyzed artic
 and consultant proposal review. No provider account/key or network request is
 required merely to install/update. The API key belongs only in the local .env or
 secret environment, never in chat or Git.
+
+
+## Learning matching and notifications (v0.2.14)
+
+The updater also manages `news_matcher` and `news_notifications`. Assign reviewers
+to the empty **security-news reviewers** group; no accounts are added automatically.
+Matching starts in learning mode; enabling processing does not enable autonomy.
+Only an app admin may activate an evaluated calibration and explicitly enable it.
+Set embedding pricing and Slack token/app origin in local .env as documented in
+[MATCHING.md](MATCHING.md). Slack delivery is separately disabled until configured.
+New migrations add caches, retained matching/feedback/calibration history, inbox
+notifications and an outbox, without changing old issues, assessments or reports.
+Back up before applying these irreversible history migrations.

@@ -294,3 +294,160 @@ class IssueArticleLink(ImmutableRecord):
     rationale = models.TextField()
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class EmbeddingCache(ImmutableRecord):
+    key = models.CharField(max_length=64, unique=True)
+    model = models.CharField(max_length=100)
+    content_hash = models.CharField(max_length=64)
+    vector = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class EmbeddingBucket(models.Model):
+    embedding = models.ForeignKey(EmbeddingCache,on_delete=models.PROTECT,related_name='buckets')
+    key = models.CharField(max_length=40,db_index=True)
+
+
+class EmbeddingAttempt(models.Model):
+    key = models.CharField(max_length=64,db_index=True)
+    status = models.CharField(max_length=20,default='running')
+    model = models.CharField(max_length=100)
+    content_hash = models.CharField(max_length=64)
+    reserved_cents = models.PositiveIntegerField(default=0)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True)
+    error = models.CharField(max_length=300,blank=True)
+    tokens = models.PositiveIntegerField(default=0)
+
+
+class IssueMatchProfile(models.Model):
+    issue = models.OneToOneField(Issue,on_delete=models.PROTECT,related_name='match_profile')
+    source_version = models.ForeignKey(IssueVersion,on_delete=models.PROTECT)
+    identity_hash = models.CharField(max_length=64,db_index=True)
+    summary = models.TextField()
+    fingerprint = models.JSONField()
+    embedding = models.ForeignKey(EmbeddingCache,on_delete=models.PROTECT,null=True)
+
+
+class IssueMatchKey(models.Model):
+    profile = models.ForeignKey(IssueMatchProfile,on_delete=models.CASCADE,related_name='keys')
+    kind = models.CharField(max_length=20)
+    value = models.CharField(max_length=200,db_index=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['profile','kind','value'],name='unique_issue_match_key')]
+
+
+class MatchComparison(ImmutableRecord):
+    key = models.CharField(max_length=64,unique=True)
+    issue = models.ForeignKey(Issue,on_delete=models.PROTECT)
+    extraction_hash = models.CharField(max_length=64)
+    identity_hash = models.CharField(max_length=64)
+    policy_version = models.CharField(max_length=30)
+    features = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CalibrationVersion(ImmutableRecord):
+    name = models.CharField(max_length=200)
+    policy_version = models.CharField(max_length=30)
+    dataset_hash = models.CharField(max_length=64)
+    label_ids = models.JSONField()
+    metrics = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT)
+    def __str__(self): return self.name
+
+
+class MatchingConfiguration(models.Model):
+    id = models.PositiveSmallIntegerField(primary_key=True,default=1,editable=False)
+    autonomous_enabled = models.BooleanField(default=False)
+    active_calibration = models.ForeignKey(CalibrationVersion,on_delete=models.PROTECT,null=True,blank=True)
+    catalog_generation = models.PositiveBigIntegerField(default=0,editable=False)
+    index_ready_generation = models.PositiveBigIntegerField(default=0,editable=False)
+    index_ready_model = models.CharField(max_length=100,blank=True,editable=False)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True,editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self): return 'Security news matching configuration'
+
+
+class MatchingConfigurationEvent(ImmutableRecord):
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True)
+    snapshot = models.JSONField()
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MatchAssessment(ImmutableRecord):
+    key = models.CharField(max_length=64,unique=True)
+    proposal = models.ForeignKey(IssueProposal,on_delete=models.PROTECT,related_name='assessments')
+    catalog_generation = models.PositiveBigIntegerField()
+    calibration = models.ForeignKey(CalibrationVersion,on_delete=models.PROTECT,null=True)
+    prediction = models.CharField(max_length=20)
+    target_issue = models.ForeignKey(Issue,on_delete=models.PROTECT,null=True)
+    bucket = models.CharField(max_length=200)
+    confidence = models.FloatField(null=True)
+    evidence = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MatchDecision(ImmutableRecord):
+    proposal = models.ForeignKey(IssueProposal,on_delete=models.PROTECT,related_name='match_decisions')
+    assessment = models.ForeignKey(MatchAssessment,on_delete=models.PROTECT)
+    outcome = models.CharField(max_length=20)
+    issue = models.ForeignKey(Issue,on_delete=models.PROTECT,null=True)
+    automatic = models.BooleanField(default=False)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,null=True)
+    rationale = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MatchFeedback(ImmutableRecord):
+    proposal = models.ForeignKey(IssueProposal,on_delete=models.PROTECT,related_name='match_feedback')
+    assessment = models.ForeignKey(MatchAssessment,on_delete=models.PROTECT)
+    decision = models.ForeignKey(MatchDecision,on_delete=models.PROTECT)
+    outcome = models.CharField(max_length=20)
+    correct_issue = models.ForeignKey(Issue,on_delete=models.PROTECT,null=True)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT)
+    rationale = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class InboxEvent(ImmutableRecord):
+    key = models.CharField(max_length=100,unique=True)
+    kind = models.CharField(max_length=20)
+    title = models.CharField(max_length=500)
+    proposal = models.ForeignKey(IssueProposal,on_delete=models.PROTECT,null=True)
+    issue = models.ForeignKey(Issue,on_delete=models.PROTECT,null=True)
+    decision = models.ForeignKey(MatchDecision,on_delete=models.PROTECT,null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class InboxReceipt(models.Model):
+    event = models.ForeignKey(InboxEvent,on_delete=models.PROTECT,related_name='receipts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT)
+    read_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['event','user'],name='unique_news_inbox_receipt')]
+
+
+class DigestDelivery(models.Model):
+    day = models.DateField(unique=True)
+    status = models.CharField(max_length=20,default='pending')
+    first_event_id = models.PositiveBigIntegerField(default=0)
+    last_event_id = models.PositiveBigIntegerField(default=0)
+    payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    attempted_at = models.DateTimeField(null=True)
+    finished_at = models.DateTimeField(null=True)
+    error = models.CharField(max_length=300,blank=True)
+    slack_timestamp = models.CharField(max_length=100,blank=True)
+
+
+class MatchQueue(models.Model):
+    proposal = models.OneToOneField(IssueProposal,on_delete=models.PROTECT,related_name='matching_work')
+    status = models.CharField(max_length=20,default='waiting')
+    catalog_generation = models.PositiveBigIntegerField(default=0)
+    calibration_id_snapshot = models.PositiveBigIntegerField(default=0)
+    embedding_model = models.CharField(max_length=100,blank=True)
+    last_processed_at = models.DateTimeField(null=True)

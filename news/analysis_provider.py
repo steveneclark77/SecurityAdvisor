@@ -12,17 +12,23 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise ValueError('Provider redirects are not allowed.')
 
 
-def request_analysis(payload):
+def post_json(path,payload):
+    if path not in ['/chat/completions','/embeddings']:
+        raise ValueError('Unsupported provider operation.')
     key = os.environ.get('NEWS_ANALYSIS_API_KEY', '')
     if not key:
         raise ValueError('Analysis credentials are not configured.')
-    request = urllib.request.Request('https://api.openai.com/v1/chat/completions',
+    request = urllib.request.Request('https://api.openai.com/v1'+path,
         data=json.dumps(payload).encode(), headers={'Content-Type':'application/json', 'Authorization':'Bearer '+key})
     with urllib.request.build_opener(NoRedirect()).open(request, timeout=30) as response:
         raw = response.read(MAX_RESPONSE + 1)
     if len(raw) > MAX_RESPONSE:
         raise ValueError('Provider response exceeded its limit.')
-    result = json.loads(raw)
+    return json.loads(raw)
+
+
+def request_analysis(payload):
+    result=post_json('/chat/completions',payload)
     choice = result['choices'][0]
     if choice.get('finish_reason') != 'stop' or choice['message'].get('refusal'):
         raise ValueError('Provider did not return complete analysis.')

@@ -59,7 +59,7 @@ class FormCsrfTests(TestCase):
                         walk(route.url_patterns)
                 elif isinstance(route, URLPattern):
                     callback = inspect.unwrap(route.callback)
-                    if callback.__module__ not in ['engagements.views','library.views','inventory.views']:
+                    if callback.__module__ not in ['engagements.views','library.views','inventory.views','news.views']:
                         continue
                     source = inspect.getsource(callback)
                     if '@require_POST' in source or ('@require_http_methods' in source and 'POST' in source):

@@ -1,0 +1,9 @@
+{% extends 'library/base.html' %}{% load static %}{% block content %}
+<h1>Review incident matching</h1><aside class="guidance-panel"><strong>Guidance</strong><p>Your decisions provide examples for evaluated matching calibration. Linking adds another report of the same incident; it does not change the issue's severity or remediation. New-issue fields below apply only when creating a new incident.</p></aside>
+<h2>{{ proposal.content.name }}</h2><p>{{ proposal.content.description }}</p><p>Suggested route: {{ assessment.prediction }}. {% if assessment.confidence %}Calibrated confidence: {{ assessment.confidence|floatformat:3 }}.{% else %}No supported calibrated confidence — human review required.{% endif %}</p>
+<details><summary>Matching evidence and article provenance</summary><pre class="analysis-evidence">{{ assessment.evidence }}</pre><p>{{ proposal.result.run.revision.source_name }} — {{ proposal.result.run.revision.title }}</p><p>{{ proposal.result.run.revision.text }}</p></details>
+{% if previous %}<aside class="guidance-panel"><strong>Guidance</strong><p>Previous decision: {{ previous.outcome }}{% if previous.issue %} — {{ previous.issue }}{% endif %}. Saving appends a correction; earlier decisions remain in history.</p></aside>{% endif %}
+<form method="get" aria-label="Find other issues"><label>Search issue names or identifiers <input name="q" value="{{ query }}" type="search"></label><button type="submit">Search issues</button><p>Search before editing; it reloads the proposed fields.</p></form>
+<form method="post" data-match-review>{% csrf_token %}{{ form.as_p }}<button type="submit">Record matching decision</button><a class="button" href="{% url 'news_inbox' %}">Cancel</a></form>
+<script src="{% static 'news/matching-review.js' %}" defer></script>
+{% endblock %}
