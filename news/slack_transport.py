@@ -108,7 +108,11 @@ def send(payload):
             return {'status':'unknown','error_code':'delivery_unconfirmed'}
         return {'status':'sent','timestamp':timestamp}
     except SlackAPIError as exc:
-        return {'status':'failed','error_code':exc.code}
+        if exc.code in {'missing_token','invalid_auth','not_authed','token_revoked','token_expired',
+            'account_inactive','missing_scope','channel_not_found','not_in_channel','is_archived',
+            'rate_limited','restricted_action','not_allowed_token_type','org_login_required'}:
+            return {'status':'failed','error_code':exc.code}
+        return {'status':'unknown','error_code':'delivery_unconfirmed'}
     except Exception:
         return {'status':'unknown','error_code':'delivery_unconfirmed'}
 

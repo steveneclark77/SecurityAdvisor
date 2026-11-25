@@ -163,3 +163,9 @@ class SlackConnectionTests(TestCase):
             with self.assertRaises(ValueError) as caught:
                 api('auth.test',{})
             self.assertNotIn('synthetic-secret',str(caught.exception))
+
+    def test_ambiguous_post_error_requires_checking_channel_before_retry(self):
+        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor.slack.com/'},
+            {'channels':[{'name':'security-advisor-notifications','id':'C-SYNTHETIC','is_member':True}]},
+            SlackAPIError('internal_error')]):
+            self.assertEqual(send({'text':'Synthetic test'}),{'status':'unknown','error_code':'delivery_unconfirmed'})
