@@ -29,7 +29,7 @@ def normalize(value):
 
 
 def identity_data(content, products=(), versions=()):
-    identifiers=sorted(set(re.findall(r'\b(?:CVE-\d{4}-\d{4,}|[A-Z][A-Z0-9]+-\d{4}-\d+)\b',content.get('identifiers','').upper())))[:40]
+    identifiers=sorted({value for value in re.findall(r'\b(?:CVE-\d{4}-\d{4,}|GHSA-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}|[A-Z][A-Z0-9]+-\d{4}-\d+)\b',content.get('identifiers','').upper()) if len(value)<=200})[:40]
     data={'name':content.get('name','').strip(),'description':content.get('description','')[:10000],
           'kind':content.get('kind','unclassified'),'identifiers':identifiers,
           'products':sorted(set(normalize(item) for item in products if normalize(item)))[:20],
@@ -61,7 +61,7 @@ def refresh_profile(issue_id, products=None, versions=None):
     profile,_=IssueMatchProfile.objects.update_or_create(issue=issue,defaults={
         'source_version_id':issue.current_version_id,'identity_hash':fingerprint,'summary':summary(data),'fingerprint':data,'embedding':None})
     profile.keys.all().delete()
-    tokens=sorted(set(re.findall(r'[a-z0-9]{4,}',data['name'].lower())))[:20]
+    tokens=sorted({word[:200] for word in re.findall(r'[a-z0-9]{4,}',data['name'].lower())})[:20]
     keys=[('identifier',item) for item in data['identifiers']]+[('product',item) for item in data['products']]+[('token',item) for item in tokens]
     IssueMatchKey.objects.bulk_create([IssueMatchKey(profile=profile,kind=kind,value=value) for kind,value in keys])
     MatchingConfiguration.objects.get_or_create(pk=1)

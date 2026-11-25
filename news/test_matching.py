@@ -88,6 +88,15 @@ class MatchingTests(TestCase):
         self.assertEqual(issue.match_profile.identity_hash,previous)
         self.assertTrue(EmbeddingCache.objects.exists())
 
+    def test_derived_index_keys_do_not_reject_valid_long_issue_fields(self):
+        issue=self.issue()
+        version=create_version(issue=issue,expected_version_id=issue.current_version_id,
+            content={'name':'X'*500,'identifiers':'CVE-2026-'+'9'*1000},actor=self.user,change_reason='Synthetic long-field boundary')
+        profile=refresh_profile(issue.pk)
+        self.assertTrue(all(len(key.value)<=200 for key in profile.keys.all()))
+        self.assertEqual(version.name,'X'*500)
+        self.assertEqual(len(version.identifiers),1009)
+
     def test_embedding_model_change_invalidates_coverage_and_old_confidence(self):
         self.issue()
         original=self.activate(self.prepared())

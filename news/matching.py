@@ -1,5 +1,6 @@
 """Cached candidate comparisons and conservative calibrated routing."""
 import math
+import re
 from django.utils import timezone
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -55,7 +56,7 @@ def assess(proposal):
     data=extraction_data(proposal)
     embedded=get_embedding(summary(data))
     identifiers=data['identifiers']
-    tokens=set(data['name'].lower().split())
+    tokens={word[:200] for word in re.findall(r'[a-z0-9]{4,}',data['name'].lower())}
     keys=IssueMatchKey.objects.filter(Q(kind='identifier',value__in=identifiers)|
         Q(kind='product',value__in=data['products'])|Q(kind='token',value__in=tokens))
     condition=Q(pk__in=keys.values('profile_id'))
