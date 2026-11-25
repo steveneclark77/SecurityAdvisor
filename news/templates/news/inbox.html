@@ -1,0 +1,6 @@
+{% extends 'library/base.html' %}{% block content %}
+<h1>Security news inbox</h1><p>{{ unread }} unread notification{{ unread|pluralize }} for security-news reviewers.</p>
+<form method="get" aria-label="Filter security news"><label>Search notifications <input name="q" value="{{ query }}" type="search"></label><label><input type="checkbox" name="show" value="all" {% if show_all %}checked{% endif %}> Show read notifications</label><button type="submit">Apply filters</button></form>
+<table data-server-sort><thead><tr>{% for header in sort_headers %}<th aria-sort="{{ header.order }}"><a href="{{ header.url }}">{{ header.label }}</a></th>{% endfor %}<th>Action</th></tr></thead><tbody>{% for row in records %}<tr><td>{{ row.label }}</td><td>{{ row.item.kind }}</td><td>{{ row.item.created_at }}</td><td><a class="button" href="{{ row.destination }}">View</a><form method="post" action="{% url 'news_inbox_read' %}">{% csrf_token %}<input type="hidden" name="event" value="{{ row.item.pk }}"><button type="submit">Mark read</button></form></td></tr>{% empty %}<tr><td colspan="4">No notifications match this view.</td></tr>{% endfor %}</tbody></table>
+{% if previous_url %}<a class="button" href="{{ previous_url }}">Previous page</a>{% endif %}{% if next_url %}<a class="button" href="{{ next_url }}">Next page</a>{% endif %}
+{% endblock %}

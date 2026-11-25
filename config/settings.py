@@ -66,3 +66,9 @@ NEWS_ANALYSIS_DAILY_CENTS = int(os.getenv('NEWS_ANALYSIS_DAILY_CENTS','500'))
 # Conservative configurable estimates, USD per million tokens; not billing guarantees.
 NEWS_ANALYSIS_INPUT_PRICE = os.getenv('NEWS_ANALYSIS_INPUT_PRICE','1')
 NEWS_ANALYSIS_OUTPUT_PRICE = os.getenv('NEWS_ANALYSIS_OUTPUT_PRICE','5')
+
+NEWS_EMBEDDING_MODEL=os.getenv('NEWS_EMBEDDING_MODEL','text-embedding-3-small')
+NEWS_EMBEDDING_PER_RUN_CENTS=int(os.getenv('NEWS_EMBEDDING_PER_RUN_CENTS','1'))
+NEWS_EMBEDDING_INPUT_PRICE=os.getenv('NEWS_EMBEDDING_INPUT_PRICE','0.1')
+NEWS_SLACK_DIGEST_ENABLED=os.getenv('NEWS_SLACK_DIGEST_ENABLED','false').strip().lower()=='true'
+NEWS_PUBLIC_BASE_URL=os.getenv('NEWS_PUBLIC_BASE_URL','')

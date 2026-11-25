@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from library.admin_sorting import IdentifiedAdmin
 from .models import (Article, ArticleRevision, AnalysisRun, AnalysisResult, IssueProposal,
-                     ProposalDecision, IssueArticleLink, Issue, IssueVersion)
+                     ProposalDecision, IssueArticleLink, Issue, IssueVersion, Source)
 from .analysis import decide_proposal, validate_new_issue
 
 
@@ -104,6 +104,10 @@ class ProposalDecisionForm(forms.ModelForm):
             ids=[item['issue_id'] for item in proposal.result.run.input_snapshot.get('candidate_issues',[])]
             if proposal.target_issue_id:
                 ids.append(proposal.target_issue_id)
+            latest_match=proposal.match_decisions.filter(issue__isnull=False).order_by('-pk').first()
+            if latest_match:
+                ids.append(latest_match.issue_id)
+                self.initial.setdefault('target_issue',latest_match.issue_id)
             ids.extend(self.initial.get('extra_candidate_ids',[]))
             target=self.initial.get('target_issue')
             if target:
@@ -129,6 +133,7 @@ class ProposalDecisionForm(forms.ModelForm):
     def clean(self):
         data=super().clean()
         proposal=data.get('proposal')
+        Source.objects.select_for_update().order_by('pk').first()
         if proposal:
             IssueProposal.objects.select_for_update().get(pk=proposal.pk)
         if data.get('decision')=='accept':
@@ -146,6 +151,8 @@ class ProposalDecisionForm(forms.ModelForm):
                     raise ValidationError('Issue changed; reload the review before accepting.')
                 data['expected_version_id']=versions[str(target.pk)] if target else None
                 if not target:
+                    if proposal.match_decisions.filter(issue__isnull=False).exists():
+                        raise ValidationError('This proposal already has an incident. Select it as the target.')
                     validate_new_issue(data.get('identifiers',''))
             except signing.BadSignature:
                 raise ValidationError('Review expired or invalid; reload before accepting.') from None
@@ -228,3 +235,6 @@ class IssueArticleLinkAdmin(HistoryAdmin):
     def save_model(self,request,obj,form,change):
         obj.actor=request.user
         super().save_model(request,obj,form,change)
+
+
+from . import matching_admin  # noqa: F401, E402

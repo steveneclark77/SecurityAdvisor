@@ -233,6 +233,8 @@ class AnalysisTests(TestCase):
         process_run(queue_articles([self.article.pk])[0],call=lambda payload:(received.append(payload) or output()))
         self.assertNotIn('tools',received[0])
         self.assertNotIn('customer',received[0]['messages'][1]['content'])
+        self.assertNotIn('candidate_issues',received[0]['messages'][1]['content'])
+        self.assertEqual(received[0]['response_format']['json_schema']['schema']['properties']['issues']['items']['properties']['target_issue_id']['maximum'],0)
 
     def test_admin_decision_is_csrf_protected_and_records_edits(self):
         proposal=self.analyze().result.proposals.get()

@@ -162,3 +162,18 @@ input gating and real admin CSRF. The existing customer-isolation and 45-route C
 matrix remain unchanged. PostgreSQL concurrency and both browser engines run in CI.
 Live model quality, chosen pricing and provider connectivity require a separately
 configured deployment and consultant evaluation before enabling automatic processing.
+
+
+## Learning matching and notifications (v0.2.14)
+
+`python manage.py test news.test_matching` uses synthetic embeddings, article
+extractions, labels and Slack responses. It verifies learning/default-off gates,
+content-hash cache reuse on severity-only edits, comparison reuse, bounded embedding
+attempts/shared reservations, confident link-only behavior, unreviewed new issues,
+uncalibrated/ambiguous cases, corrections/retractions, reviewer-group isolation,
+admin-only activation, incident-held-out calibration and no automatic self-enabling.
+It also tests 09:00 Los Angeles scheduling, empty-day suppression, app-only digest
+links, destination checks and uncertain-delivery reconciliation. No live provider or
+Slack calls occur. The CSRF inventory now covers 47 valid form operations plus 188
+rejections per origin/referer matrix. Browser checks exercise learning inbox review,
+required-input gating, personal read controls and incident-source recall.

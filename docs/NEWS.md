@@ -1,6 +1,6 @@
-# Security news collection, analysis and review (v0.2.13)
+# Security news collection, analysis and review (v0.2.14)
 
-Collection captures RSS/Atom articles and immutable revisions, separate from underlying issues. Optional OpenAI analysis extracts suggested defaults and potential duplicate matches into **pending proposals**. All proposals require human acceptance; automatic collection and automatic analysis are independently **off by default**. Neither process changes controls, baselines, customer assessments, findings or reports. This remains a synthetic-data development application.
+Collection captures RSS/Atom articles and immutable revisions, separate from underlying issues. Optional OpenAI analysis extracts suggested defaults and potential duplicate matches into **pending proposals**. Learning mode requires human matching review; an app admin can later explicitly enable evaluated matching autonomy (link-only for duplicates). Automatic collection and automatic analysis are independently **off by default**. Neither process changes controls, baselines, customer assessments, findings or reports. This remains a synthetic-data development application.
 
 ## Sources
 
@@ -157,3 +157,7 @@ Quota failures roll back that source's article/revision writes and record a fail
 ## Validation
 
 `python manage.py test news` covers synthetic feeds, repeated sightings, publisher changes, provenance, immutable rows, stale forms, quotas, parser/connection boundaries, and permissions. Isolated migration tests run on the selected database backend, verify source-key conversion and content/review preservation, and check that duplicate websites stop migration without removing history guards. They create and destroy only temporary test databases. The PostgreSQL suite additionally races two editors to verify that one succeeds and the stale editor is rejected. Chromium/WebKit tests exercise source creation, version/reference creation, disabled incomplete-input buttons, and exact-version review using real CSRF behavior. No test contacts publishers. Live endpoint correctness still requires a separate check on an allowed network.
+
+## Learning and calibrated matching (v0.2.14)
+
+See [MATCHING.md](MATCHING.md) for identity/embedding/comparison caches, incident-grouped held-out calibration, explicit admin activation, the security-news reviewer inbox, and the daily Slack digest. Earlier review-only instructions above describe content proposals: autonomous duplicate matching never applies their severity/remediation changes.

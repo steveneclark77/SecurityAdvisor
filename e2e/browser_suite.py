@@ -32,6 +32,8 @@ class BrowserForms(StaticLiveServerTestCase):
         editor = connection.schema_editor(atomic=False)
         analysis_guards = importlib.import_module('news.migrations.0008_article_history')
         run_guards = importlib.import_module('news.migrations.0010_analysis_run_guards')
+        matching_guards=importlib.import_module('news.migrations.0012_matching_history')
+        matching_guards.uninstall(None, editor)
         run_guards.uninstall(None, editor)
         analysis_guards.uninstall(None, editor)
         guards.uninstall(None, editor)
@@ -41,6 +43,7 @@ class BrowserForms(StaticLiveServerTestCase):
             guards.install(None, editor)
             analysis_guards.install(None, editor)
             run_guards.install(None, editor)
+            matching_guards.install(None, editor)
 
     def setUp(self):
         self.media = tempfile.TemporaryDirectory(prefix='securityadvisor-browser-media-')
@@ -165,6 +168,8 @@ class BrowserForms(StaticLiveServerTestCase):
                 self.visit(case.page)
                 matching = []
                 for form in self.page.locator('form').all():
+                    if (form.get_attribute('method') or 'get').lower()!='post':
+                        continue
                     action = form.evaluate("f => { const u=new URL(f.getAttribute('action') || location.href, location.href); return u.pathname+u.search; }")
                     if action != case.target:
                         continue
@@ -185,7 +190,13 @@ class BrowserForms(StaticLiveServerTestCase):
                     tag = field.evaluate('e=>e.tagName.toLowerCase()')
                     kind = field.get_attribute('type')
                     if kind=='hidden':
-                        self.assertEqual(field.input_value(),str(value))
+                        if case.name=='news_match_review' and name=='token':
+                            from django.core import signing
+                            self.assertEqual(signing.loads(field.input_value(),salt='news-match-review'),signing.loads(str(value),salt='news-match-review'))
+                        else:
+                            self.assertEqual(field.input_value(),str(value))
+                    elif not field.is_visible():
+                        continue  # Conditional input sections are unavailable to the user.
                     elif kind in ['checkbox','radio']:
                         values = [str(v) for v in value] if isinstance(value,list) else [str(value)]
                         for choice in fields.all():
@@ -700,6 +711,33 @@ class BrowserForms(StaticLiveServerTestCase):
         artifacts=Path('test-artifacts') / self.engine
         artifacts.mkdir(parents=True,exist_ok=True)
         self.page.screenshot(path=str(artifacts / 'persistent-admin-mobile.png'),full_page=True)
+
+    def test_learning_inbox_review_and_incident_sources(self):
+        def join_reviewers():
+            from django.contrib.auth.models import Group
+            from news.access import REVIEWER_GROUP
+            self.fixture.user.groups.add(Group.objects.get(name=REVIEWER_GROUP))
+        self.db(join_reviewers)
+        self.login()
+        self.visit(reverse('news_inbox'))
+        expect(self.page.get_by_role('heading',name='Security news inbox')).to_be_visible()
+        self.page.get_by_role('link',name='View',exact=True).first.click()
+        save=self.page.get_by_role('button',name='Record matching decision',exact=True)
+        expect(save).to_be_disabled()
+        self.page.get_by_label('Outcome:').select_option('new')
+        self.page.get_by_label('Rationale:').fill('Synthetic reviewer confirms a distinct incident.')
+        self.page.get_by_label('Name:').fill('')
+        expect(save).to_be_disabled()
+        self.page.get_by_label('Name:').fill('Human-confirmed synthetic incident')
+        expect(save).to_be_enabled()
+        save.click()
+        expect(self.page.get_by_text('Matching decision recorded.',exact=False)).to_be_visible()
+        self.page.get_by_role('link',name='View',exact=True).first.click()
+        expect(self.page.get_by_role('heading',name='Reports of Human-confirmed synthetic incident')).to_be_visible()
+        expect(self.page.get_by_role('link',name='Read source',exact=True)).to_have_count(1)
+        self.page.get_by_label('Show association history').check()
+        self.page.get_by_role('button',name='Search',exact=True).click()
+        expect(self.page.get_by_role('link',name='Read source',exact=True)).to_have_count(1)
 
     def test_news_analysis_review_creates_edited_version_with_csrf(self):
         def proposal_fixture():
