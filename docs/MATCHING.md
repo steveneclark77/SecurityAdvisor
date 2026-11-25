@@ -1,7 +1,11 @@
 # Learning, calibrated matching, and reviewer notifications (v0.2.14)
 
 Article extraction still uses the public-news analysis described in [NEWS.md](NEWS.md).
-Matching is a separate, cached stage. Initial mode is **learning**: every existing/new
+Matching is a separate, cached stage. Extractor prompt v2 sends only the new article
+to the model, never existing-issue snippets; historical comparisons are deterministic
+and cached. Older compatible extraction results remain usable by matching. An explicit
+extractor policy/model upgrade is a new analysis policy, so analyze_news may queue a
+new extraction under that policy; changing calibration or matching alone does not. Initial mode is **learning**: every existing/new
 incident judgment needs a human. Installing or updating never enables autonomy.
 `NEWS_ANALYSIS_ENABLED=false` still keeps the analyzer and matching loops idle.
 
