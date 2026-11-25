@@ -103,6 +103,15 @@ class SlackConnectionTests(TestCase):
         self.assertIn('Local check only; no message sent.',output.getvalue())
         self.assertFalse(DigestDelivery.objects.exists())
 
+    def test_worker_does_not_steal_a_direct_cli_request(self):
+        request=SlackTestRequest.objects.create(origin='cli')
+        with patch('news.slack_tests.transport') as transport:
+            self.assertEqual(process_test_requests(),[])
+            transport.assert_not_called()
+        request.refresh_from_db()
+        self.assertEqual(request.status,'pending')
+        self.assertEqual(deliver_test(request.pk,call=lambda payload:{'status':'sent','timestamp':'123.456'}).status,'sent')
+
     def test_interrupted_test_becomes_unknown_without_retry(self):
         request=SlackTestRequest.objects.create(origin='cli',status='sending',started_at=timezone.now()-timedelta(minutes=6))
         with patch('news.slack_tests.transport') as transport:

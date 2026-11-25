@@ -55,5 +55,5 @@ def deliver_test(pk,call=None):
 def process_test_requests(limit=5):
     SlackTestRequest.objects.filter(status='sending',started_at__lt=timezone.now()-timedelta(minutes=5)).update(
         status='unknown',finished_at=timezone.now(),message=diagnostic({'status':'unknown'}))
-    ids=list(SlackTestRequest.objects.filter(status='pending').order_by('pk').values_list('pk',flat=True)[:limit])
+    ids=list(SlackTestRequest.objects.filter(status='pending',origin='admin').order_by('pk').values_list('pk',flat=True)[:limit])
     return [deliver_test(pk) for pk in ids]
