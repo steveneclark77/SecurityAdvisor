@@ -196,9 +196,9 @@ GitHub Actions runs the full discovered Django suite on PostgreSQL for every PR 
 
 The PostgreSQL CI job measures Python line and branch execution with coverage.py. Open **Actions → Application tests → a run → Summary** to see the per-file table and total. The `Cover` column includes both line and branch execution; `Branch` and `BrPart` show branch counts and partial branches. The test step also prints its normal pass/fail results. Failed tests still fail the job; the reporting steps run afterward when coverage data exists.
 
-Download the **python-coverage** artifact from that run's Summary page, extract it, and open `htmlcov/index.html`. Click a file to see missed lines and branch paths. The artifact also contains `coverage.xml` for tooling and is retained for seven days. Reports contain first-party source code and use the repository's Actions access controls; no external reporting service is involved.
+Download the **python-coverage** artifact from that run's Summary page, extract it, and open `htmlcov/index.html`. Click a file to see missed lines and branch paths. The artifact also contains `coverage.xml` and `coverage.json` for tooling and is retained for seven days. Reports contain first-party source code and use the repository's Actions access controls; no external reporting service is involved.
 
-Coverage is informational, with no minimum threshold. It includes `config`, `engagements`, `inventory`, `library`, and `news`, including unexecuted modules. Migrations and test files are excluded. Browser runs and isolated provider subprocess execution are not combined into this measurement; mocked integration tests do not prove live provider connectivity. Other references to coverage in this document describe tested behaviors, not measured percentages.
+Every measured module must reach **at least 90% combined line-and-branch coverage**. The `ci.coverage_gate` check fails the Django CI job if any module falls below 90%, including newly added modules in the measured packages. The comparison uses integer execution counts before rounding; a displayed rounded value cannot pass an actually lower percentage. Empty modules have no executable opportunities and pass. Missing, malformed, empty or line-only reports fail. A high project total cannot compensate for an under-tested module. It includes `config`, `engagements`, `inventory`, `library`, and `news`, including unexecuted modules. Migrations and test files are excluded. Browser runs and isolated provider subprocess execution are not combined into this measurement; mocked integration tests do not prove live provider connectivity. Other references to coverage in this document describe tested behaviors, not measured percentages.
 
 Run locally in your configured development virtual environment (synthetic data only):
 
@@ -206,6 +206,8 @@ Run locally in your configured development virtual environment (synthetic data o
 python -m pip install -r requirements-test.txt
 python -m coverage run manage.py test
 python -m coverage report -m
+python -m coverage json
+python -m ci.coverage_gate
 python -m coverage html
 ```
 
@@ -218,3 +220,10 @@ OpenAI diagnostics are tested with mocked provider responses and subprocesses, s
 
 Run policy checks locally with `python -m unittest ci.tests` (no dependencies or database required). The allowlist covers isolated network subprocess modules only; Python views, forms, models and shared services do not qualify. Any other changed path wins over an allowlisted path and forces both browsers. The selector checks the complete PR diff, not just the latest commit. Workflow runs remain on `pull_request`, without privileged `pull_request_target` execution. Use Actions **Run workflow** on the PR branch to force a complete run. Django system/migration checks and the full server-side suite always run independently of browser selection; Ruff and ESLint remain unchanged.
 
+
+
+## Per-module coverage regressions (v0.2.19)
+
+Run `python -m unittest ci.test_coverage_gate` to check the threshold implementation: exact 90%, unrounded comparisons, branch counts, high-average/low-module cases, missing reports and summary/exit status. CI generates and uploads reports before enforcing the gate, so failed coverage remains inspectable. Keep the Django job required in repository branch protection/rulesets to prevent merging failing PRs; the workflow itself reports failure but does not change repository rules.
+
+Additional synthetic tests exercise the WSGI handler, inventory validation/history guards, baseline error responses, signed/stale news reviews, permission checks, admin history and reference handling, embedding budgets and malformed responses, calibration commands, matching cache limits, outbox reconciliation and provider entry points. In-process `runpy` tests execute isolated provider entry-point code while mocking network primitives, so these paths are measured without live requests. Browser coverage is still separate; measurement does not imply live integration success. Test/migration exclusions and the first-party package scope are unchanged.

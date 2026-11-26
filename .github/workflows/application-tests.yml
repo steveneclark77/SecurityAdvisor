@@ -72,10 +72,11 @@ jobs:
           python -m coverage report
           python -m coverage html
           python -m coverage xml
+          python -m coverage json
           {
             echo '## Python coverage (Django suite on PostgreSQL)'
             echo ''
-            echo 'Line and branch coverage; informational, with no minimum threshold.'
+            echo 'Every measured Python module must reach 90% combined line-and-branch coverage.'
             echo ''
             echo '```text'
             python -m coverage report
@@ -91,8 +92,12 @@ jobs:
           path: |
             htmlcov/
             coverage.xml
+            coverage.json
           if-no-files-found: warn
           retention-days: 7
+      - name: Enforce 90 percent coverage for every Python module
+        if: ${{ always() && !cancelled() }}
+        run: python -m ci.coverage_gate
 
   browsers:
     needs: browser-selection
