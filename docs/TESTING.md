@@ -194,6 +194,21 @@ schedule/calibration/customer-isolation/CSRF suites remain in place.
 
 GitHub Actions runs the full discovered Django suite on PostgreSQL and the complete browser suite separately on Chromium and WebKit for every PR update and push to main. There is no change-impact test selection or path filter. Ruff and ESLint also check the full project. Locally, Django test labels can select a targeted suite, for example `python manage.py test news.test_openai_connection`.
 
-Line/branch code coverage is not currently measured: no coverage.py, coverage report artifact or minimum percentage is configured. References to coverage elsewhere in this document describe tested behaviors, not measured execution percentages.
+The PostgreSQL CI job measures Python line and branch execution with coverage.py. Open **Actions → Application tests → a run → Summary** to see the per-file table and total. The `Cover` column includes both line and branch execution; `Branch` and `BrPart` show branch counts and partial branches. The test step also prints its normal pass/fail results. Failed tests still fail the job; the reporting steps run afterward when coverage data exists.
+
+Download the **python-coverage** artifact from that run's Summary page, extract it, and open `htmlcov/index.html`. Click a file to see missed lines and branch paths. The artifact also contains `coverage.xml` for tooling and is retained for seven days. Reports contain first-party source code and use the repository's Actions access controls; no external reporting service is involved.
+
+Coverage is informational, with no minimum threshold. It includes `config`, `engagements`, `inventory`, `library`, and `news`, including unexecuted modules. Migrations and test files are excluded. Browser runs and isolated provider subprocess execution are not combined into this measurement; mocked integration tests do not prove live provider connectivity. Other references to coverage in this document describe tested behaviors, not measured percentages.
+
+Run locally in your configured development virtual environment (synthetic data only):
+
+```bash
+python -m pip install -r requirements-test.txt
+python -m coverage run manage.py test
+python -m coverage report -m
+python -m coverage html
+```
+
+Open `htmlcov/index.html` in your browser. These generated files and coverage data are ignored by Git and Docker. `coverage run` replaces the prior measurement, and a targeted suite produces coverage for that selection only; use the full suite when comparing totals. The coverage dependency is development/CI only and is not installed in the application image.
 
 OpenAI diagnostics are tested with mocked provider responses and subprocesses, synthetic input and a `SimpleTestCase` database prohibition. Tests verify zero-network startup checks, disabled-analysis behavior, explicit testing of both models, missing-key rejection, response validation and safe error handling. Automated tests never call the live API. Live verification is an explicit operator action documented in SETUP.md.

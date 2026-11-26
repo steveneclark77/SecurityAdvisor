@@ -1,0 +1,3 @@
+-r requirements.txt
+# Development/CI only; excluded from the application image dependencies.
+coverage==7.10.7

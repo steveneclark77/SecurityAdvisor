@@ -1,0 +1,19 @@
+[run]
+branch = True
+source = config, engagements, inventory, library, news
+omit =
+    */migrations/*
+    */tests.py
+    */test_*.py
+    */tests/*
+
+[report]
+show_missing = True
+precision = 2
+fail_under = 0
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
