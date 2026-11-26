@@ -189,3 +189,11 @@ history and no duplicate send for one request. Tests mock Slack transport; no re
 message is posted. The real-browser suite checks the admin configuration link,
 disabled-until-confirmed action and asynchronously updated result. Existing digest
 schedule/calibration/customer-isolation/CSRF suites remain in place.
+
+## Suite selection and code coverage
+
+GitHub Actions runs the full discovered Django suite on PostgreSQL and the complete browser suite separately on Chromium and WebKit for every PR update and push to main. There is no change-impact test selection or path filter. Ruff and ESLint also check the full project. Locally, Django test labels can select a targeted suite, for example `python manage.py test news.test_openai_connection`.
+
+Line/branch code coverage is not currently measured: no coverage.py, coverage report artifact or minimum percentage is configured. References to coverage elsewhere in this document describe tested behaviors, not measured execution percentages.
+
+OpenAI diagnostics are tested with mocked provider responses and subprocesses, synthetic input and a `SimpleTestCase` database prohibition. Tests verify zero-network startup checks, disabled-analysis behavior, explicit testing of both models, missing-key rejection, response validation and safe error handling. Automated tests never call the live API. Live verification is an explicit operator action documented in SETUP.md.

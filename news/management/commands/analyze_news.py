@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import close_old_connections
 from news.analysis import queue_articles, process_run, recover_expired, policy_key
 from news.models import Article, AnalysisRun
+from news.openai_tests import configuration_status
 
 
 class Command(BaseCommand):
@@ -29,6 +30,7 @@ class Command(BaseCommand):
             raise CommandError('--loop cannot be combined with manual selection/retry options.')
         if not options['loop'] and not (options['article'] or options['all_unanalyzed'] or options['queued']):
             raise CommandError('Select --article ID [ID ...], --all-unanalyzed or --queued.')
+        self.stdout.write(configuration_status())
         while True:
             if options['loop'] and not settings.NEWS_ANALYSIS_ENABLED:
                 self.stdout.write('Automatic analysis is disabled; no database or provider requests.')
