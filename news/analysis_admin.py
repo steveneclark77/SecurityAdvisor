@@ -238,3 +238,4 @@ class IssueArticleLinkAdmin(HistoryAdmin):
 
 
 from . import matching_admin  # noqa: F401, E402
+from . import slack_test_admin  # noqa: F401, E402

@@ -33,6 +33,8 @@ class BrowserForms(StaticLiveServerTestCase):
         analysis_guards = importlib.import_module('news.migrations.0008_article_history')
         run_guards = importlib.import_module('news.migrations.0010_analysis_run_guards')
         matching_guards=importlib.import_module('news.migrations.0012_matching_history')
+        slack_test_guards=importlib.import_module('news.migrations.0015_slacktestrequest')
+        slack_test_guards.uninstall(None, editor)
         matching_guards.uninstall(None, editor)
         run_guards.uninstall(None, editor)
         analysis_guards.uninstall(None, editor)
@@ -44,6 +46,7 @@ class BrowserForms(StaticLiveServerTestCase):
             analysis_guards.install(None, editor)
             run_guards.install(None, editor)
             matching_guards.install(None, editor)
+            slack_test_guards.install(None, editor)
 
     def setUp(self):
         self.media = tempfile.TemporaryDirectory(prefix='securityadvisor-browser-media-')
@@ -711,6 +714,30 @@ class BrowserForms(StaticLiveServerTestCase):
         artifacts=Path('test-artifacts') / self.engine
         artifacts.mkdir(parents=True,exist_ok=True)
         self.page.screenshot(path=str(artifacts / 'persistent-admin-mobile.png'),full_page=True)
+
+    def test_admin_slack_test_is_explicit_and_worker_reports_result(self):
+        self.login()
+        self.visit(reverse('admin:news_matchingconfiguration_change',args=[1]))
+        self.page.get_by_role('link',name='Send test notification',exact=True).click()
+        button=self.page.get_by_role('button',name='Send test notification',exact=True)
+        expect(button).to_be_disabled()
+        self.page.get_by_role('checkbox',name='Send a real test message to securityadvisor / security-advisor-notifications',exact=False).check()
+        expect(button).to_be_enabled()
+        button.click()
+        expect(self.page.locator('.success')).to_be_visible()
+        def worker():
+            from unittest.mock import patch
+            from news.models import SlackTestRequest,DigestDelivery
+            from news.slack_tests import process_test_requests
+            from django.test import override_settings
+            before=list(DigestDelivery.objects.values())
+            with patch.dict('os.environ',{'NEWS_SLACK_BOT_TOKEN':'synthetic-key'}),override_settings(NEWS_PUBLIC_BASE_URL='https://app.example.test'),patch('news.slack_tests.transport',return_value={'status':'sent','timestamp':'123.456'}):
+                process_test_requests()
+            record=SlackTestRequest.objects.get()
+            return record.status,record.actor_id,list(DigestDelivery.objects.values())==before
+        self.assertEqual(self.db(worker),('sent',self.fixture.user.pk,True))
+        self.page.reload()
+        expect(self.page.locator('#result_list')).to_contain_text('Test message sent to securityadvisor / security-advisor-notifications.')
 
     def test_learning_inbox_review_and_incident_sources(self):
         def join_reviewers():

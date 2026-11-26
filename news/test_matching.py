@@ -58,7 +58,7 @@ class MatchingTests(TestCase):
         self.assertIsNone(apply_automatic(assessment))
         self.assertFalse(MatchDecision.objects.exists())
         for command in ['match_news','send_news_digest']:
-            with override_settings(NEWS_ANALYSIS_ENABLED=False,NEWS_SLACK_DIGEST_ENABLED=False),self.assertNumQueries(0),patch(f'news.management.commands.{command}.time.sleep',side_effect=KeyboardInterrupt):
+            with override_settings(NEWS_ANALYSIS_ENABLED=False,NEWS_SLACK_DIGEST_ENABLED=False),self.assertNumQueries(2 if command=='send_news_digest' else 0),patch(f'news.management.commands.{command}.time.sleep',side_effect=KeyboardInterrupt):
                 with self.assertRaises(KeyboardInterrupt):
                     call_command(command,loop=True,stdout=StringIO())
 

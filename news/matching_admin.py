@@ -30,6 +30,7 @@ class ConfigurationForm(forms.ModelForm):
 
 @admin.register(MatchingConfiguration)
 class MatchingConfigurationAdmin(admin.ModelAdmin):
+    change_form_template='admin/news/matching_configuration.html'
     form=ConfigurationForm
     readonly_fields=['catalog_generation','index_ready_generation','index_ready_model','updated_by','updated_at']
     class Media:

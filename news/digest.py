@@ -28,10 +28,14 @@ def transport(payload):
 
 
 def base_url():
-    value=settings.NEWS_PUBLIC_BASE_URL.rstrip('/')
-    parts=urlsplit(value)
+    value=settings.NEWS_PUBLIC_BASE_URL.strip().rstrip('/')
+    try:
+        parts=urlsplit(value)
+        port=parts.port
+    except ValueError:
+        raise ValidationError('Configure NEWS_PUBLIC_BASE_URL as a valid app origin.') from None
     allowed_scheme=parts.scheme=='https' or (settings.DEBUG and parts.scheme=='http' and parts.hostname in ['localhost','127.0.0.1'])
-    if not allowed_scheme or not parts.hostname or parts.username or parts.password or parts.query or parts.fragment or parts.path not in ('','/'):
+    if any(ord(char)<32 for char in value) or port==0 or not allowed_scheme or not parts.hostname or parts.username or parts.password or parts.query or parts.fragment or parts.path not in ('','/'):
         raise ValidationError('Configure NEWS_PUBLIC_BASE_URL as a credential-free HTTPS app origin.')
     return value
 

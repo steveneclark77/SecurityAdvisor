@@ -218,3 +218,15 @@ Set embedding pricing and Slack token/app origin in local .env as documented in
 New migrations add caches, retained matching/feedback/calibration history, inbox
 notifications and an outbox, without changing old issues, assessments or reports.
 Back up before applying these irreversible history migrations.
+
+
+## Slack connection check (v0.2.15)
+
+Use `docker compose run --rm news_notifications python manage.py test_news_slack`
+after configuring the notification worker. It deliberately sends a labeled real
+test even with no news, independently of digest scheduling. App superusers can also
+queue it through **Matching configuration > Send test notification** and reload
+**Slack test requests** for status. Startup logs perform only a local configuration
+check; they never post a message. See [MATCHING.md](MATCHING.md) for permissions,
+worker behavior, diagnostics and uncertain delivery. This additive migration retains
+test history; it does not modify daily digest records or existing assessments.
