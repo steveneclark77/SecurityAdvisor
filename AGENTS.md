@@ -43,3 +43,8 @@ Reviewers Prioritize:
 - Prioritize DRY in every coding task: reuse and improve existing helpers, components, templates, and styles before introducing parallel implementations.
 - Keep all first-party CSS in shared static stylesheets. Do not add embedded `<style>` blocks, `style` attributes, or JavaScript-generated CSS; use reusable classes and class toggles.
 - Share component rules and typography across public and consultant pages. Keep genuinely different page layouts in their layout stylesheet, using the common stylesheet include.
+
+## Python coverage
+
+- Every Python module measured by `.coveragerc` must retain at least 90% combined line-and-branch coverage. Add meaningful behavioral tests for changes/new modules; do not hide gaps by broadening exclusions or adding coverage pragmas.
+- Run the full suite under coverage and `python -m coverage json && python -m ci.coverage_gate` before submitting Python changes. The CI Django job enforces this per-module minimum, including unexecuted modules.
