@@ -108,7 +108,7 @@ class ProviderBoundaryTests(SimpleTestCase):
         with patch.object(st,'api',side_effect=[{'channels':[],'response_metadata':{'next_cursor':'next'}},{'channels':[]},{'channels':[]}]),self.assertRaises(ValueError): st.find_channel()
         with patch.object(st,'api',side_effect=OSError): self.assertEqual(st.send({})['error_code'],'connection_failed')
         for value in [{'ts':'bad'},OSError('private')]:
-            with patch.object(st,'find_channel',return_value={'id':'C'}),patch.object(st,'api',side_effect=[{'url':'https://securityadvisor.slack.com/'},value]):
+            with patch.object(st,'find_channel',return_value={'id':'C'}),patch.object(st,'api',side_effect=[{'url':'https://securityadvisor-talk.slack.com/'},value]):
                 self.assertEqual(st.send({})['status'],'unknown')
         with patch.object(st,'api',return_value={'url':'https://wrong.slack.com'}):
             self.assertEqual(st.send({})['error_code'],'workspace_mismatch')

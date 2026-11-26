@@ -150,7 +150,7 @@ With autonomy enabled and supported confidence >=90%:
 
 ## Daily Slack digest
 
-Target is fixed to workspace **securityadvisor**, channel
+Target is fixed to workspace **securityadvisor** (`https://securityadvisor-talk.slack.com/`), channel
 **security-advisor-notifications**. Add a Slack bot to that channel, with `chat:write`,
 `channels:read`, and `groups:read` if private-channel discovery is needed. Put its bot
 token only in local `.env`/secret configuration, never in Git or chat:

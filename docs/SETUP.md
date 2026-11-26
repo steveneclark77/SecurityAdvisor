@@ -242,3 +242,5 @@ docker compose run --rm news_analyzer python manage.py test_news_openai
 ```
 
 This sends two small synthetic requests using `NEWS_ANALYSIS_API_KEY`, `NEWS_ANALYSIS_MODEL` and `NEWS_EMBEDDING_MODEL`. Normal API charges may apply. The command verifies generation and a 256-dimensional embedding without reading or changing articles, proposals, issues, caches or daily budget records. These diagnostic calls are outside the application's analysis budget accounting. Errors return a nonzero exit code with safe authentication, access, model, quota/rate-limit or connectivity guidance. No automatic retries occur; a timed-out request may still incur a provider charge. Run this in the analysis container; the web container intentionally has no API key.
+
+Slack workspace verification uses the exact hostname `securityadvisor-talk.slack.com`, even though the workspace display name is SecurityAdvisor. Install the bot in that workspace and invite it to `security-advisor-notifications`. A different workspace URL is rejected before posting.

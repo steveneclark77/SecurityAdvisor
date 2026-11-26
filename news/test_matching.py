@@ -245,7 +245,7 @@ class MatchingTests(TestCase):
         with patch('news.slack_transport.api',side_effect=[{'url':'https://wrong.slack.com/'}]) as api:
             self.assertEqual(send({})['status'],'failed')
             self.assertEqual(api.call_count,1)
-        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor.slack.com/'},
+        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor-talk.slack.com/'},
                 {'channels':[{'name':'security-advisor-notifications','id':'C-SYNTHETIC'}]}, {'ts':'123.456'}]) as api:
             self.assertEqual(send({'blocks':[]})['status'],'sent')
             self.assertEqual(api.call_args.args[1]['channel'],'C-SYNTHETIC')
