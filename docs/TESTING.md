@@ -192,8 +192,14 @@ schedule/calibration/customer-isolation/CSRF suites remain in place.
 
 ## Suite selection and code coverage
 
-GitHub Actions runs the full discovered Django suite on PostgreSQL and the complete browser suite separately on Chromium and WebKit for every PR update and push to main. There is no change-impact test selection or path filter. Ruff and ESLint also check the full project. Locally, Django test labels can select a targeted suite, for example `python manage.py test news.test_openai_connection`.
+GitHub Actions runs the full discovered Django suite on PostgreSQL for every PR update and push to main. Both browser suites run unless a PR changes only modified files from the narrow isolated-provider/transport allowlist in `ci/browser_selection.py`, optionally with `VERSION`. Additions, deletions, UI/shared code, dependencies, tests, documentation, unknown files, empty diffs and diff failures run both browsers. Main pushes and manual workflow runs always run both engines. The selector uses the PR merge-base diff, tests its policy, and explains its decision in the Actions Summary. A failed selector also runs browsers rather than silently skipping them. Ruff and ESLint also check the full project. Locally, Django test labels can select a targeted suite, for example `python manage.py test news.test_openai_connection`.
 
 Line/branch code coverage is not currently measured: no coverage.py, coverage report artifact or minimum percentage is configured. References to coverage elsewhere in this document describe tested behaviors, not measured execution percentages.
 
 OpenAI diagnostics are tested with mocked provider responses and subprocesses, synthetic input and a `SimpleTestCase` database prohibition. Tests verify zero-network startup checks, disabled-analysis behavior, explicit testing of both models, missing-key rejection, response validation and safe error handling. Automated tests never call the live API. Live verification is an explicit operator action documented in SETUP.md.
+
+
+## Conservative browser selection
+
+Run policy checks locally with `python -m unittest ci.tests` (no dependencies or database required). The allowlist covers isolated network subprocess modules only; Python views, forms, models and shared services do not qualify. Any other changed path wins over an allowlisted path and forces both browsers. The selector checks the complete PR diff, not just the latest commit. Workflow runs remain on `pull_request`, without privileged `pull_request_target` execution. Use Actions **Run workflow** on the PR branch to force a complete run. Django system/migration checks and the full server-side suite always run independently of browser selection; Ruff and ESLint remain unchanged.
+

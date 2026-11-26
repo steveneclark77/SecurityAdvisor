@@ -10,6 +10,29 @@ permissions:
   contents: read
 
 jobs:
+  browser-selection:
+    name: Select browser tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run_browsers: ${{ steps.selection.outputs.run_browsers }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check selection policy
+        run: python -m unittest ci.tests
+      - name: Select browser suites conservatively
+        id: selection
+        env:
+          SELECTION_EVENT: ${{ github.event_name }}
+          SELECTION_BASE: ${{ github.event.pull_request.base.sha }}
+          SELECTION_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: python -m ci.browser_selection
+
   django:
     name: Django tests (PostgreSQL)
     runs-on: ubuntu-24.04
@@ -43,6 +66,9 @@ jobs:
       - run: python manage.py test --verbosity 2
 
   browsers:
+    needs: browser-selection
+    # A failed/missing selector must not silently skip browser checks.
+    if: ${{ always() && !cancelled() && needs.browser-selection.outputs.run_browsers != 'false' }}
     name: Browser forms (${{ matrix.browser }})
     runs-on: ubuntu-24.04
     timeout-minutes: 20
