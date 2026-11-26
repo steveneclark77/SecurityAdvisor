@@ -139,14 +139,14 @@ class SlackConnectionTests(TestCase):
         self.assertEqual(client.post(path,{'confirm':'on','csrfmiddlewaretoken':csrf},HTTP_ORIGIN='http://testserver').status_code,403)
 
     def test_public_channel_does_not_need_private_read_scope(self):
-        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor.slack.com/'},
+        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor-talk.slack.com/'},
             {'channels':[{'name':'security-advisor-notifications','id':'C-SYNTHETIC','is_member':True}]},{'ts':'123.456'}]) as request:
             self.assertEqual(send({'text':'Synthetic test'})['status'],'sent')
             self.assertEqual(request.call_args_list[1].args[1]['types'],'public_channel')
             self.assertEqual(request.call_count,3)
 
     def test_private_channel_lookup_and_explicit_post_errors(self):
-        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor.slack.com/'},
+        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor-talk.slack.com/'},
             {'channels':[]},{'channels':[{'name':'security-advisor-notifications','id':'G-SYNTHETIC','is_member':True}]},
             SlackAPIError('not_in_channel')]) as request:
             result=send({'text':'Synthetic test'})
@@ -165,7 +165,16 @@ class SlackConnectionTests(TestCase):
             self.assertNotIn('synthetic-secret',str(caught.exception))
 
     def test_ambiguous_post_error_requires_checking_channel_before_retry(self):
-        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor.slack.com/'},
+        with patch('news.slack_transport.api',side_effect=[{'url':'https://securityadvisor-talk.slack.com/'},
             {'channels':[{'name':'security-advisor-notifications','id':'C-SYNTHETIC','is_member':True}]},
             SlackAPIError('internal_error')]):
             self.assertEqual(send({'text':'Synthetic test'}),{'status':'unknown','error_code':'delivery_unconfirmed'})
+
+    def test_workspace_check_rejects_old_url_and_hostname_lookalikes_before_posting(self):
+        for url in ['https://securityadvisor.slack.com/',
+                    'https://securityadvisor-talk.slack.com.attacker.test/',
+                    'https://attacker.test/securityadvisor-talk.slack.com/',
+                    'https://securityadvisor-talk.slack.com@attacker.test/']:
+            with self.subTest(url=url),patch('news.slack_transport.api',return_value={'url':url}) as api:
+                self.assertEqual(send({'text':'Synthetic test'}),{'status':'failed','error_code':'workspace_mismatch'})
+                self.assertEqual(api.call_count,1)

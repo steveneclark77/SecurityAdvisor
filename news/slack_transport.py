@@ -17,7 +17,7 @@ MESSAGES={
     'token_expired':'The Slack bot token expired. Configure a current bot token.',
     'account_inactive':'The Slack bot account is inactive. Check the app installation.',
     'missing_scope':'The bot lacks a required scope: channels:read for public channels, groups:read for private channels, and chat:write to post. Reinstall after changes.',
-    'workspace_mismatch':'The bot belongs to a different workspace. Use the securityadvisor workspace installation.',
+    'workspace_mismatch':'The bot belongs to a different workspace. Use the securityadvisor-talk.slack.com workspace installation.',
     'channel_not_found':'The security-advisor-notifications channel was not found. Check its name, bot membership and read scopes.',
     'not_in_channel':'Invite the bot to security-advisor-notifications before posting.',
     'is_archived':'The notification channel is archived. Restore it before posting.',
@@ -94,7 +94,7 @@ def find_channel():
 def send(payload):
     try:
         auth=api('auth.test',{})
-        if urllib.parse.urlsplit(auth.get('url','')).hostname!='securityadvisor.slack.com':
+        if urllib.parse.urlsplit(auth.get('url','')).hostname!='securityadvisor-talk.slack.com':
             raise SlackAPIError('workspace_mismatch')
         channel=find_channel()
     except SlackAPIError as exc:
