@@ -230,3 +230,15 @@ queue it through **Matching configuration > Send test notification** and reload
 check; they never post a message. See [MATCHING.md](MATCHING.md) for permissions,
 worker behavior, diagnostics and uncertain delivery. This additive migration retains
 test history; it does not modify daily digest records or existing assessments.
+
+### Verify OpenAI connectivity
+
+The analysis worker logs a local configuration check on startup. It reports whether automatic analysis, credentials and model names are configured; it does not contact OpenAI or validate the key. No key or remote response is logged. Automatic analysis remains disabled by default.
+
+Explicitly test the configured analysis and embedding models, even while automatic analysis is disabled:
+
+```bash
+docker compose run --rm news_analyzer python manage.py test_news_openai
+```
+
+This sends two small synthetic requests using `NEWS_ANALYSIS_API_KEY`, `NEWS_ANALYSIS_MODEL` and `NEWS_EMBEDDING_MODEL`. Normal API charges may apply. The command verifies generation and a 256-dimensional embedding without reading or changing articles, proposals, issues, caches or daily budget records. These diagnostic calls are outside the application's analysis budget accounting. Errors return a nonzero exit code with safe authentication, access, model, quota/rate-limit or connectivity guidance. No automatic retries occur; a timed-out request may still incur a provider charge. Run this in the analysis container; the web container intentionally has no API key.

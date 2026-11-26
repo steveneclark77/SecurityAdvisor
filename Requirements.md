@@ -375,3 +375,5 @@ only in the notification worker: admin requests are queued with actor/status his
 Never consume or alter the daily digest slot/cursor. Startup checks log configuration
 presence/validity without network calls or messages. Do not blindly retry an uncertain
 test. Preserve CSRF and required confirmation gating, and reuse the digest transport.
+
+OpenAI integration diagnostics: analysis-worker startup reports local configuration only, without API calls or secrets. An explicit CLI command tests configured analysis and embedding models with bounded synthetic requests, independent of automatic analysis, without changing application records. Report safe failures and do not retry automatically. Diagnostic requests may incur API charges outside application budget accounting.
